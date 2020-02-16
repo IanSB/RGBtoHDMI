@@ -5,7 +5,7 @@
 
 
 //note using inverted termination requires new cplds with inverted clamping
-//#define TERMINATION_INVERTED
+#define TERMINATION_INVERTED
 
 // Define how the Pi Framebuffer is initialized
 // - if defined, use the property interface (Channel 8)
