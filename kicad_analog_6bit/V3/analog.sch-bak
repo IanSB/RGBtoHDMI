@@ -548,54 +548,10 @@ Wire Wire Line
 Connection ~ 6400 7550
 Wire Wire Line
 	6400 7550 6450 7550
-$Comp
-L 4xxx:4066 U3
-U 5 1 5E118FBF
-P 9050 5900
-F 0 "U3" H 9280 5946 50  0000 L CNN
-F 1 "4066" H 9280 5855 50  0000 L CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 9050 5900 50  0001 C CNN
-F 3 "http://www.ti.com/lit/ds/symlink/cd4066b.pdf" H 9050 5900 50  0001 C CNN
-	5    9050 5900
-	1    0    0    -1  
-$EndComp
-Text Label 9050 5400 2    50   ~ 0
+Text Label 1050 2350 2    50   ~ 0
 VCC
-Text Label 9050 6400 2    50   ~ 0
+Text Label 1050 3350 2    50   ~ 0
 GND
-$Comp
-L 4xxx:4066 U3
-U 1 1 5E1234E2
-P 2400 3550
-F 0 "U3" V 2354 3422 50  0000 R CNN
-F 1 "4066" V 2445 3422 50  0000 R CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 2400 3550 50  0001 C CNN
-F 3 "http://www.ti.com/lit/ds/symlink/cd4066b.pdf" H 2400 3550 50  0001 C CNN
-	1    2400 3550
-	0    -1   1    0   
-$EndComp
-$Comp
-L 4xxx:4066 U3
-U 2 1 5E127744
-P 4600 3550
-F 0 "U3" V 4554 3422 50  0000 R CNN
-F 1 "4066" V 4645 3422 50  0000 R CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 4600 3550 50  0001 C CNN
-F 3 "http://www.ti.com/lit/ds/symlink/cd4066b.pdf" H 4600 3550 50  0001 C CNN
-	2    4600 3550
-	0    1    1    0   
-$EndComp
-$Comp
-L 4xxx:4066 U3
-U 3 1 5E129BF6
-P 3150 3550
-F 0 "U3" V 3104 3422 50  0000 R CNN
-F 1 "4066" V 3195 3422 50  0000 R CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 3150 3550 50  0001 C CNN
-F 3 "http://www.ti.com/lit/ds/symlink/cd4066b.pdf" H 3150 3550 50  0001 C CNN
-	3    3150 3550
-	0    1    1    0   
-$EndComp
 Wire Wire Line
 	2400 3850 2400 5050
 Wire Wire Line
@@ -605,12 +561,7 @@ Wire Wire Line
 Wire Wire Line
 	3150 4200 3450 4200
 Wire Wire Line
-	3900 4200 3900 3850
-Wire Wire Line
-	3900 4200 4200 4200
-Wire Wire Line
 	4600 4200 4600 3850
-Connection ~ 3900 4200
 Text Label 2950 4200 2    50   ~ 0
 GND
 Wire Wire Line
@@ -846,32 +797,20 @@ Wire Wire Line
 	3450 4100 3450 4200
 Connection ~ 3450 4200
 Wire Wire Line
-	3450 4200 3900 4200
-Wire Wire Line
 	4200 4100 4200 4200
 Connection ~ 4200 4200
 Wire Wire Line
 	4200 4200 4600 4200
 Wire Wire Line
 	4200 3900 4200 3800
-Connection ~ 3450 3550
-Wire Wire Line
-	3450 3550 3450 3800
 Wire Wire Line
 	4050 3800 4200 3800
-Connection ~ 4200 3800
-Wire Wire Line
-	4200 3800 4200 3550
 Wire Wire Line
 	3150 3250 3150 2450
 Connection ~ 3150 2450
 Wire Wire Line
-	3900 3250 3900 2100
-Wire Wire Line
 	4600 3250 4600 1750
 Connection ~ 4600 1750
-Wire Wire Line
-	3450 3100 3450 3550
 Wire Wire Line
 	3450 3100 4900 3100
 Wire Wire Line
@@ -880,8 +819,6 @@ Wire Wire Line
 	950  5800 1900 5800
 Wire Wire Line
 	800  5200 800  3550
-Wire Wire Line
-	800  3550 2100 3550
 Wire Wire Line
 	1100 4450 1100 4650
 Wire Wire Line
@@ -935,12 +872,12 @@ Text Label 5550 1150 0    50   ~ 0
 VCC
 Text Label 2900 6100 0    50   ~ 0
 SPARE
-Text Label 2400 3250 0    50   ~ 0
+Text Label 2400 3150 0    50   ~ 0
 SW_CLAMP
 Text Label 1950 4850 0    50   ~ 0
-CLAMP_G
+TERM_G
 Text Label 1750 4400 0    50   ~ 0
-CLAMP_RB
+TERM_RB
 Wire Wire Line
 	1650 4850 1650 5000
 $Comp
@@ -948,7 +885,7 @@ L Device:R_Small R7
 U 1 1 5E5C9265
 P 1650 5100
 F 0 "R7" H 1709 5146 50  0000 L CNN
-F 1 "100K" H 1709 5055 50  0000 L CNN
+F 1 "10K" H 1709 5055 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1650 5100 50  0001 C CNN
 F 3 "~" H 1650 5100 50  0001 C CNN
 	1    1650 5100
@@ -961,22 +898,11 @@ L Device:R_Small R8
 U 1 1 5E5CBF20
 P 1500 4650
 F 0 "R8" H 1559 4696 50  0000 L CNN
-F 1 "100K" H 1559 4605 50  0000 L CNN
+F 1 "10K" H 1559 4605 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1500 4650 50  0001 C CNN
 F 3 "~" H 1500 4650 50  0001 C CNN
 	1    1500 4650
 	1    0    0    -1  
-$EndComp
-$Comp
-L 4xxx:4066 U3
-U 4 1 5E12E54E
-P 3900 3550
-F 0 "U3" V 3854 3422 50  0000 R CNN
-F 1 "4066" V 3945 3422 50  0000 R CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 3900 3550 50  0001 C CNN
-F 3 "http://www.ti.com/lit/ds/symlink/cd4066b.pdf" H 3900 3550 50  0001 C CNN
-	4    3900 3550
-	0    1    1    0   
 $EndComp
 Wire Wire Line
 	950  6000 1500 6000
@@ -996,4 +922,96 @@ Wire Wire Line
 Connection ~ 1500 6000
 Wire Wire Line
 	1500 6000 1900 6000
+Wire Wire Line
+	3450 3100 3450 3550
+Wire Wire Line
+	3450 4200 3900 4200
+Wire Wire Line
+	3900 4200 3900 3850
+Connection ~ 3900 4200
+Wire Wire Line
+	3900 4200 4200 4200
+Wire Wire Line
+	4800 3550 4900 3550
+Wire Wire Line
+	4200 3800 4200 3550
+Wire Wire Line
+	4200 3550 4100 3550
+Connection ~ 4200 3800
+Wire Wire Line
+	3350 3550 3450 3550
+Connection ~ 3450 3550
+Wire Wire Line
+	3450 3550 3450 3800
+Wire Wire Line
+	3900 2100 3900 3250
+Wire Wire Line
+	800  3550 2200 3550
+Wire Wire Line
+	1400 2350 1300 2350
+Connection ~ 1300 2350
+Wire Wire Line
+	1300 2350 1050 2350
+Wire Wire Line
+	1400 3350 1300 3350
+Connection ~ 1300 3350
+Wire Wire Line
+	1300 3350 1050 3350
+$Comp
+L Analog_Switch:DG441xY U3
+U 5 1 5E5EA56F
+P 1300 2850
+F 0 "U3" H 1580 2896 50  0000 L CNN
+F 1 "DG441xY" H 1580 2805 50  0000 L CNN
+F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 1300 2750 50  0001 C CNN
+F 3 "https://datasheets.maximintegrated.com/en/ds/DG441-DG442.pdf" H 1300 2850 50  0001 C CNN
+	5    1300 2850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Analog_Switch:DG441xY U3
+U 4 1 5E5EE151
+P 3900 3550
+F 0 "U3" V 3946 3680 50  0000 L CNN
+F 1 "DG441xY" V 3855 3680 50  0000 L CNN
+F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 3900 3450 50  0001 C CNN
+F 3 "https://datasheets.maximintegrated.com/en/ds/DG441-DG442.pdf" H 3900 3550 50  0001 C CNN
+	4    3900 3550
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Analog_Switch:DG441xY U3
+U 1 1 5E5EFEBA
+P 2400 3550
+F 0 "U3" V 2500 3250 50  0000 L CNN
+F 1 "DG441xY" V 2650 3050 50  0000 L CNN
+F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 2400 3450 50  0001 C CNN
+F 3 "https://datasheets.maximintegrated.com/en/ds/DG441-DG442.pdf" H 2400 3550 50  0001 C CNN
+	1    2400 3550
+	0    1    1    0   
+$EndComp
+$Comp
+L Analog_Switch:DG441xY U3
+U 2 1 5E5F16C1
+P 4600 3550
+F 0 "U3" V 4646 3680 50  0000 L CNN
+F 1 "DG441xY" V 4555 3680 50  0000 L CNN
+F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 4600 3450 50  0001 C CNN
+F 3 "https://datasheets.maximintegrated.com/en/ds/DG441-DG442.pdf" H 4600 3550 50  0001 C CNN
+	2    4600 3550
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Analog_Switch:DG441xY U3
+U 3 1 5E5F2F3B
+P 3150 3550
+F 0 "U3" V 3196 3680 50  0000 L CNN
+F 1 "DG441xY" V 3105 3680 50  0000 L CNN
+F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 3150 3450 50  0001 C CNN
+F 3 "https://datasheets.maximintegrated.com/en/ds/DG441-DG442.pdf" H 3150 3550 50  0001 C CNN
+	3    3150 3550
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	1400 2350 1400 2450
 $EndSCHEMATC
