@@ -3,6 +3,10 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+
+//note using inverted termination requires new cplds with inverted clamping
+//#define TERMINATION_INVERTED
+
 // Define how the Pi Framebuffer is initialized
 // - if defined, use the property interface (Channel 8)
 // - if not defined, use to the the framebuffer interface (Channel 1)
@@ -220,6 +224,8 @@ typedef struct {
 #define PSYNC_MASK    (1U << PSYNC_PIN)
 #define CSYNC_MASK    (1U << CSYNC_PIN)
 #define LED1_MASK     (1U << LED1_PIN)
+#define SP_CLKEN_MASK (1U << SP_CLKEN_PIN)
+#define SP_DATA_MASK  (1U << SP_DATA_PIN)
 
 #define INTERLACED_FLAG (1U << 31)
 

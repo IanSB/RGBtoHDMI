@@ -1160,8 +1160,15 @@ static void init_hardware() {
    RPI_SetGpioValue(MODE7_PIN,          1);
    RPI_SetGpioValue(MUX_PIN,            0);
    RPI_SetGpioValue(SP_CLK_PIN,         1);
+
+#ifdef TERMINATION_INVERTED   
+   RPI_SetGpioValue(SP_DATA_PIN,        1);
+   RPI_SetGpioValue(SP_CLKEN_PIN,       1);
+#else
    RPI_SetGpioValue(SP_DATA_PIN,        0);
    RPI_SetGpioValue(SP_CLKEN_PIN,       0);
+#endif    
+
    RPI_SetGpioValue(LED1_PIN,           0); // active high
 
    // This line enables IRQ interrupts
@@ -1171,6 +1178,16 @@ static void init_hardware() {
 
    // Initialize hardware cycle counter
    _init_cycle_counter();
+
+#ifdef TERMINATION_INVERTED
+   RPI_SetGpioPullUpDown(SP_CLKEN_MASK, GPIO_PULLUP);
+   RPI_SetGpioPullUpDown(SP_DATA_MASK, GPIO_PULLUP);  
+#else
+   RPI_SetGpioPullUpDown(SP_CLKEN_MASK, GPIO_PULLDOWN);
+   RPI_SetGpioPullUpDown(SP_DATA_MASK, GPIO_PULLDOWN);  
+#endif    
+
+   RPI_SetGpioPullUpDown(SW1_MASK | SW2_MASK | SW3_MASK, GPIO_PULLUP);
 
    // Configure the GPCLK pin as a GPCLK
    RPI_SetGpioPinFunction(GPCLK_PIN, FS_ALT5);
@@ -1216,6 +1233,8 @@ static void init_hardware() {
 
    // Initialise the info system with cached values (as we break the GPU property interface)
    init_info();
+   
+
 
 #ifdef DEBUG
    dump_useful_info();

@@ -34,12 +34,7 @@ typedef struct {
    int dac_h;
 } config_t;
 
-static const char *rate_names[] = {
-   "3 Bits Per Pixel",
-   "6 Bits Per Pixel",
-   "Half-Odd (3BPP)",
-   "Half-Even (3BPP)"
-};
+
 
 // Current calibration state for mode 0..6
 static config_t default_config;
@@ -126,11 +121,25 @@ enum {
    DAC_H
 };
 
+static const char *rate_names[] = {
+   "3 Bits Per Pixel",
+   "6 Bits Per Pixel",
+   "Half-Odd (3BPP)",
+   "Half-Even (3BPP)"
+};
 
 static const char *cpld_setup_names[] = {
    "Normal",
    "Set Delay"
 };
+
+static const char *termination_names[] = {
+   "Off",
+   "G only",
+   "RB only",
+   "RGB"
+};
+
 
 enum {
    CPLD_SETUP_NORMAL,
@@ -152,7 +161,7 @@ static param_t params[] = {
    {       DELAY,       "Delay",       "delay", 0,  15, 1 },
    {        RATE, "Sample Mode", "sample_mode", 0,   3, 1 },
    {         MUX,   "Input Mux",   "input_mux", 0,   1, 1 },
-   {   TERMINATE,  "Terminate",    "terminate", 0,   1, 1 },
+   {   TERMINATE,  "75R Termination", "terminate", 0,   3, 1 },
    {       DAC_A,  "DAC-A: G Hi",     "dac_a", 0, 255, 1 },
    {       DAC_B,  "DAC-B: G Lo",     "dac_b", 0, 255, 1 },
    {       DAC_C,  "DAC-C: RB Hi",    "dac_c", 0, 255, 1 },
@@ -309,10 +318,18 @@ static void write_config(config_t *config) {
       sendDAC(6, config->dac_g);
       sendDAC(7, config->dac_h);
 
-      RPI_SetGpioValue(SP_CLKEN_PIN, config->terminate > 0 ? 1 : 0);
+#ifdef TERMINATION_INVERTED
+      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 1 : 0);
+      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 1 : 0);
+#else
+      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 0 : 1);
+      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 0 : 1);
+#endif
+
+   } else {
+      RPI_SetGpioValue(SP_DATA_PIN, 0);
    }
 
-   RPI_SetGpioValue(SP_DATA_PIN, 0);
    RPI_SetGpioValue(MUX_PIN, config->mux);
 
 }
@@ -824,6 +841,9 @@ static const char *cpld_get_value_string(int num) {
    }
    if (num == CPLD_SETUP_MODE) {
       return cpld_setup_names[config->cpld_setup_mode];
+   }
+   if (num == TERMINATE) {
+      return termination_names[config->terminate];
    }
    return NULL;
 }

@@ -121,6 +121,13 @@ static const char *clamptype_names[] = {
    "Back Porch Auto"
 };
 
+static const char *termination_names[] = {
+   "Off",
+   "Y only",
+   "UV only",
+   "YUV",
+};
+
 enum {
    CPLD_SETUP_NORMAL,
    CPLD_SETUP_DELAY,
@@ -147,7 +154,7 @@ static param_t params[] = {
    {   CLAMPTYPE,  "Clamp Type",   "clamptype", 0,     NUM_CLAMPTYPE-1, 1 },
    {       DELAY,  "Delay",            "delay", 0,  15, 1 },
    {         MUX,  "Input Mux",    "input_mux", 0,   1, 1 },
-   {   TERMINATE,  "Terminate",    "terminate", 0,   1, 1 },
+   {   TERMINATE,  "75R Termination",    "terminate", 0,   3, 1 },
    {       DAC_A,  "DAC-A: Y Hi",      "dac_a", 0, 255, 1 },
    {       DAC_B,  "DAC-B: Y Lo",      "dac_b", 0, 255, 1 },
    {       DAC_C,  "DAC-C: UV Hi",     "dac_c", 0, 255, 1 },
@@ -282,10 +289,15 @@ static void write_config(config_t *config) {
    sendDAC(5, config->dac_f);
    sendDAC(6, config->dac_g);
    sendDAC(7, config->dac_h);
+   
+#ifdef TERMINATION_INVERTED
+      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 1 : 0);
+      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 1 : 0);
+#else
+      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 0 : 1);
+      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 0 : 1);
+#endif
 
-   RPI_SetGpioValue(SP_CLKEN_PIN, config->terminate > 0 ? 1 : 0);
-
-   RPI_SetGpioValue(SP_DATA_PIN, 0);
    RPI_SetGpioValue(MUX_PIN, config->mux);
 }
 
@@ -530,6 +542,9 @@ static const char *cpld_get_value_string(int num) {
    }
    if (num == CPLD_SETUP_MODE) {
       return cpld_setup_names[config->cpld_setup_mode];
+   }
+   if (num == TERMINATE) {
+      return termination_names[config->terminate];
    }
    return NULL;
 }
