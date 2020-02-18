@@ -23,31 +23,31 @@ unsigned char *xsvf_data;
 /* if in debugging mode, then just set the variables */
 void setPort(short p,short val)
 {
-static short true_TMS = 1;
-static short true_TDI = 1;
+static short TMS_state = 0;
+static short TDI_state = 0;
 
    switch (p) {
    case TMS:
       //RPI_SetGpioValue(TMS_PIN, val);
-      true_TMS = val;
+      TMS_state = val;
       break;
    case TDI:
       //RPI_SetGpioValue(TDI_PIN, val);
-      true_TDI = val;
+      TDI_state = val;
       break;
    case TCK:
       if (val == 0) {
           RPI_SetGpioValue(TCK_PIN, 0);
           delay_in_arm_cycles(200);
       } else {
-          RPI_SetGpioValue(TMS_PIN, true_TMS);
-          RPI_SetGpioValue(TDI_PIN, true_TDI);
+          RPI_SetGpioValue(TMS_PIN, TMS_state);
+          RPI_SetGpioValue(TDI_PIN, TDI_state);
           delay_in_arm_cycles(200);
           RPI_SetGpioValue(TCK_PIN, 1);
           delay_in_arm_cycles(200);
-          RPI_SetGpioValue(TMS_PIN, 1);
-          RPI_SetGpioValue(TDI_PIN, 1);
-          delay_in_arm_cycles(2000);
+          RPI_SetGpioValue(TMS_PIN, 0);  //force termination off during reprogramming
+          RPI_SetGpioValue(TDI_PIN, 0);  //force termination off during reprogramming
+          delay_in_arm_cycles(2200);
       }
       break;
    default:
