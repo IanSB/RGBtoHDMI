@@ -123,9 +123,15 @@ static const char *clamptype_names[] = {
 
 static const char *termination_names[] = {
    "Off",
-   "Y only",
-   "UV only",
-   "YUV",
+   "On (YUV)",
+   "On (Y only)"
+};
+
+enum {
+   TERM_YUV_OFF,
+   TERM_YUV_ON,
+   TERM_YUV_Y,
+   NUM_TERM_YUV
 };
 
 enum {
@@ -154,15 +160,15 @@ static param_t params[] = {
    {   CLAMPTYPE,  "Clamp Type",   "clamptype", 0,     NUM_CLAMPTYPE-1, 1 },
    {       DELAY,  "Delay",            "delay", 0,  15, 1 },
    {         MUX,  "Input Mux",    "input_mux", 0,   1, 1 },
-   {   TERMINATE,  "75R Termination",    "terminate", 0,   3, 1 },
+   {   TERMINATE,  "75R Termination",    "terminate", 0,   NUM_TERM_YUV-1, 1 },
    {       DAC_A,  "DAC-A: Y Hi",      "dac_a", 0, 255, 1 },
    {       DAC_B,  "DAC-B: Y Lo",      "dac_b", 0, 255, 1 },
    {       DAC_C,  "DAC-C: UV Hi",     "dac_c", 0, 255, 1 },
    {       DAC_D,  "DAC-D: UV Lo",     "dac_d", 0, 255, 1 },
    {       DAC_E,  "DAC-E: Y Mid/VS",  "dac_f", 0, 255, 1 },
    {       DAC_F,  "DAC-F: Sync",      "dac_g", 0, 255, 1 },
-   {       DAC_G,  "DAC-G: Spare",     "dac_g", 0, 255, 1 },
-   {       DAC_H,  "DAC-H: Y Clamp",   "dac_h", 0, 255, 1 },
+   {       DAC_G,  "DAC-G: Y Clamp",   "dac_g", 0, 255, 1 },
+   {       DAC_H,  "DAC-H: Spare",     "dac_h", 0, 255, 1 },
    {          -1,  NULL,                  NULL, 0,   0, 0 }
 };
 
@@ -183,9 +189,7 @@ static void sendDAC(int dac, int value)
     if (dac == 5) {
         if (value < 2) value = 2;  // prevent sync being just high frequency noise when no sync input
     }
-    if (dac == 6) {
-        value = (config->terminate == 0) ? 0 : 255;   //substitute termination state for value of DAC-G
-    }
+
     int packet = (dac << 11) | 0x600 | value;
 
     RPI_SetGpioValue(STROBE_PIN, 0);
@@ -289,14 +293,22 @@ static void write_config(config_t *config) {
    sendDAC(5, config->dac_f);
    sendDAC(6, config->dac_g);
    sendDAC(7, config->dac_h);
-   
-#ifdef TERMINATION_INVERTED
-      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 1 : 0);
-      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 1 : 0);
-#else
-      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 0 : 1);
-      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 0 : 1);
-#endif
+
+   switch (config->terminate) {
+          default:
+          case TERM_YUV_OFF:
+            RPI_SetGpioValue(SP_DATA_PIN, 0);   //Y
+            RPI_SetGpioValue(SP_CLKEN_PIN, 0);  //UV
+          break;
+          case TERM_YUV_ON:
+            RPI_SetGpioValue(SP_DATA_PIN, 1);
+            RPI_SetGpioValue(SP_CLKEN_PIN, 1);
+          break;
+          case TERM_YUV_Y:
+            RPI_SetGpioValue(SP_DATA_PIN, 1);
+            RPI_SetGpioValue(SP_CLKEN_PIN, 0);
+          break;
+   }
 
    RPI_SetGpioValue(MUX_PIN, config->mux);
 }

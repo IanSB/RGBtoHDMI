@@ -1179,15 +1179,7 @@ static void init_hardware() {
    // Initialize hardware cycle counter
    _init_cycle_counter();
 
-#ifdef TERMINATION_INVERTED
-   RPI_SetGpioPullUpDown(SP_CLKEN_MASK, GPIO_PULLUP);
-   RPI_SetGpioPullUpDown(SP_DATA_MASK, GPIO_PULLUP);  
-#else
-   RPI_SetGpioPullUpDown(SP_CLKEN_MASK, GPIO_PULLDOWN);
-   RPI_SetGpioPullUpDown(SP_DATA_MASK, GPIO_PULLDOWN);  
-#endif    
-
-   RPI_SetGpioPullUpDown(SW1_MASK | SW2_MASK | SW3_MASK, GPIO_PULLUP);
+  // RPI_SetGpioPullUpDown(SW1_MASK | SW2_MASK | SW3_MASK, GPIO_PULLUP);
 
    // Configure the GPCLK pin as a GPCLK
    RPI_SetGpioPinFunction(GPCLK_PIN, FS_ALT5);

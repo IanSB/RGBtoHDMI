@@ -3,10 +3,6 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-
-//note using inverted termination requires new cplds with inverted clamping
-#define TERMINATION_INVERTED
-
 // Define how the Pi Framebuffer is initialized
 // - if defined, use the property interface (Channel 8)
 // - if not defined, use to the the framebuffer interface (Channel 1)

@@ -135,11 +135,16 @@ static const char *cpld_setup_names[] = {
 
 static const char *termination_names[] = {
    "Off",
-   "G only",
-   "RB only",
-   "RGB"
+   "On (RGB)",
+   "On (G only)"
 };
 
+enum {
+   TERM_RGB_OFF,
+   TERM_RGB_ON,
+   TERM_RGB_G,
+   NUM_TERM_RGB
+};
 
 enum {
    CPLD_SETUP_NORMAL,
@@ -161,15 +166,15 @@ static param_t params[] = {
    {       DELAY,       "Delay",       "delay", 0,  15, 1 },
    {        RATE, "Sample Mode", "sample_mode", 0,   3, 1 },
    {         MUX,   "Input Mux",   "input_mux", 0,   1, 1 },
-   {   TERMINATE,  "75R Termination", "terminate", 0,   3, 1 },
+   {   TERMINATE,  "75R Termination", "terminate", 0,   NUM_TERM_RGB-1, 1 },
    {       DAC_A,  "DAC-A: G Hi",     "dac_a", 0, 255, 1 },
    {       DAC_B,  "DAC-B: G Lo",     "dac_b", 0, 255, 1 },
    {       DAC_C,  "DAC-C: RB Hi",    "dac_c", 0, 255, 1 },
    {       DAC_D,  "DAC-D: RB Lo",    "dac_d", 0, 255, 1 },
    {       DAC_E,  "DAC-E: G Mid/VS", "dac_f", 0, 255, 1 },
    {       DAC_F,  "DAC-F: Sync",     "dac_g", 0, 255, 1 },
-   {       DAC_G,  "DAC-G: Spare",    "dac_g", 0, 255, 1 },
-   {       DAC_H,  "DAC-H: G Clamp",  "dac_h", 0, 255, 1 },
+   {       DAC_G,  "DAC-G: G Clamp",  "dac_g", 0, 255, 1 },
+   {       DAC_H,  "DAC-H: Spare",    "dac_h", 0, 255, 1 },
    {          -1,          NULL,          NULL, 0,   0, 1 }
 };
 
@@ -191,9 +196,8 @@ static void sendDAC(int dac, int value)
             if (value < 2) value = 2;  // prevent sync being just high frequency noise when no sync input
             old_dac = 2;
         break;
-        case 6:
+        case 7:
             old_dac = 3;
-            value = (config->terminate == 0) ? 0 : 255;   //substitute termination state for value of DAC-G
         break;
         default:
         break;
@@ -318,16 +322,25 @@ static void write_config(config_t *config) {
       sendDAC(6, config->dac_g);
       sendDAC(7, config->dac_h);
 
-#ifdef TERMINATION_INVERTED
-      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 1 : 0);
-      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 1 : 0);
-#else
-      RPI_SetGpioValue(SP_DATA_PIN, (config->terminate & 1) == 0 ? 0 : 1);
-      RPI_SetGpioValue(SP_CLKEN_PIN, (config->terminate & 2) == 0 ? 0 : 1);
-#endif
+      switch (config->terminate) {
+         default:
+          case TERM_RGB_OFF:
+            RPI_SetGpioValue(SP_DATA_PIN, 0);   //G
+            RPI_SetGpioValue(SP_CLKEN_PIN, 0);  //RB
+          break;
+          case TERM_RGB_ON:
+            RPI_SetGpioValue(SP_DATA_PIN, 1);
+            RPI_SetGpioValue(SP_CLKEN_PIN, 1);
+          break;
+          case TERM_RGB_G:
+            RPI_SetGpioValue(SP_DATA_PIN, 1);
+            RPI_SetGpioValue(SP_CLKEN_PIN, 0);
+          break;
+      }
 
    } else {
       RPI_SetGpioValue(SP_DATA_PIN, 0);
+      RPI_SetGpioValue(SP_CLKEN_PIN, 0);
    }
 
    RPI_SetGpioValue(MUX_PIN, config->mux);
