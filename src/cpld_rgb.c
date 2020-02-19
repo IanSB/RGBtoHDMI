@@ -134,16 +134,18 @@ static const char *cpld_setup_names[] = {
 };
 
 static const char *termination_names[] = {
-   "Off",
-   "On (RGB)",
-   "On (G only)"
+   "AC/High Impedance",
+   "AC/75R Termination",
+   "DC/High Impedance",
+   "DC/75R Termination"
 };
 
 enum {
-   TERM_RGB_OFF,
-   TERM_RGB_ON,
-   TERM_RGB_G,
-   NUM_TERM_RGB
+   RGB_INPUT_AC_HI,
+   RGB_INPUT_AC_TERM,
+   RGB_INPUT_DC_HI,
+   RGB_INPUT_DC_TERM,
+   NUM_RGB_INPUT
 };
 
 enum {
@@ -166,7 +168,7 @@ static param_t params[] = {
    {       DELAY,       "Delay",       "delay", 0,  15, 1 },
    {        RATE, "Sample Mode", "sample_mode", 0,   3, 1 },
    {         MUX,   "Input Mux",   "input_mux", 0,   1, 1 },
-   {   TERMINATE,  "75R Termination", "terminate", 0,   NUM_TERM_RGB-1, 1 },
+   {   TERMINATE,  "Input Coupling", "coupling", 0,   NUM_RGB_INPUT-1, 1 },
    {       DAC_A,  "DAC-A: G Hi",     "dac_a", 0, 255, 1 },
    {       DAC_B,  "DAC-B: G Lo",     "dac_b", 0, 255, 1 },
    {       DAC_C,  "DAC-C: RB Hi",    "dac_c", 0, 255, 1 },
@@ -324,18 +326,22 @@ static void write_config(config_t *config) {
 
       switch (config->terminate) {
          default:
-          case TERM_RGB_OFF:
-            RPI_SetGpioValue(SP_DATA_PIN, 0);   //G
-            RPI_SetGpioValue(SP_CLKEN_PIN, 0);  //RB
+          case RGB_INPUT_AC_HI:
+            RPI_SetGpioValue(SP_DATA_PIN, 0);   //ac-dc 
+            RPI_SetGpioValue(SP_CLKEN_PIN, 0);  //termination
           break;
-          case TERM_RGB_ON:
-            RPI_SetGpioValue(SP_DATA_PIN, 1);
+          case RGB_INPUT_AC_TERM:
+            RPI_SetGpioValue(SP_DATA_PIN, 0);
             RPI_SetGpioValue(SP_CLKEN_PIN, 1);
           break;
-          case TERM_RGB_G:
+          case RGB_INPUT_DC_HI:
             RPI_SetGpioValue(SP_DATA_PIN, 1);
             RPI_SetGpioValue(SP_CLKEN_PIN, 0);
           break;
+          case RGB_INPUT_DC_TERM:
+            RPI_SetGpioValue(SP_DATA_PIN, 1);
+            RPI_SetGpioValue(SP_CLKEN_PIN, 1);
+          break; 
       }
 
    } else {

@@ -122,16 +122,18 @@ static const char *clamptype_names[] = {
 };
 
 static const char *termination_names[] = {
-   "Off",
-   "On (YUV)",
-   "On (Y only)"
+   "AC/High Impedance",
+   "AC/75R Termination",
+   "DC/High Impedance",
+   "DC/75R Termination"
 };
 
 enum {
-   TERM_YUV_OFF,
-   TERM_YUV_ON,
-   TERM_YUV_Y,
-   NUM_TERM_YUV
+   YUV_INPUT_AC_HI,
+   YUV_INPUT_AC_TERM,
+   YUV_INPUT_DC_HI,
+   YUV_INPUT_DC_TERM,
+   NUM_YUV_INPUT
 };
 
 enum {
@@ -160,7 +162,7 @@ static param_t params[] = {
    {   CLAMPTYPE,  "Clamp Type",   "clamptype", 0,     NUM_CLAMPTYPE-1, 1 },
    {       DELAY,  "Delay",            "delay", 0,  15, 1 },
    {         MUX,  "Input Mux",    "input_mux", 0,   1, 1 },
-   {   TERMINATE,  "75R Termination",    "terminate", 0,   NUM_TERM_YUV-1, 1 },
+   {   TERMINATE,  "Input Coupling",    "coupling", 0,   NUM_YUV_INPUT-1, 1 },
    {       DAC_A,  "DAC-A: Y Hi",      "dac_a", 0, 255, 1 },
    {       DAC_B,  "DAC-B: Y Lo",      "dac_b", 0, 255, 1 },
    {       DAC_C,  "DAC-C: UV Hi",     "dac_c", 0, 255, 1 },
@@ -294,22 +296,25 @@ static void write_config(config_t *config) {
    sendDAC(6, config->dac_g);
    sendDAC(7, config->dac_h);
 
-   switch (config->terminate) {
-          default:
-          case TERM_YUV_OFF:
-            RPI_SetGpioValue(SP_DATA_PIN, 0);   //Y
-            RPI_SetGpioValue(SP_CLKEN_PIN, 0);  //UV
+      switch (config->terminate) {
+         default:
+          case YUV_INPUT_AC_HI:
+            RPI_SetGpioValue(SP_DATA_PIN, 0);   //ac-dc 
+            RPI_SetGpioValue(SP_CLKEN_PIN, 0);  //termination
           break;
-          case TERM_YUV_ON:
-            RPI_SetGpioValue(SP_DATA_PIN, 1);
+          case YUV_INPUT_AC_TERM:
+            RPI_SetGpioValue(SP_DATA_PIN, 0);
             RPI_SetGpioValue(SP_CLKEN_PIN, 1);
           break;
-          case TERM_YUV_Y:
+          case YUV_INPUT_DC_HI:
             RPI_SetGpioValue(SP_DATA_PIN, 1);
             RPI_SetGpioValue(SP_CLKEN_PIN, 0);
           break;
-   }
-
+          case YUV_INPUT_DC_TERM:
+            RPI_SetGpioValue(SP_DATA_PIN, 1);
+            RPI_SetGpioValue(SP_CLKEN_PIN, 1);
+          break; 
+      }
    RPI_SetGpioValue(MUX_PIN, config->mux);
 }
 
