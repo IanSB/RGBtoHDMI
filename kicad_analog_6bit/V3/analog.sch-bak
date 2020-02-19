@@ -21,10 +21,10 @@ GND
 Text Label 4950 7550 2    50   ~ 0
 GND
 $Comp
-L Device:C_Small C2
+L Device:C_Small C7
 U 1 1 5DD09882
 P 6050 7300
-F 0 "C2" H 6142 7346 50  0000 L CNN
+F 0 "C7" H 6142 7346 50  0000 L CNN
 F 1 "10uF" H 6142 7255 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 6050 7300 50  0001 C CNN
 F 3 "~" H 6050 7300 50  0001 C CNN
@@ -154,10 +154,10 @@ Wire Wire Line
 Wire Wire Line
 	1650 1650 1900 1650
 $Comp
-L Device:C_Small C1
+L Device:C_Small C6
 U 1 1 5DCE58C4
 P 1250 7200
-F 0 "C1" H 1342 7246 50  0000 L CNN
+F 0 "C6" H 1342 7246 50  0000 L CNN
 F 1 "10uF" H 1342 7155 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1250 7200 50  0001 C CNN
 F 3 "~" H 1250 7200 50  0001 C CNN
@@ -165,10 +165,10 @@ F 3 "~" H 1250 7200 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C_Small C5
+L Device:C_Small C3
 U 1 1 5DCE4EBF
 P 3150 7200
-F 0 "C5" H 3242 7246 50  0000 L CNN
+F 0 "C3" H 3242 7246 50  0000 L CNN
 F 1 "100n" H 3242 7155 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3150 7200 50  0001 C CNN
 F 3 "~" H 3150 7200 50  0001 C CNN
@@ -176,10 +176,10 @@ F 3 "~" H 3150 7200 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C_Small C7
+L Device:C_Small C4
 U 1 1 5DCAB08B
 P 3650 7200
-F 0 "C7" H 3742 7246 50  0000 L CNN
+F 0 "C4" H 3742 7246 50  0000 L CNN
 F 1 "100n" H 3742 7155 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3650 7200 50  0001 C CNN
 F 3 "~" H 3650 7200 50  0001 C CNN
@@ -220,7 +220,7 @@ Connection ~ 9300 1150
 Wire Wire Line
 	9000 1150 9300 1150
 Text Label 3000 2650 2    50   ~ 0
-CGREEN
+SGREEN
 Text Label 6600 1150 2    50   ~ 0
 ARED
 Wire Wire Line
@@ -355,10 +355,10 @@ F 3 "" H 3950 7500 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C_Small C3
+L Device:C_Small C8
 U 1 1 5DE8AE53
 P 3500 6300
-F 0 "C3" H 3592 6346 50  0000 L CNN
+F 0 "C8" H 3592 6346 50  0000 L CNN
 F 1 "10uF" H 3592 6255 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3500 6300 50  0001 C CNN
 F 3 "~" H 3500 6300 50  0001 C CNN
@@ -366,10 +366,10 @@ F 3 "~" H 3500 6300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C_Small Cx1
+L Device:C_Small C1
 U 1 1 5DE8B86E
 P 2400 2400
-F 0 "Cx1" H 2100 2450 50  0000 L CNN
+F 0 "C1" H 2100 2450 50  0000 L CNN
 F 1 "100n" H 2100 2350 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 2400 2400 50  0001 C CNN
 F 3 "~" H 2400 2400 50  0001 C CNN
@@ -495,10 +495,10 @@ GND
 Wire Wire Line
 	3500 6500 3500 6400
 $Comp
-L Device:R_Small R1
+L Device:R_Small R4
 U 1 1 5E08BDE2
 P 1100 4750
-F 0 "R1" H 1159 4796 50  0000 L CNN
+F 0 "R4" H 1159 4796 50  0000 L CNN
 F 1 "1K" H 1159 4705 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1100 4750 50  0001 C CNN
 F 3 "~" H 1100 4750 50  0001 C CNN
@@ -525,10 +525,10 @@ Wire Wire Line
 Text Label 1100 4450 2    50   ~ 0
 VCC
 $Comp
-L Device:C_Small C4
+L Device:C_Small C5
 U 1 1 5E10B5E9
 P 6400 7300
-F 0 "C4" H 6492 7346 50  0000 L CNN
+F 0 "C5" H 6492 7346 50  0000 L CNN
 F 1 "100n" H 6492 7255 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 6400 7300 50  0001 C CNN
 F 3 "~" H 6400 7300 50  0001 C CNN
@@ -600,8 +600,6 @@ Wire Wire Line
 Wire Wire Line
 	3150 3850 3150 4200
 Wire Wire Line
-	3150 4200 3450 4200
-Wire Wire Line
 	3900 4200 3900 3850
 Wire Wire Line
 	3900 4200 4200 4200
@@ -628,10 +626,10 @@ REFSYNC
 Text Label 2900 6100 0    50   ~ 0
 CLAMPLVL
 $Comp
-L Device:R_Small Rx1
+L Device:R_Small R1
 U 1 1 5E23A0EA
 P 2400 3000
-F 0 "Rx1" H 2100 3050 50  0000 L CNN
+F 0 "R1" H 2100 3050 50  0000 L CNN
 F 1 "75R" H 2100 2950 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 2400 3000 50  0001 C CNN
 F 3 "~" H 2400 3000 50  0001 C CNN
@@ -656,10 +654,10 @@ Wire Wire Line
 Wire Wire Line
 	2250 7100 2250 6850
 $Comp
-L Device:C_Small C6
+L Device:C_Small C2
 U 1 1 5DCABD73
 P 2250 7200
-F 0 "C6" H 2342 7246 50  0000 L CNN
+F 0 "C2" H 2342 7246 50  0000 L CNN
 F 1 "100n" H 2342 7155 50  0000 L CNN
 F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 2250 7200 50  0001 C CNN
 F 3 "~" H 2250 7200 50  0001 C CNN
@@ -689,11 +687,6 @@ Wire Wire Line
 Connection ~ 2000 1350
 Wire Wire Line
 	2000 1350 3900 1350
-Connection ~ 2400 2650
-Wire Wire Line
-	2400 2650 2400 2900
-Wire Wire Line
-	2400 2500 2400 2650
 $Comp
 L analog-rescue:MAX9108-Comparator U2
 U 4 1 5DD54DB9
@@ -717,10 +710,10 @@ F 3 "" H 6950 3700 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:R_Small R7
+L Device:R_Small R6
 U 1 1 5DFCAEED
 P 4950 2450
-F 0 "R7" H 5009 2496 50  0000 L CNN
+F 0 "R6" H 5009 2496 50  0000 L CNN
 F 1 "10K" H 5009 2405 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 4950 2450 50  0001 C CNN
 F 3 "~" H 4950 2450 50  0001 C CNN
@@ -728,10 +721,10 @@ F 3 "~" H 4950 2450 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R_Small R8
+L Device:R_Small R7
 U 1 1 5DFFC467
 P 4950 2100
-F 0 "R8" H 5009 2146 50  0000 L CNN
+F 0 "R7" H 5009 2146 50  0000 L CNN
 F 1 "10K" H 5009 2055 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 4950 2100 50  0001 C CNN
 F 3 "~" H 4950 2100 50  0001 C CNN
@@ -739,10 +732,10 @@ F 3 "~" H 4950 2100 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R_Small R9
+L Device:R_Small R8
 U 1 1 5DFFCF3C
 P 4950 1750
-F 0 "R9" H 5009 1796 50  0000 L CNN
+F 0 "R8" H 5009 1796 50  0000 L CNN
 F 1 "10K" H 5009 1705 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 4950 1750 50  0001 C CNN
 F 3 "~" H 4950 1750 50  0001 C CNN
@@ -784,8 +777,6 @@ VCC_IN
 Wire Wire Line
 	5550 2650 5550 3300
 Wire Wire Line
-	2400 2650 5550 2650
-Wire Wire Line
 	6650 3950 6650 3300
 Connection ~ 6650 3950
 Connection ~ 6650 3300
@@ -818,17 +809,6 @@ Connection ~ 5250 2450
 Text Label 5450 2450 0    50   ~ 0
 GND
 $Comp
-L Device:C_Small C8
-U 1 1 5E695726
-P 3450 4000
-F 0 "C8" H 3542 4046 50  0000 L CNN
-F 1 "10uF" H 3542 3955 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3450 4000 50  0001 C CNN
-F 3 "~" H 3450 4000 50  0001 C CNN
-	1    3450 4000
-	1    0    0    -1  
-$EndComp
-$Comp
 L Device:C_Small C9
 U 1 1 5E696312
 P 4200 4000
@@ -840,20 +820,12 @@ F 3 "~" H 4200 4000 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3450 4100 3450 4200
-Connection ~ 3450 4200
-Wire Wire Line
-	3450 4200 3900 4200
-Wire Wire Line
 	4200 4100 4200 4200
 Connection ~ 4200 4200
 Wire Wire Line
 	4200 4200 4600 4200
 Wire Wire Line
 	4200 3900 4200 3800
-Connection ~ 3450 3550
-Wire Wire Line
-	3450 3550 3450 3800
 Wire Wire Line
 	4050 3800 4200 3800
 Connection ~ 4200 3800
@@ -870,8 +842,6 @@ Connection ~ 4600 1750
 Wire Wire Line
 	3450 3100 3450 3550
 Wire Wire Line
-	3450 3100 4900 3100
-Wire Wire Line
 	4900 3100 4900 3550
 Wire Wire Line
 	950  5800 1900 5800
@@ -882,14 +852,7 @@ Wire Wire Line
 Wire Wire Line
 	1100 4450 1100 4650
 Wire Wire Line
-	3450 3800 3300 3800
-Connection ~ 3450 3800
-Wire Wire Line
-	3450 3800 3450 3900
-Wire Wire Line
 	4050 4850 4050 3800
-Wire Wire Line
-	3300 3800 3300 4400
 Wire Wire Line
 	2900 5500 6650 5500
 Wire Wire Line
@@ -933,37 +896,11 @@ VCC
 Text Label 2900 6200 0    50   ~ 0
 SPARE
 Text Label 2400 3250 0    50   ~ 0
-SW_CLAMP
+VCLAMP
 Text Label 1950 4850 0    50   ~ 0
-TERM_G
-Text Label 1750 4400 0    50   ~ 0
-TERM_RB
+TERM
 Wire Wire Line
 	1650 4850 1650 5000
-$Comp
-L Device:R_Small R6
-U 1 1 5E5C9265
-P 1650 5100
-F 0 "R6" H 1709 5146 50  0000 L CNN
-F 1 "10K" H 1709 5055 50  0000 L CNN
-F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1650 5100 50  0001 C CNN
-F 3 "~" H 1650 5100 50  0001 C CNN
-	1    1650 5100
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1500 4550 1500 4400
-$Comp
-L Device:R_Small R5
-U 1 1 5E5CBF20
-P 1500 4650
-F 0 "R5" H 1559 4696 50  0000 L CNN
-F 1 "10K" H 1559 4605 50  0000 L CNN
-F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1500 4650 50  0001 C CNN
-F 3 "~" H 1500 4650 50  0001 C CNN
-	1    1500 4650
-	1    0    0    -1  
-$EndComp
 $Comp
 L analog-rescue:MAX4610-4xxx U3
 U 4 1 5E12E54E
@@ -976,29 +913,12 @@ F 3 "http://www.ti.com/lit/ds/symlink/cdMAX4610b.pdf" H 3900 3550 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 Wire Wire Line
-	1650 5200 1650 5900
-Wire Wire Line
 	1650 4850 4050 4850
-Wire Wire Line
-	3300 4400 1500 4400
-Wire Wire Line
-	1500 4750 1500 5900
 $Comp
 L Device:R_Small R3
-U 1 1 5E6BC038
-P 1500 6300
-F 0 "R3" H 1350 6350 50  0000 L CNN
-F 1 "1K" H 1350 6250 50  0000 L CNN
-F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1500 6300 50  0001 C CNN
-F 3 "~" H 1500 6300 50  0001 C CNN
-	1    1500 6300
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:R_Small R4
 U 1 1 5E6BCBE0
 P 1650 6300
-F 0 "R4" H 1709 6346 50  0000 L CNN
+F 0 "R3" H 1709 6346 50  0000 L CNN
 F 1 "1K" H 1709 6255 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1650 6300 50  0001 C CNN
 F 3 "~" H 1650 6300 50  0001 C CNN
@@ -1006,35 +926,10 @@ F 3 "~" H 1650 6300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1500 6000 1500 6200
-Wire Wire Line
-	1650 5900 1650 6000
-Wire Wire Line
 	2400 6500 1650 6500
-Wire Wire Line
-	1500 6500 1500 6400
 Wire Wire Line
 	1650 6400 1650 6500
 Connection ~ 1650 6500
-Wire Wire Line
-	1650 6500 1500 6500
-Wire Wire Line
-	1500 6500 1400 6500
-Connection ~ 1500 6500
-Wire Wire Line
-	950  5900 1500 5900
-Connection ~ 1650 6000
-Wire Wire Line
-	1650 6000 1900 6000
-Wire Wire Line
-	1650 6000 1650 6200
-Wire Wire Line
-	950  6000 1650 6000
-Connection ~ 1500 5900
-Wire Wire Line
-	1500 5900 1500 6000
-Wire Wire Line
-	1500 5900 1900 5900
 $Comp
 L Connector_Generic:Conn_01x01 J1
 U 1 1 5E4E7BF5
@@ -1055,4 +950,95 @@ Wire Wire Line
 	2900 6200 3300 6200
 Wire Wire Line
 	3300 6200 3300 6650
+Connection ~ 2400 2100
+Wire Wire Line
+	2400 2800 1800 2800
+Wire Wire Line
+	1800 2800 1800 3100
+Connection ~ 2400 2800
+Wire Wire Line
+	2400 2800 2400 2900
+Wire Wire Line
+	950  2100 2400 2100
+Wire Wire Line
+	2400 2500 2400 2800
+Wire Wire Line
+	5550 2650 1800 2650
+Wire Wire Line
+	3150 4200 3900 4200
+Wire Wire Line
+	4200 3550 4200 3100
+Wire Wire Line
+	3450 3100 4200 3100
+Connection ~ 4200 3550
+Connection ~ 4200 3100
+Wire Wire Line
+	4200 3100 4900 3100
+Wire Wire Line
+	1400 6500 1650 6500
+Wire Wire Line
+	950  6000 1500 6000
+Wire Wire Line
+	1900 5900 1650 5900
+Connection ~ 1650 5900
+Wire Wire Line
+	1650 5900 950  5900
+Wire Wire Line
+	1650 6200 1650 5900
+Wire Wire Line
+	1650 5900 1650 5200
+Wire Wire Line
+	1500 2950 1500 6000
+Connection ~ 1500 6000
+Wire Wire Line
+	1500 6000 1900 6000
+$Comp
+L Analog_Switch:TS5A3159ADBVR U6
+U 2 1 5E6F59AE
+P 10350 5900
+F 0 "U6" H 10530 5946 50  0000 L CNN
+F 1 "TS5A3159ADBVR" H 10530 5855 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23-6_Handsoldering" H 10350 5600 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/ts5a3159a.pdf" H 10350 5900 50  0001 C CNN
+	2    10350 5900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9050 5400 10350 5400
+Wire Wire Line
+	10350 6400 9050 6400
+$Comp
+L Device:R_Small R5
+U 1 1 5E5C9265
+P 1650 5100
+F 0 "R5" H 1709 5146 50  0000 L CNN
+F 1 "10K" H 1709 5055 50  0000 L CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 1650 5100 50  0001 C CNN
+F 3 "~" H 1650 5100 50  0001 C CNN
+	1    1650 5100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Analog_Switch:TS5A3159ADBVR U6
+U 1 1 5E4D667A
+P 1500 2550
+F 0 "U6" H 1500 2792 50  0000 C CNN
+F 1 "TS5A3159ADBVR" H 1500 2701 50  0000 C CNN
+F 2 "Package_TO_SOT_SMD:SOT-23-6_Handsoldering" H 1500 2250 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/ts5a3159a.pdf" H 1500 2550 50  0001 C CNN
+	1    1500 2550
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	1800 3100 1050 3100
+Wire Wire Line
+	1050 3100 1050 2550
+Wire Wire Line
+	1050 2550 1200 2550
+Wire Wire Line
+	950  2750 1200 2750
+Wire Wire Line
+	950  2100 950  2750
+Text Label 1050 3000 0    50   ~ 0
+CGREEN
 $EndSCHEMATC
