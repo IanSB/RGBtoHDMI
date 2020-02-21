@@ -92,6 +92,21 @@ F 3 "~" H 750 5900 50  0001 C CNN
 	1    750  5900
 	-1   0    0    1   
 $EndComp
+Wire Wire Line
+	1650 1850 2000 1850
+Wire Wire Line
+	1650 1950 1900 1950
+$Comp
+L Connector_Generic:Conn_01x02 P4
+U 1 1 5DD175CA
+P 1450 1950
+F 0 "P4" H 1650 1950 50  0000 C CNN
+F 1 "Conn_01x02" H 1800 1850 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 1450 1950 50  0001 C CNN
+F 3 "~" H 1450 1950 50  0001 C CNN
+	1    1450 1950
+	-1   0    0    1   
+$EndComp
 Connection ~ 3650 6850
 Wire Wire Line
 	3650 7100 3650 6850
@@ -134,6 +149,10 @@ $EndComp
 Connection ~ 6800 1150
 Wire Wire Line
 	6800 1150 6600 1150
+Wire Wire Line
+	1900 1650 1900 1950
+Wire Wire Line
+	1650 1650 1900 1650
 $Comp
 L Device:C_Small C6
 U 1 1 5DCE58C4
@@ -169,6 +188,8 @@ F 3 "~" H 3650 7200 50  0001 C CNN
 $EndComp
 Text Label 7600 3400 0    50   ~ 0
 VSYNC
+Text Label 9350 3950 2    50   ~ 0
+ASYNC
 Text Label 1000 6000 0    50   ~ 0
 GPIO0_DAT
 Text Label 1000 5900 0    50   ~ 0
@@ -176,20 +197,20 @@ GPIO1_CLK
 Text Label 1000 5800 0    50   ~ 0
 GPIO22_STB
 Wire Wire Line
-	8850 2100 9550 2100
+	8850 2250 9550 2250
 Wire Wire Line
-	6150 2100 7050 2100
+	6150 2250 7050 2250
 Wire Wire Line
 	8850 1350 9550 1350
 Text Label 800  7550 2    50   ~ 0
 GND
-Text Label 10150 2000 0    50   ~ 0
+Text Label 10150 2150 0    50   ~ 0
 BBLUE
 Text Label 10150 1250 0    50   ~ 0
 BLUE
 Text Label 7600 4050 0    50   ~ 0
 GREEN
-Text Label 7650 2000 0    50   ~ 0
+Text Label 7650 2150 0    50   ~ 0
 BRED
 Text Label 7650 1250 0    50   ~ 0
 RED
@@ -205,13 +226,13 @@ ARED
 Wire Wire Line
 	9300 1150 9550 1150
 Wire Wire Line
-	9300 1900 9300 1150
+	9300 2050 9300 1150
 Wire Wire Line
-	9550 1900 9500 1900
+	9550 2050 9300 2050
 Wire Wire Line
 	6800 1150 7050 1150
 Wire Wire Line
-	7050 1900 6950 1900
+	7050 2050 6800 2050
 Text Label 2100 1550 0    50   ~ 0
 ASYNC
 Text Label 2100 1450 0    50   ~ 0
@@ -236,15 +257,15 @@ F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/20002276C.pdf" H 5550 7050 
 $EndComp
 Connection ~ 6050 7550
 Wire Wire Line
-	5900 1350 5900 1550
+	5900 1350 5900 1700
 Wire Wire Line
-	6150 2100 6150 2300
+	6150 2250 6150 2650
 Wire Wire Line
-	8850 1550 5900 1550
+	8850 1700 5900 1700
 Wire Wire Line
-	8850 1350 8850 1550
+	8850 1350 8850 1700
 Wire Wire Line
-	8850 2100 8850 2300
+	8850 2250 8850 2650
 NoConn ~ 1950 750 
 NoConn ~ 1000 750 
 $Comp
@@ -261,23 +282,23 @@ $EndComp
 $Comp
 L analog-rescue:MAX9108-Comparator U2
 U 2 1 5DD566FE
-P 9800 2000
-F 0 "U2" H 9850 2367 50  0000 C CNN
-F 1 "MAX9108" H 9850 2276 50  0000 C CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 9500 2300 50  0001 C CNN
-F 3 "" H 9500 2300 50  0001 C CNN
-	2    9800 2000
+P 9800 2150
+F 0 "U2" H 9850 2517 50  0000 C CNN
+F 1 "MAX9108" H 9850 2426 50  0000 C CNN
+F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 9500 2450 50  0001 C CNN
+F 3 "" H 9500 2450 50  0001 C CNN
+	2    9800 2150
 	1    0    0    -1  
 $EndComp
 $Comp
 L analog-rescue:MAX9108-Comparator U2
 U 3 1 5DD57620
-P 7300 2000
-F 0 "U2" H 7350 2367 50  0000 C CNN
-F 1 "MAX9108" H 7350 2276 50  0000 C CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 7000 2300 50  0001 C CNN
-F 3 "" H 7000 2300 50  0001 C CNN
-	3    7300 2000
+P 7300 2150
+F 0 "U2" H 7350 2517 50  0000 C CNN
+F 1 "MAX9108" H 7350 2426 50  0000 C CNN
+F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 7000 2450 50  0001 C CNN
+F 3 "" H 7000 2450 50  0001 C CNN
+	3    7300 2150
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -336,12 +357,12 @@ $EndComp
 $Comp
 L Device:C_Small C8
 U 1 1 5DE8AE53
-P 3500 6450
-F 0 "C8" H 3592 6496 50  0000 L CNN
-F 1 "10uF" H 3592 6405 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3500 6450 50  0001 C CNN
-F 3 "~" H 3500 6450 50  0001 C CNN
-	1    3500 6450
+P 3500 6300
+F 0 "C8" H 3592 6346 50  0000 L CNN
+F 1 "10uF" H 3592 6255 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3500 6300 50  0001 C CNN
+F 3 "~" H 3500 6300 50  0001 C CNN
+	1    3500 6300
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -356,13 +377,63 @@ F 3 "~" H 2400 2400 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	8850 2300 6150 2300
+	8850 2650 6150 2650
 Wire Wire Line
-	6800 1900 6800 1150
+	6800 2050 6800 1150
 Wire Wire Line
 	5900 1350 7050 1350
+$Comp
+L analog-rescue:MAX9108-Comparator U1
+U 3 1 5DE522AE
+P 9800 4050
+F 0 "U1" H 9850 4417 50  0000 C CNN
+F 1 "MAX9108" H 9850 4326 50  0000 C CNN
+F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 9500 4350 50  0001 C CNN
+F 3 "" H 9500 4350 50  0001 C CNN
+	3    9800 4050
+	1    0    0    -1  
+$EndComp
+Text Notes 8700 5000 0    50   ~ 0
+NOTE: Connections\nreversed compared\nto RGB to HD pcb
+$Comp
+L Connector_Generic:Conn_02x05_Odd_Even P1
+U 1 1 5DB26BD3
+P 9950 5000
+F 0 "P1" H 10000 5417 50  0000 C CNN
+F 1 "Conn_02x05_Odd_Even" H 10000 5326 50  0000 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_2x05_P2.54mm_Horizontal" H 9950 5000 50  0001 C CNN
+F 3 "~" H 9950 5000 50  0001 C CNN
+	1    9950 5000
+	1    0    0    -1  
+$EndComp
 Text Label 7600 4700 0    50   ~ 0
 BGREEN
+Text Label 9750 4800 2    50   ~ 0
+VCC
+Text Label 9750 4900 2    50   ~ 0
+VSYNC
+Text Label 9750 5000 2    50   ~ 0
+SYNC
+Text Label 9750 5100 2    50   ~ 0
+BBLUE
+Text Label 9750 5200 2    50   ~ 0
+BGREEN
+Text Label 10250 5200 0    50   ~ 0
+GND
+Text Label 10250 5100 0    50   ~ 0
+BRED
+Text Label 10250 5000 0    50   ~ 0
+RED
+Text Label 10250 4900 0    50   ~ 0
+GREEN
+Text Label 10250 4800 0    50   ~ 0
+BLUE
+Wire Wire Line
+	9550 3950 9350 3950
+Text Label 10150 4050 0    50   ~ 0
+SYNC
+Wire Wire Line
+	9550 4150 8450 4150
 Connection ~ 3150 6850
 Connection ~ 3150 7550
 Wire Wire Line
@@ -402,6 +473,8 @@ VANALOG
 Text Label 1900 5600 2    50   ~ 0
 GND
 Wire Wire Line
+	8450 4150 8450 6000
+Wire Wire Line
 	800  7550 950  7550
 Connection ~ 950  7550
 Connection ~ 4050 7550
@@ -409,14 +482,18 @@ Wire Wire Line
 	6650 3950 6650 4600
 Wire Wire Line
 	1650 1250 4600 1250
+Wire Wire Line
+	1650 1350 2000 1350
+Wire Wire Line
+	3150 1450 1650 1450
 Text Label 1100 5100 2    50   ~ 0
 CLAMP
 Wire Wire Line
 	3500 5050 3500 6100
-Text Label 3500 6650 2    50   ~ 0
+Text Label 3500 6500 2    50   ~ 0
 GND
 Wire Wire Line
-	3500 6650 3500 6550
+	3500 6500 3500 6400
 $Comp
 L Device:R_Small R4
 U 1 1 5E08BDE2
@@ -560,9 +637,11 @@ F 3 "~" H 2400 3000 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3900 1350 3900 1450
+	3900 1350 3900 2100
 Wire Wire Line
 	2400 3250 2400 3100
+Wire Wire Line
+	2400 2100 3900 2100
 Connection ~ 3900 2100
 Wire Wire Line
 	2400 2300 2400 2100
@@ -603,6 +682,11 @@ Wire Wire Line
 	5550 7550 6050 7550
 Wire Wire Line
 	1650 1550 2250 1550
+Wire Wire Line
+	2000 1850 2000 1350
+Connection ~ 2000 1350
+Wire Wire Line
+	2000 1350 3900 1350
 $Comp
 L analog-rescue:MAX9108-Comparator U2
 U 4 1 5DD54DB9
@@ -658,7 +742,7 @@ F 3 "~" H 4950 1750 50  0001 C CNN
 	1    4950 1750
 	0    -1   -1   0   
 $EndComp
-Text Label 1650 1650 0    50   ~ 0
+Text Label 1700 1650 0    50   ~ 0
 GND
 Wire Wire Line
 	6450 4150 6450 5600
@@ -667,11 +751,11 @@ Wire Wire Line
 Wire Wire Line
 	6650 4800 6650 5500
 Wire Wire Line
-	5900 1550 5900 5700
-Connection ~ 5900 1550
+	5900 1700 5900 5700
+Connection ~ 5900 1700
 Wire Wire Line
-	6150 2300 6150 5800
-Connection ~ 6150 2300
+	6150 2650 6150 5800
+Connection ~ 6150 2650
 Wire Wire Line
 	6350 3500 6350 5900
 Wire Wire Line
@@ -699,7 +783,9 @@ Connection ~ 6650 3300
 Wire Wire Line
 	6650 3300 5550 3300
 Wire Wire Line
-	4600 1250 4600 1350
+	3150 1450 3150 2450
+Wire Wire Line
+	4600 1250 4600 1750
 Wire Wire Line
 	4850 2450 3150 2450
 Wire Wire Line
@@ -746,6 +832,14 @@ Connection ~ 4200 3800
 Wire Wire Line
 	4200 3800 4200 3550
 Wire Wire Line
+	3150 3250 3150 2450
+Connection ~ 3150 2450
+Wire Wire Line
+	3900 3250 3900 2100
+Wire Wire Line
+	4600 3250 4600 1750
+Connection ~ 4600 1750
+Wire Wire Line
 	3450 3100 3450 3550
 Wire Wire Line
 	4900 3100 4900 3550
@@ -768,6 +862,10 @@ Wire Wire Line
 Wire Wire Line
 	2900 5600 6450 5600
 Wire Wire Line
+	2900 6000 8450 6000
+Wire Wire Line
+	2900 5900 6350 5900
+Wire Wire Line
 	4950 7050 5250 7050
 Wire Wire Line
 	800  5200 1100 5200
@@ -789,6 +887,8 @@ F 3 "~" H 5150 1150 50  0001 C CNN
 	1    5150 1150
 	-1   0    0    -1  
 $EndComp
+Wire Wire Line
+	1650 1150 5000 1150
 Wire Wire Line
 	5300 1150 5550 1150
 Text Label 5550 1150 0    50   ~ 0
@@ -830,9 +930,27 @@ Wire Wire Line
 Wire Wire Line
 	1650 6400 1650 6500
 Connection ~ 1650 6500
+$Comp
+L Connector_Generic:Conn_01x01 J1
+U 1 1 5E4E7BF5
+P 3500 6650
+F 0 "J1" H 3580 6692 50  0001 L CNN
+F 1 "Spare DAC" H 3580 6646 50  0000 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 3500 6650 50  0001 C CNN
+F 3 "~" H 3500 6650 50  0001 C CNN
+	1    3500 6650
+	1    0    0    -1  
+$EndComp
 Wire Wire Line
 	2900 6100 3500 6100
 Connection ~ 3500 6100
+Wire Wire Line
+	3500 6100 3500 6200
+Wire Wire Line
+	2900 6200 3300 6200
+Wire Wire Line
+	3300 6200 3300 6650
+Connection ~ 2400 2100
 Wire Wire Line
 	2400 2800 1800 2800
 Wire Wire Line
@@ -840,6 +958,8 @@ Wire Wire Line
 Connection ~ 2400 2800
 Wire Wire Line
 	2400 2800 2400 2900
+Wire Wire Line
+	950  2100 2400 2100
 Wire Wire Line
 	2400 2500 2400 2800
 Wire Wire Line
@@ -884,9 +1004,9 @@ F 3 "http://www.ti.com/lit/ds/symlink/ts5a3159a.pdf" H 10350 5900 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	9050 5400 9900 5400
+	9050 5400 10350 5400
 Wire Wire Line
-	10350 6400 9700 6400
+	10350 6400 9050 6400
 $Comp
 L Device:R_Small R5
 U 1 1 5E5C9265
@@ -909,354 +1029,16 @@ F 3 "http://www.ti.com/lit/ds/symlink/ts5a3159a.pdf" H 1500 2550 50  0001 C CNN
 	1    1500 2550
 	-1   0    0    -1  
 $EndComp
-Text Label 1050 3000 0    50   ~ 0
-CGREEN
-Wire Wire Line
-	2900 5900 6350 5900
-Text Label 7600 5550 0    50   ~ 0
-SYNC
-Wire Wire Line
-	7000 5450 6950 5450
-$Comp
-L analog-rescue:MAX9108-Comparator U1
-U 3 1 5DE522AE
-P 7250 5550
-F 0 "U1" H 7300 5917 50  0000 C CNN
-F 1 "MAX9108" H 7300 5826 50  0000 C CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 6950 5850 50  0001 C CNN
-F 3 "" H 6950 5850 50  0001 C CNN
-	3    7250 5550
-	1    0    0    -1  
-$EndComp
-Text Label 6950 5450 2    50   ~ 0
-ASYNC
-$Comp
-L analog-rescue:MAX9108-Comparator U7
-U 4 1 5E591929
-P 10350 2900
-F 0 "U7" H 10000 3250 50  0000 C CNN
-F 1 "MAX9108-Comparator" H 10100 3150 50  0000 C CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 10050 3200 50  0001 C CNN
-F 3 "" H 10050 3200 50  0001 C CNN
-	4    10350 2900
-	1    0    0    -1  
-$EndComp
-$Comp
-L analog-rescue:MAX9108-Comparator U7
-U 5 1 5E592994
-P 9900 6000
-F 0 "U7" H 9800 5850 50  0000 C CNN
-F 1 "MAX9108-Comparator" H 9750 5500 50  0000 C CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 9600 6300 50  0001 C CNN
-F 3 "" H 9600 6300 50  0001 C CNN
-	5    9900 6000
-	1    0    0    -1  
-$EndComp
-$Comp
-L analog-rescue:MAX9108-Comparator U7
-U 1 1 5E593759
-P 8750 2850
-F 0 "U7" H 8800 3217 50  0000 C CNN
-F 1 "MAX9108-Comparator" H 8800 3126 50  0000 C CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 8450 3150 50  0001 C CNN
-F 3 "" H 8450 3150 50  0001 C CNN
-	1    8750 2850
-	1    0    0    -1  
-$EndComp
-$Comp
-L analog-rescue:MAX9108-Comparator U7
-U 2 1 5E5947A9
-P 8750 3950
-F 0 "U7" H 8800 4350 50  0000 C CNN
-F 1 "MAX9108-Comparator" H 8800 4226 50  0000 C CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 8450 4250 50  0001 C CNN
-F 3 "" H 8450 4250 50  0001 C CNN
-	2    8750 3950
-	1    0    0    -1  
-$EndComp
-$Comp
-L analog-rescue:MAX9108-Comparator U7
-U 3 1 5E5959CE
-P 10350 4000
-F 0 "U7" H 10350 4500 50  0000 L CNN
-F 1 "MAX9108-Comparator" H 10050 4400 50  0000 L CNN
-F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 10050 4300 50  0001 C CNN
-F 3 "" H 10050 4300 50  0001 C CNN
-	3    10350 4000
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	10100 2800 9900 2800
-Wire Wire Line
-	9500 2800 9500 1900
-Connection ~ 9500 1900
-Wire Wire Line
-	9500 1900 9300 1900
-Wire Wire Line
-	9900 2800 9900 3900
-Wire Wire Line
-	9900 3900 10100 3900
-Connection ~ 9900 2800
-Wire Wire Line
-	9900 2800 9500 2800
-Wire Wire Line
-	8500 2750 8300 2750
-Wire Wire Line
-	6950 2750 6950 1900
-Connection ~ 6950 1900
-Wire Wire Line
-	6950 1900 6800 1900
-Wire Wire Line
-	8500 3850 8300 3850
-Wire Wire Line
-	8300 3850 8300 2750
-Connection ~ 8300 2750
-Wire Wire Line
-	8300 2750 6950 2750
-Wire Wire Line
-	8150 2950 8500 2950
-Wire Wire Line
-	10100 3000 9450 3000
-Wire Wire Line
-	9450 3000 9450 3300
-Wire Wire Line
-	9450 3300 8150 3300
-Wire Wire Line
-	8150 3300 8150 2950
-Wire Wire Line
-	8350 4050 8500 4050
-Wire Wire Line
-	8350 4400 9950 4400
-Wire Wire Line
-	9950 4400 9950 4100
-Wire Wire Line
-	9950 4100 10100 4100
-Wire Wire Line
-	8350 4400 8350 4050
-Wire Wire Line
-	9900 5650 9900 5400
-Connection ~ 9900 5400
-Wire Wire Line
-	9900 5400 10350 5400
-Wire Wire Line
-	9700 6250 9700 6400
-Connection ~ 9700 6400
-Wire Wire Line
-	9700 6400 9050 6400
-Wire Wire Line
-	7000 5650 6850 5650
-Wire Wire Line
-	6850 5650 6850 6000
-Wire Wire Line
-	6850 6000 2900 6000
-Wire Wire Line
-	3500 6350 3500 6100
-Wire Wire Line
-	1650 1350 2750 1350
-Text Notes 8500 5000 0    50   ~ 0
-NOTE: Connections\nreversed compared\nto RGB to HD pcb
 Wire Wire Line
 	1800 3100 1050 3100
 Wire Wire Line
-	1050 3100 1050 2750
+	1050 3100 1050 2550
 Wire Wire Line
-	1050 2750 1200 2750
+	1050 2550 1200 2550
 Wire Wire Line
-	1200 2550 1050 2550
+	950  2750 1200 2750
 Wire Wire Line
-	1050 2550 1050 2100
-Wire Wire Line
-	1050 2100 2400 2100
-$Comp
-L Device:R_Small R10
-U 1 1 5E53A087
-P 3900 1600
-F 0 "R10" H 3959 1646 50  0000 L CNN
-F 1 "68R" H 3959 1555 50  0000 L CNN
-F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3900 1600 50  0001 C CNN
-F 3 "~" H 3900 1600 50  0001 C CNN
-	1    3900 1600
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:R_Small R11
-U 1 1 5E53AE19
-P 4600 1500
-F 0 "R11" H 4659 1546 50  0000 L CNN
-F 1 "68R" H 4659 1455 50  0000 L CNN
-F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 4600 1500 50  0001 C CNN
-F 3 "~" H 4600 1500 50  0001 C CNN
-	1    4600 1500
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4600 1400 4600 1350
-Wire Wire Line
-	4600 1600 4600 1650
-Wire Wire Line
-	3900 1450 3800 1450
-Wire Wire Line
-	3800 1450 3800 1750
-Wire Wire Line
-	3800 1750 3900 1750
-Connection ~ 3900 1450
-Wire Wire Line
-	3900 1450 3900 1500
-Connection ~ 3900 1750
-Wire Wire Line
-	3900 1750 3900 1700
-Wire Wire Line
-	4600 1350 4500 1350
-Wire Wire Line
-	4500 1650 4600 1650
-Connection ~ 4600 1350
-Connection ~ 4600 1650
-Wire Wire Line
-	4600 1650 4600 1750
-Wire Wire Line
-	3900 1750 3900 2100
-Wire Wire Line
-	3150 2450 3150 3250
-Wire Wire Line
-	3900 2100 3900 3250
-Wire Wire Line
-	4600 1750 4600 3250
-Connection ~ 4600 1750
-Connection ~ 3150 2450
-Wire Wire Line
-	3150 1450 1650 1450
-Wire Wire Line
-	1650 1150 5000 1150
-Wire Wire Line
-	3150 1850 3150 2450
-Connection ~ 3150 1850
-Connection ~ 3150 1550
-Wire Wire Line
-	3050 1850 3150 1850
-Wire Wire Line
-	3150 1550 3050 1550
-Wire Wire Line
-	3150 1800 3150 1850
-Wire Wire Line
-	3150 1600 3150 1550
-$Comp
-L Device:R_Small R9
-U 1 1 5E538E74
-P 3150 1700
-F 0 "R9" H 3209 1746 50  0000 L CNN
-F 1 "68R" H 3209 1655 50  0000 L CNN
-F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" H 3150 1700 50  0001 C CNN
-F 3 "~" H 3150 1700 50  0001 C CNN
-	1    3150 1700
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3150 1450 3150 1550
-Wire Wire Line
-	3050 1550 3050 1850
-Wire Wire Line
-	4500 1350 4500 1650
-Wire Wire Line
-	2400 2100 2750 2100
-Wire Wire Line
-	2750 2100 2750 1350
-Connection ~ 2400 2100
-Connection ~ 2750 1350
-Wire Wire Line
-	2750 1350 3900 1350
-$Comp
-L Connector_Generic:Conn_02x06_Odd_Even P1
-U 1 1 5E50C60D
-P 9850 4900
-F 0 "P1" H 9900 5317 50  0000 C CNN
-F 1 "Conn_02x06_Odd_Even" H 9900 5226 50  0000 C CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Horizontal" H 9850 4900 50  0001 C CNN
-F 3 "~" H 9850 4900 50  0001 C CNN
-	1    9850 4900
-	1    0    0    -1  
-$EndComp
-Text Label 9650 4700 2    50   ~ 0
-VCC
-Text Label 9650 4800 2    50   ~ 0
-VSYNC
-Text Label 9650 4900 2    50   ~ 0
-SYNC
-Text Label 9650 5000 2    50   ~ 0
-BBLUE
-Text Label 10150 5000 0    50   ~ 0
-BRED
-Text Label 10150 4900 0    50   ~ 0
-RED
-Text Label 10150 4800 0    50   ~ 0
-GREEN
-Text Label 10150 4700 0    50   ~ 0
-BLUE
-Text Label 10150 5100 0    50   ~ 0
-GND
-Text Label 9650 5100 2    50   ~ 0
-BGREEN
-$Comp
-L Jumper:SolderJumper_3_Bridged12 JP1
-U 1 1 5E68C1BF
-P 10750 3100
-F 0 "JP1" V 10704 3168 50  0000 L CNN
-F 1 "SolderJumper_3_Bridged12" V 10400 3050 50  0001 L CNN
-F 2 "Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm" H 10750 3100 50  0001 C CNN
-F 3 "~" H 10750 3100 50  0001 C CNN
-	1    10750 3100
-	0    -1   1    0   
-$EndComp
-$Comp
-L Jumper:SolderJumper_3_Bridged12 JP2
-U 1 1 5E68F193
-P 10750 4200
-F 0 "JP2" V 10750 4268 50  0000 L CNN
-F 1 "SolderJumper_3_Bridged12" V 10705 4268 50  0001 L CNN
-F 2 "Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm" H 10750 4200 50  0001 C CNN
-F 3 "~" H 10750 4200 50  0001 C CNN
-	1    10750 4200
-	0    -1   -1   0   
-$EndComp
-Wire Wire Line
-	10700 4000 10750 4000
-Wire Wire Line
-	10700 2900 10750 2900
-Text Label 10900 4200 0    50   ~ 0
-UV2
-Text Label 10900 3100 0    50   ~ 0
-UV1
-Text Label 10150 5200 0    50   ~ 0
-UV2
-Text Label 9650 5200 2    50   ~ 0
-UV1
-Wire Wire Line
-	9100 3950 9350 3950
-Wire Wire Line
-	9350 3950 9350 4300
-Wire Wire Line
-	9350 4300 10500 4300
-Wire Wire Line
-	10500 4300 10500 4400
-Wire Wire Line
-	10500 4400 10750 4400
-Wire Wire Line
-	9100 2850 9350 2850
-Wire Wire Line
-	9350 2850 9350 3200
-Wire Wire Line
-	9350 3200 10400 3200
-Wire Wire Line
-	10400 3200 10400 3300
-Wire Wire Line
-	10400 3300 10750 3300
-Wire Wire Line
-	8350 6100 8350 4400
-Wire Wire Line
-	3500 6100 8350 6100
-Connection ~ 8350 4400
-Wire Wire Line
-	2900 6200 8150 6200
-Wire Wire Line
-	8150 6200 8150 3300
-Connection ~ 8150 3300
+	950  2100 950  2750
+Text Label 1050 3000 0    50   ~ 0
+CGREEN
 $EndSCHEMATC
