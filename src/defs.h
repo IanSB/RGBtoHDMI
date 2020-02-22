@@ -204,7 +204,7 @@ typedef struct {
 #define VERSION_PIN  (18) // active low, connects to GSR
 
 // These pins are overloaded
-#define TCK_PIN      (SP_CLK_PIN)
+#define TCK_PIN      (SP_CLK_PIN) 
 #define TMS_PIN      (SP_CLKEN_PIN)
 #define TDI_PIN      (SP_DATA_PIN)
 #define TDO_PIN      (MUX_PIN)

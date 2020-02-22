@@ -122,17 +122,17 @@ static const char *clamptype_names[] = {
 };
 
 static const char *termination_names[] = {
-   "AC/High Impedance",
-   "AC/75R Termination",
    "DC/High Impedance",
-   "DC/75R Termination"
+   "DC/75R Termination",
+   "AC/High Impedance",
+   "AC/75R Termination"
 };
 
 enum {
-   YUV_INPUT_AC_HI,
-   YUV_INPUT_AC_TERM,
    YUV_INPUT_DC_HI,
    YUV_INPUT_DC_TERM,
+   YUV_INPUT_AC_HI,
+   YUV_INPUT_AC_TERM,
    NUM_YUV_INPUT
 };
 
@@ -192,6 +192,32 @@ static void sendDAC(int dac, int value)
         if (value < 2) value = 2;  // prevent sync being just high frequency noise when no sync input
     }
 
+    if (frontend == FRONTEND_YUV_ISSUE2_5259) {
+        switch (dac) {
+            case 6:
+                dac = 7;
+            break;
+            case 7:
+            {
+                dac = 6;
+                switch (config->terminate) {
+                      default: 
+                      case YUV_INPUT_DC_HI:
+                      case YUV_INPUT_AC_HI:
+                        value = 0;  //high impedance
+                      break;
+                      case YUV_INPUT_DC_TERM:
+                      case YUV_INPUT_AC_TERM:                          
+                        value = 255; //termination
+                      break;
+                  }
+            }
+            break;
+            default:
+            break;
+            }
+    }
+    
     int packet = (dac << 11) | 0x600 | value;
 
     RPI_SetGpioValue(STROBE_PIN, 0);
@@ -298,19 +324,19 @@ static void write_config(config_t *config) {
 
       switch (config->terminate) {
          default:
-          case YUV_INPUT_AC_HI:
+          case YUV_INPUT_DC_HI:
             RPI_SetGpioValue(SP_DATA_PIN, 0);   //ac-dc 
             RPI_SetGpioValue(SP_CLKEN_PIN, 0);  //termination
           break;
-          case YUV_INPUT_AC_TERM:
+          case YUV_INPUT_DC_TERM:
             RPI_SetGpioValue(SP_DATA_PIN, 0);
             RPI_SetGpioValue(SP_CLKEN_PIN, 1);
           break;
-          case YUV_INPUT_DC_HI:
+          case YUV_INPUT_AC_HI:
             RPI_SetGpioValue(SP_DATA_PIN, 1);
             RPI_SetGpioValue(SP_CLKEN_PIN, 0);
           break;
-          case YUV_INPUT_DC_TERM:
+          case YUV_INPUT_AC_TERM:
             RPI_SetGpioValue(SP_DATA_PIN, 1);
             RPI_SetGpioValue(SP_CLKEN_PIN, 1);
           break; 
@@ -692,7 +718,7 @@ static int cpld_get_delay() {
 }
 
 static int cpld_frontend_info() {
-    return FRONTEND_YUV_5259 | FRONTEND_YUV_5259 << 16;
+    return FRONTEND_YUV_ISSUE3_5259 | FRONTEND_YUV_ISSUE2_5259 << 16;
 }
 
 static void cpld_set_frontend(int value) {
