@@ -1006,7 +1006,9 @@ process_line_loop:
 
         subs   r5, r5, #1
         bne    process_line_loop
-
+        push   {r0-r12}
+        bl     CleanL1DataCache
+        pop    {r0-r12}
         ldr    r5, flag_state
         and    r5, r5, #BIT_OSD
         and    r7, r3, #BIT_INHIBIT_MODE_DETECT
@@ -1311,7 +1313,10 @@ exit:
 // Local Variables
 // ======================================================================
         .align 6
-
+dpmsframecount:
+        .word 0
+dpms_state:
+        .word 0
 sw1counter:
         .word 0
 
@@ -1433,10 +1438,7 @@ line_timeout:
         .word 100000000
 vsync_retry_count:
         .word 0
-dpmsframecount:
-        .word 0
-dpms_state:
-        .word 0
+
 
         .ltorg
 
