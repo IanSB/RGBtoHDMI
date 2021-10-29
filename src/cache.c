@@ -188,9 +188,13 @@ void enable_MMU_and_IDCaches(void)
    {
       PageTable[base] = base << 20 | 0x04C02 | (shareable << 16) | (bb << 12);
    }
-   for (; base < uncached_threshold; base++)
+   for (; base < 0x3e0; base++)
    {
       PageTable[base] = base << 20 | 0x01C02;
+   }   
+   for (; base < uncached_threshold; base++)
+   {
+      PageTable[base] = base << 20 | 0x04C02 | (shareable << 16) | (bb << 12) | (aa << 2);
    }
    for (; base < 4096; base++)
    {
