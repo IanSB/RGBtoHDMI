@@ -2009,14 +2009,14 @@ size_t sd_read(struct block_device *dev, uint8_t *buf, size_t buf_size, uint32_t
    struct emmc_block_dev *edev = (struct emmc_block_dev *)dev;
 
     if(sd_ensure_data_mode(edev) != 0)
-        return -1;
+        return 0;
 
 #ifdef EMMC_DEBUG
    printf("SD: read() card ready, reading from block %"PRIu32"\r\n", block_no);
 #endif
 
     if(sd_do_data_command(edev, 0, buf, buf_size, block_no) < 0)
-        return -1;
+        return 0;
 
 #ifdef EMMC_DEBUG
    printf("SD: data read successful\r\n");
@@ -2031,14 +2031,14 @@ size_t sd_write(struct block_device *dev, uint8_t *buf, size_t buf_size, uint32_
    // Check the status of the card
    struct emmc_block_dev *edev = (struct emmc_block_dev *)dev;
     if(sd_ensure_data_mode(edev) != 0)
-        return -1;
+        return 0;
 
 #ifdef EMMC_DEBUG
    printf("SD: write() card ready, writing to block %"PRIu32"\r\n", block_no);
 #endif
 
     if(sd_do_data_command(edev, 1, buf, buf_size, block_no) < 0)
-        return -1;
+        return 0;
 
 #ifdef EMMC_DEBUG
    printf("SD: write read successful\n");
