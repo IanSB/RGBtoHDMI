@@ -8,4 +8,6 @@ Raspberry Pi, in conjunction with the CPLD, is able to correctly
 sample each of the Beeb's video modes to give a pixel-perfect
 rendition.
 
-For more information, see the project [Wiki](../../wiki).
+For more information, see the project [Wiki](../../wiki).  
+Assembled boards available here:  
+https://github.com/IanSB/RGBtoHDMI/wiki/Assembled-boards-for-sale
