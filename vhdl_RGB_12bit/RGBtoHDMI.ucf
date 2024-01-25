@@ -1,16 +1,10 @@
 # Global Clock Nets
 NET "clk" BUFG=CLK;
 
-# Global Clock Nets
-NET "sp_clk" BUFG=CLK;
-
 # 96MHz clock domain
 NET "clk" TNM_NET = clk_period_grp_1;
 TIMESPEC TS_clk_period_1 = PERIOD "clk_period_grp_1" 5.2ns HIGH;
 
-# 10MHz clock domain
-#NET "sp_clk" TNM_NET = clk_period_grp_2;
-#TIMESPEC TS_clk_period_2 = PERIOD "clk_period_grp_2" 100ns HIGH;
 
 NET "clk"       LOC = "P43";       # input  gpio21 (gclk)
 
@@ -34,8 +28,6 @@ NET "analog"    LOC = "P19";       # input  gpio22
 
 NET "version"   LOC = "P33";       # input  gpio18 (gsr)
 
-NET "sp_clk"    LOC = "P44";       # input  gpio20 (gclk)
-NET "sp_data"   LOC = "P7";        # input  gpio0  (input only)
 NET "sp_clken"  LOC = "P6";        # input  gpio1  (input only)
 
 NET "quad(0)"   LOC = "P29";       # output gpio2
