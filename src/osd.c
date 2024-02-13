@@ -42,7 +42,7 @@
 #define DEFAULT_CPLD_UPDATE_DIR "/cpld_firmware/6-12_bit"
 #define DEFAULT_CPLD_UPDATE_DIR_3BIT "/cpld_firmware/3_bit"
 #define DEFAULT_CPLD_UPDATE_DIR_ATOM "/cpld_firmware/atom"
-#define MONO_BOARD_DEFAULT "Commodore_/Commodore_64_LumaCode_"
+#define MONO_BOARD_DEFAULT "Commodore_/Commodore_64_Lumacode_"
 
 #define PI 3.14159265f
 // =============================================================
@@ -99,8 +99,9 @@ static char *default_palette_names[] = {
    "RGBI",
    "RGBI_(CGA)",
    "RGBI_(XRGB-NTSC)",
-   "RGBI_(Laser)",
+   "RGBI_(XRGB-Apple)",
    "RGBI_(Spectrum)",
+   "RGBI_(Lumacode)",
    "RGBrgb_(Spectrum)",
    "RGBrgb_(Amstrad)",
    "RrGgBb_(EGA)",
@@ -114,19 +115,24 @@ static char *default_palette_names[] = {
    "Atom_MKII_Full",
    "Mono_(2_level)",
    "Mono_(3_level)",
+   "Mono_(3_level_Bright)",
    "Mono_(4_level)",
    "Mono_(6_level)",
    "Mono_(8_level_RGB)",
    "Mono_(8_level_YUV)",
-   "TI-99-4a",
+   "TMS99XX",
+   "TMS99XX_(Lumacode)",
    "Spectrum_48K_9Col",
    "Colour_Genie_S24",
    "Colour_Genie_S25",
    "Colour_Genie_N25",
    "Commodore_64",
    "Commodore_64_Rev1",
+   "VIC_20",
    "Atari_800_PAL",
    "Atari_800_NTSC",
+   "Atari_2600_PAL",
+   "Atari_2600_NTSC",
    "Tea1002",
    "Intellivision",
    "Test_4_Lvl_G_or_Y",
@@ -140,9 +146,11 @@ static const char *palette_control_names[] = {
    "CGA NTSC Artifact",
    "Mono NTSC Artifact",
    "Auto NTSC Artifact",
-   "PAL Artifact",
-   "Atari GTIA",
-   "C64 Lumacode"
+   "Commodore 64 YUV",
+   "Atari GTIA YUV",
+   "4 Bit Lumacode",
+   "6/8 Bit Lumacode",
+   "8 Bit Lumacode"
 };
 
 static const char *return_names[] = {
@@ -262,6 +270,24 @@ static const char *frontend_names_8[] = {
    "8 Bit Analog YUV Issue 5"
 };
 
+static const char *frontend_names_mono_luma[] = {
+   "3 Bit Digital RGB(TTL)",
+   "12 Bit Simple",
+   "Atom",
+   "8/12 Bit Digital RGB(TTL)",
+   "8 Bit Digital YUV(TTL)",
+   "8 Bit Analog RGB Issue 3",
+   "8 Bit Analog RGB Issue 2",
+   "8 Bit Analog RGB Issue 1A",
+   "8 Bit Analog RGB Issue 1B",
+   "RGB Issue 4 Mono/Lumacode",
+   "RGB Issue 5 Mono/Lumacode",
+   "8 Bit Analog YUV Issue 3",
+   "8 Bit Analog YUV Issue 2",
+   "YUV Issue 4 Mono/Lumacode",
+   "YUV Issue 5 Mono/Lumacode"
+};
+
 static const char *genlock_speed_names[] = {
    "Slow (333PPM)",
    "Medium (1000PPM)",
@@ -269,8 +295,11 @@ static const char *genlock_speed_names[] = {
 };
 
 static const char *genlock_adjust_names[] = {
-   "-5% to +5%",
-   "Unlimited"
+   "48Hz to Unlimited",
+   "48Hz to Limit +5%",
+   "Profile +-5%",
+   "Profile +-2%",
+   "Profile +-1%"
 };
 
 static const char *fontsize_names[] = {
@@ -281,6 +310,11 @@ static const char *fontsize_names[] = {
 static const char *even_scaling_names[] = {
    "Even",
    "Uneven (3:2>>4:3)"
+};
+
+static const char *hdmi_auto_names[] = {
+   "Manual",
+   "Auto"
 };
 
 static const char *screencap_names[] = {
@@ -346,6 +380,12 @@ static const char *alt_profile_names[] = {
    "Set 2"
 };
 
+static const char *pal_odd_names[] = {
+   "Off",
+   "Blended Colours",
+   "All Colours"
+};
+
 
 // =============================================================
 // Feature definitions
@@ -357,7 +397,8 @@ static param_t features[] = {
    {        F_AUTO_SWITCH,       "Auto Switch",       "auto_switch", 0, NUM_AUTOSWITCHES - 1, 1 },
    {         F_RESOLUTION,        "Resolution",        "resolution", 0,                    0, 1 },
    {            F_REFRESH,           "Refresh",           "refresh", 0,      NUM_REFRESH - 1, 1 },
-   {          F_HDMI_MODE,         "HDMI Mode",         "hdmi_mode", 0,        NUM_HDMIS - 1, 1 },
+   {          F_HDMI_AUTO,  "HDMI Mode Detect",         "hdmi_auto", 0,                    1, 1 },
+   {          F_HDMI_MODE,  "HDMI Manual Mode",         "hdmi_mode", 0,        NUM_HDMIS - 1, 1 },
    {  F_HDMI_MODE_STANDBY, "HDMI Grey Standby",      "hdmi_standby", 0,                    1, 1 },
    {            F_SCALING,           "Scaling",           "scaling", 0,      NUM_SCALING - 1, 1 },
    {            F_PROFILE,           "Profile",           "profile", 0,                    0, 1 },
@@ -366,9 +407,11 @@ static param_t features[] = {
    {            F_PALETTE,           "Palette",           "palette", 0,                    0, 1 },
    {    F_PALETTE_CONTROL,    "Palette Control",   "palette_control", 0,     NUM_CONTROLS - 1, 1 },
    {        F_NTSC_COLOUR,    "Artifact Colour",       "ntsc_colour", 0,                    1, 1 },
-   {         F_NTSC_PHASE,     "Artifact Phase",        "ntsc_phase", 0,                    3, 1 },
-   {          F_NTSC_TYPE,      "Artifact Type",         "ntsc_type", 0,     NUM_NTSCTYPE - 1, 1 },
-   {       F_NTSC_QUALITY,   "Artifact Quality",      "ntsc_quality", 0,       NUM_FRINGE - 1, 1 },
+   {         F_NTSC_PHASE,         "NTSC Phase",        "ntsc_phase", 0,                    3, 1 },
+   {          F_NTSC_TYPE,          "NTSC Type",         "ntsc_type", 0,     NUM_NTSCTYPE - 1, 1 },
+   {       F_NTSC_QUALITY,       "NTSC Quality",      "ntsc_quality", 0,       NUM_FRINGE - 1, 1 },
+   {      F_PAL_ODD_LEVEL,       "PAL Odd Level",     "pal_oddlevel", -180,             180, 1 },
+   {       F_PAL_ODD_LINE,       "PAL Odd Line",       "pal_oddline", 0,      NUM_PAL_ODD - 1, 1 },
    {               F_TINT,               "Tint",              "tint",-60,                  60, 1 },
    {                F_SAT,         "Saturation",        "saturation", 0,                  200, 1 },
    {                F_CONT,           "Contrast",          "contrast", 0,                  200, 1 },
@@ -379,6 +422,7 @@ static param_t features[] = {
    {  F_NORMAL_DEINTERLACE, "Normal Deinterlace",   "normal_deinterlace", 0,   NUM_DEINTERLACES - 1, 1 },
    {       F_MODE7_SCALING,  "Teletext Scaling",  "teletext_scaling", 0,    NUM_ESCALINGS - 1, 1 },
    {      F_NORMAL_SCALING,    "Normal Scaling",    "normal_scaling", 0,    NUM_ESCALINGS - 1, 1 },
+   {          F_DROP_FRAME,"Drop Frame (25/30Hz)",      "drop_frame", 0,                    1, 1 },
    {               F_FFOSD,     "FFOSD Overlay",     "ffosd_overlay", 0,                    1, 1 },
    {         F_SWAP_ASPECT,"Swap Aspect 625<>525",     "swap_aspect", 0,                    1, 1 },
    {       F_OUTPUT_COLOUR,     "Output Colour",     "output_colour", 0,      NUM_COLOURS - 1, 1 },
@@ -409,6 +453,14 @@ static param_t features[] = {
    {    F_YUV_PIXEL_DOUBLE,  "YUV Pixel Double",  "yuv_pixel_double", 0,                    1, 1 },
    {      F_INTEGER_ASPECT,    "Integer Aspect",    "integer_aspect", 0,                    1, 1 },
 
+   {         F_PROFILE_NUM,"Custom Profile Num",    "profile_number", 0,                  9, 1 },
+   {             F_H_WIDTH,       "Pixel Width",       "pixel_width", 120,               1920, 8 },
+   {            F_V_HEIGHT,      "Pixel Height",      "pixel_height", 120,               1200, 2 },
+   {               F_CLOCK,   "Clock Frequency",   "pixel_frequency", 1000000,    64000000, 1000 },
+   {            F_LINE_LEN,       "Line Length", "pixel_line_length",       100,    5000,    1 },
+   {            F_H_OFFSET,          "H Offset",    "pixel_h_offset", -256,               256, 4 },
+   {            F_V_OFFSET,          "V Offset",    "pixel_v_offset", -256,               256, 1 },
+
    {            F_FRONTEND,         "Interface",         "interface", 0,    NUM_FRONTENDS - 1, 1 },
    {                -1,                NULL,                NULL, 0,                    0, 0 }
 };
@@ -431,7 +483,11 @@ typedef enum {
    I_PICKMAN,  // Item is a pick manufacturer
    I_PICKPRO,  // Item is a pick profile
    I_CALIBRATE,// Item is a calibration update
-   I_TEST      // Item is a 50 Hz test option
+   I_CALIBRATE_NO_SAVE,// Item is a calibration update without saving
+   I_TEST,     // Item is a 50 Hz test option
+   I_CREATE,    // Item is create profile menu
+   I_SAVE_CUSTOM, //Item is save custom profile
+   I_DELETE_CUSTOM //Item is delete custom profile
 } item_type_t;
 
 typedef struct {
@@ -472,12 +528,16 @@ typedef struct {
 
 static void info_source_summary(int line);
 static void info_system_summary(int line);
+static void info_help_quickstart(int line);
 static void info_help_buttons(int line);
 static void info_help_calibration(int line);
 static void info_help_noise(int line);
 static void info_help_flashing(int line);
 static void info_help_artifacts(int line);
 static void info_help_updates(int line);
+static void info_help_custom_profile(int line);
+static void info_help_custom_hints(int line);
+
 static void info_cal_summary(int line);
 static void info_cal_detail(int line);
 static void info_cal_raw(int line);
@@ -493,27 +553,38 @@ static void rebuild_update_cpld_menu(menu_t *menu);
 static void rebuild_manufacturer_menu(menu_t *menu);
 static void rebuild_profile_menu(menu_t *menu);
 
-static info_menu_item_t source_summary_ref   = { I_INFO, "Source Summary",      info_source_summary};
-static info_menu_item_t system_summary_ref   = { I_INFO, "System Summary",      info_system_summary};
-static info_menu_item_t help_buttons_ref     = { I_INFO, "Help Buttons",        info_help_buttons};
-static info_menu_item_t help_calibration_ref = { I_INFO, "Help Calibration",    info_help_calibration};
-static info_menu_item_t help_noise_ref       = { I_INFO, "Help Noise",          info_help_noise};
-static info_menu_item_t help_flashing_ref    = { I_INFO, "Help Flashing Screen",info_help_flashing};
-static info_menu_item_t help_artifacts_ref   = { I_INFO, "Help NTSC Artifacts", info_help_artifacts};
-static info_menu_item_t help_updates_ref     = { I_INFO, "Help Software Updates",info_help_updates};
-static info_menu_item_t cal_summary_ref      = { I_INFO, "Calibration Summary", info_cal_summary};
-static info_menu_item_t cal_detail_ref       = { I_INFO, "Calibration Detail",  info_cal_detail};
-static info_menu_item_t cal_raw_ref          = { I_INFO, "Calibration Raw",     info_cal_raw};
-static info_menu_item_t save_list_ref        = { I_INFO, "Save Profile List",   info_save_list};
-static info_menu_item_t save_log_ref         = { I_INFO, "Save Log & EDID",     info_save_log};
-static info_menu_item_t credits_ref          = { I_INFO, "Credits",             info_credits};
-static info_menu_item_t reboot_ref           = { I_INFO, "Reboot",              info_reboot};
+static void analyse_timing(int line);
 
-static back_menu_item_t back_ref             = { I_BACK, "Return"};
-static action_menu_item_t save_ref           = { I_SAVE, "Save Configuration"};
-static action_menu_item_t restore_ref        = { I_RESTORE, "Restore Default Configuration"};
-static action_menu_item_t cal_sampling_ref   = { I_CALIBRATE, "Auto Calibrate Video Sampling"};
-static info_menu_item_t test_50hz_ref        = { I_TEST, "Test Monitor for 50Hz Support",  info_test_50hz};
+static info_menu_item_t source_summary_ref      = { I_INFO, "Source Summary",       info_source_summary};
+static info_menu_item_t system_summary_ref      = { I_INFO, "System Summary",       info_system_summary};
+static info_menu_item_t help_quickstart_ref     = { I_INFO, "Help Quick Start",     info_help_quickstart};
+static info_menu_item_t help_buttons_ref        = { I_INFO, "Help Buttons",         info_help_buttons};
+static info_menu_item_t help_calibration_ref    = { I_INFO, "Help Calibration",     info_help_calibration};
+static info_menu_item_t help_noise_ref          = { I_INFO, "Help Noise",           info_help_noise};
+static info_menu_item_t help_flashing_ref       = { I_INFO, "Help Flashing Screen", info_help_flashing};
+static info_menu_item_t help_artifacts_ref      = { I_INFO, "Help NTSC Artifacts",  info_help_artifacts};
+static info_menu_item_t help_updates_ref        = { I_INFO, "Help Software Updates",info_help_updates};
+static info_menu_item_t help_custom_profile_ref = { I_INFO, "Help Create Profile",  info_help_custom_profile};
+static info_menu_item_t help_custom_hints_ref   = { I_INFO, "Help Hints and Tips",  info_help_custom_hints};
+static info_menu_item_t cal_summary_ref         = { I_INFO, "Calibration Summary",  info_cal_summary};
+static info_menu_item_t cal_detail_ref          = { I_INFO, "Calibration Detail",   info_cal_detail};
+static info_menu_item_t cal_raw_ref             = { I_INFO, "Calibration Raw",      info_cal_raw};
+static info_menu_item_t save_list_ref           = { I_INFO, "Save Profile List",    info_save_list};
+static info_menu_item_t save_log_ref            = { I_INFO, "Save Log & EDID",      info_save_log};
+static info_menu_item_t credits_ref             = { I_INFO, "Credits",              info_credits};
+static info_menu_item_t reboot_ref              = { I_INFO, "Reboot",               info_reboot};
+
+
+static info_menu_item_t analyse_timing_ref      = { I_INFO, "Analyse Timing",    analyse_timing};
+
+static back_menu_item_t back_ref                     = { I_BACK, "Return"};
+static action_menu_item_t save_ref                   = { I_SAVE, "Save Configuration"};
+static action_menu_item_t restore_ref                = { I_RESTORE, "Restore Default Configuration"};
+static action_menu_item_t cal_sampling_ref           = { I_CALIBRATE, "Auto Calibrate Video Sampling"};
+static action_menu_item_t cal_sampling_no_save_ref   = { I_CALIBRATE_NO_SAVE, "Auto Calibrate Video Sampling"};
+static action_menu_item_t save_custom_profile_ref    = { I_SAVE_CUSTOM, "Save Custom Profile"};
+static action_menu_item_t delete_custom_profile_ref  = { I_DELETE_CUSTOM, "Delete Custom Profile"};
+static info_menu_item_t test_50hz_ref                = { I_TEST, "Test Monitor for 50Hz Support",  info_test_50hz};
 
 static menu_t update_cpld_menu = {
    "Update CPLD Menu",
@@ -632,33 +703,39 @@ static menu_t profile_menu = {
    }
 };
 
-static param_menu_item_t profile_ref         = { I_FEATURE, &features[F_PROFILE]        };
-static param_menu_item_t saved_ref           = { I_FEATURE, &features[F_SAVED_CONFIG]          };
-static param_menu_item_t subprofile_ref      = { I_FEATURE, &features[F_SUB_PROFILE]     };
-static param_menu_item_t resolution_ref      = { I_FEATURE, &features[F_RESOLUTION]     };
-static param_menu_item_t refresh_ref         = { I_FEATURE, &features[F_REFRESH]        };
-static param_menu_item_t hdmi_ref            = { I_FEATURE, &features[F_HDMI_MODE]           };
-static param_menu_item_t hdmi_standby_ref    = { I_FEATURE, &features[F_HDMI_MODE_STANDBY]   };
-static param_menu_item_t scaling_ref         = { I_FEATURE, &features[F_SCALING]        };
-static param_menu_item_t overscan_ref        = { I_FEATURE, &features[F_CROP_BORDER]       };
-static param_menu_item_t capscale_ref        = { I_FEATURE, &features[F_SCREENCAP_SIZE]       };
-static param_menu_item_t border_ref          = { I_FEATURE, &features[F_BORDER_COLOUR]         };
-static param_menu_item_t palettecontrol_ref  = { I_FEATURE, &features[F_PALETTE_CONTROL] };
-static param_menu_item_t ntsccolour_ref      = { I_FEATURE, &features[F_NTSC_COLOUR]     };
-static param_menu_item_t ntscphase_ref       = { I_FEATURE, &features[F_NTSC_PHASE]      };
-static param_menu_item_t ntsctype_ref        = { I_FEATURE, &features[F_NTSC_TYPE]       };
+
+
+static param_menu_item_t profile_ref         = { I_FEATURE, &features[F_PROFILE]          };
+static param_menu_item_t saved_ref           = { I_FEATURE, &features[F_SAVED_CONFIG]     };
+static param_menu_item_t subprofile_ref      = { I_FEATURE, &features[F_SUB_PROFILE]      };
+static param_menu_item_t resolution_ref      = { I_FEATURE, &features[F_RESOLUTION]       };
+static param_menu_item_t refresh_ref         = { I_FEATURE, &features[F_REFRESH]          };
+static param_menu_item_t hdmi_auto_ref       = { I_FEATURE, &features[F_HDMI_AUTO]        };
+static param_menu_item_t hdmi_ref            = { I_FEATURE, &features[F_HDMI_MODE]        };
+static param_menu_item_t hdmi_standby_ref    = { I_FEATURE, &features[F_HDMI_MODE_STANDBY]};
+static param_menu_item_t scaling_ref         = { I_FEATURE, &features[F_SCALING]          };
+static param_menu_item_t overscan_ref        = { I_FEATURE, &features[F_CROP_BORDER]      };
+static param_menu_item_t capscale_ref        = { I_FEATURE, &features[F_SCREENCAP_SIZE]   };
+static param_menu_item_t border_ref          = { I_FEATURE, &features[F_BORDER_COLOUR]    };
+static param_menu_item_t palettecontrol_ref  = { I_FEATURE, &features[F_PALETTE_CONTROL]  };
+static param_menu_item_t ntsccolour_ref      = { I_FEATURE, &features[F_NTSC_COLOUR]      };
+static param_menu_item_t ntscphase_ref       = { I_FEATURE, &features[F_NTSC_PHASE]       };
+static param_menu_item_t ntsctype_ref        = { I_FEATURE, &features[F_NTSC_TYPE]        };
 static param_menu_item_t ntscfringe_ref      = { I_FEATURE, &features[F_NTSC_QUALITY]     };
-static param_menu_item_t tint_ref            = { I_FEATURE, &features[F_TINT]           };
-static param_menu_item_t sat_ref             = { I_FEATURE, &features[F_SAT]            };
-static param_menu_item_t cont_ref            = { I_FEATURE, &features[F_CONT]           };
-static param_menu_item_t bright_ref          = { I_FEATURE, &features[F_BRIGHT]         };
-static param_menu_item_t gamma_ref           = { I_FEATURE, &features[F_GAMMA]          };
-static param_menu_item_t timingset_ref       = { I_FEATURE, &features[F_TIMING_SET]      };
-static param_menu_item_t palette_ref         = { I_FEATURE, &features[F_PALETTE]        };
-static param_menu_item_t m7deinterlace_ref   = { I_FEATURE, &features[F_MODE7_DEINTERLACE]  };
+static param_menu_item_t paloddline_ref      = { I_FEATURE, &features[F_PAL_ODD_LINE]     };
+static param_menu_item_t paloddlevel_ref     = { I_FEATURE, &features[F_PAL_ODD_LEVEL]    };
+static param_menu_item_t tint_ref            = { I_FEATURE, &features[F_TINT]             };
+static param_menu_item_t sat_ref             = { I_FEATURE, &features[F_SAT]              };
+static param_menu_item_t cont_ref            = { I_FEATURE, &features[F_CONT]             };
+static param_menu_item_t bright_ref          = { I_FEATURE, &features[F_BRIGHT]           };
+static param_menu_item_t gamma_ref           = { I_FEATURE, &features[F_GAMMA]            };
+static param_menu_item_t timingset_ref       = { I_FEATURE, &features[F_TIMING_SET]       };
+static param_menu_item_t palette_ref         = { I_FEATURE, &features[F_PALETTE]          };
+static param_menu_item_t m7deinterlace_ref   = { I_FEATURE, &features[F_MODE7_DEINTERLACE]};
 static param_menu_item_t deinterlace_ref     = { I_FEATURE, &features[F_NORMAL_DEINTERLACE]    };
 static param_menu_item_t m7scaling_ref       = { I_FEATURE, &features[F_MODE7_SCALING]      };
 static param_menu_item_t normalscaling_ref   = { I_FEATURE, &features[F_NORMAL_SCALING]  };
+static param_menu_item_t drop_frame_ref       = { I_FEATURE, &features[F_DROP_FRAME]  };
 static param_menu_item_t ffosd_ref           = { I_FEATURE, &features[F_FFOSD]          };
 static param_menu_item_t stretch_ref         = { I_FEATURE, &features[F_SWAP_ASPECT]        };
 static param_menu_item_t scanlines_ref       = { I_FEATURE, &features[F_SCANLINES]      };
@@ -684,14 +761,47 @@ static param_menu_item_t oclock_sdram_ref    = { I_FEATURE, &features[F_OVERCLOC
 static param_menu_item_t res_status_ref      = { I_FEATURE, &features[F_POWERUP_MESSAGE]        };
 static param_menu_item_t yuv_pixel_ref       = { I_FEATURE, &features[F_YUV_PIXEL_DOUBLE]      };
 static param_menu_item_t aspect_ref          = { I_FEATURE, &features[F_INTEGER_ASPECT]         };
+
+static param_menu_item_t profile_num_ref     = { I_FEATURE, &features[F_PROFILE_NUM]   };
+static param_menu_item_t h_width_ref         = { I_FEATURE, &features[F_H_WIDTH]       };
+static param_menu_item_t v_height_ref        = { I_FEATURE, &features[F_V_HEIGHT]      };
+static param_menu_item_t clock_ref           = { I_FEATURE, &features[F_CLOCK]         };
+static param_menu_item_t line_len_ref        = { I_FEATURE, &features[F_LINE_LEN]      };
+static param_menu_item_t h_offset_ref        = { I_FEATURE, &features[F_H_OFFSET]      };
+static param_menu_item_t v_offset_ref        = { I_FEATURE, &features[F_V_OFFSET]      };
+
 #ifndef HIDE_INTERFACE_SETTING
 static param_menu_item_t frontend_ref        = { I_FEATURE, &features[F_FRONTEND]       };
 #endif
 
-static child_menu_item_t update_cpld_menu_ref = { I_MENU, &update_cpld_menu };
+static menu_t custom_profile_menu = {
+   "Create Custom Profile",
+   NULL,
+   {
+      (base_menu_item_t *) &back_ref,
+      (base_menu_item_t *) &analyse_timing_ref,
+      (base_menu_item_t *) &h_width_ref,
+      (base_menu_item_t *) &v_height_ref,
+      (base_menu_item_t *) &clock_ref,
+      (base_menu_item_t *) &line_len_ref,
+      (base_menu_item_t *) &h_offset_ref,
+      (base_menu_item_t *) &v_offset_ref,
+      (base_menu_item_t *) &cal_sampling_no_save_ref,
+      //(base_menu_item_t *) &palette_ref,
+      (base_menu_item_t *) &profile_num_ref,
+      (base_menu_item_t *) &save_custom_profile_ref,
+      (base_menu_item_t *) &delete_custom_profile_ref,
+      (base_menu_item_t *) &help_custom_profile_ref,
+      (base_menu_item_t *) &help_custom_hints_ref,
+      NULL
+   }
+};
+
+static child_menu_item_t update_cpld_menu_ref  = { I_MENU, &update_cpld_menu };
+static child_menu_item_t custom_profile_ref = { I_CREATE, &custom_profile_menu };
 
 static menu_t info_menu = {
-   "Info Menu",
+   "Info & Help Menu",
    NULL,
    {
       (base_menu_item_t *) &back_ref,
@@ -700,12 +810,15 @@ static menu_t info_menu = {
       (base_menu_item_t *) &cal_summary_ref,
       (base_menu_item_t *) &cal_detail_ref,
       (base_menu_item_t *) &cal_raw_ref,
+      (base_menu_item_t *) &help_quickstart_ref,
       (base_menu_item_t *) &help_buttons_ref,
       (base_menu_item_t *) &help_calibration_ref,
       (base_menu_item_t *) &help_artifacts_ref,
       (base_menu_item_t *) &help_flashing_ref,
       (base_menu_item_t *) &help_noise_ref,
       (base_menu_item_t *) &help_updates_ref,
+      (base_menu_item_t *) &help_custom_profile_ref,
+      (base_menu_item_t *) &help_custom_hints_ref,
       (base_menu_item_t *) &save_list_ref,
       (base_menu_item_t *) &save_log_ref,
       (base_menu_item_t *) &credits_ref,
@@ -736,6 +849,8 @@ static menu_t palette_menu = {
       (base_menu_item_t *) &ntscphase_ref,
       (base_menu_item_t *) &ntsctype_ref,
       (base_menu_item_t *) &ntscfringe_ref,
+      (base_menu_item_t *) &paloddline_ref,
+      (base_menu_item_t *) &paloddlevel_ref,
       NULL
    }
 };
@@ -753,6 +868,7 @@ static menu_t preferences_menu = {
       (base_menu_item_t *) &deinterlace_ref,
       (base_menu_item_t *) &m7scaling_ref,
       (base_menu_item_t *) &normalscaling_ref,
+      (base_menu_item_t *) &drop_frame_ref,
       (base_menu_item_t *) &capscale_ref,
       (base_menu_item_t *) &yuv_pixel_ref,
       (base_menu_item_t *) &aspect_ref,
@@ -760,6 +876,7 @@ static menu_t preferences_menu = {
       NULL
    }
 };
+
 
 static menu_t settings_menu = {
    "Settings Menu",
@@ -774,6 +891,8 @@ static menu_t settings_menu = {
       (base_menu_item_t *) &genlock_adjust_ref,
       (base_menu_item_t *) &nbuffers_ref,
       (base_menu_item_t *) &ffosd_ref,
+      (base_menu_item_t *) &hdmi_auto_ref,
+      (base_menu_item_t *) &hdmi_ref,
       (base_menu_item_t *) &hdmi_standby_ref,
       (base_menu_item_t *) &return_ref,
       (base_menu_item_t *) &oclock_cpu_ref,
@@ -1051,7 +1170,7 @@ static char manufacturer_names[MAX_PROFILES][MAX_PROFILE_WIDTH];
 static char profile_names[MAX_PROFILES][MAX_PROFILE_WIDTH];
 static char sub_profile_names[MAX_SUB_PROFILES][MAX_PROFILE_WIDTH];
 static char resolution_names[MAX_NAMES][MAX_NAMES_WIDTH];
-static char favourite_names[MAX_FAVOURITES][MAX_PROFILE_WIDTH];
+static char favourite_names[MAX_FAVOURITES + 1][MAX_PROFILE_WIDTH];
 static char current_cpld_prefix[MAX_PROFILE_WIDTH];
 static char BBC_cpld_prefix[MAX_PROFILE_WIDTH];
 static char RGB_cpld_prefix[MAX_PROFILE_WIDTH];
@@ -1087,6 +1206,8 @@ typedef struct {
    int sync_type;
    int lower_limit;
    int upper_limit;
+   int lower_frame_limit;
+   int upper_frame_limit;
 } autoswitch_info_t;
 
 static autoswitch_info_t autoswitch_info[MAX_SUB_PROFILES];
@@ -1107,11 +1228,11 @@ void set_menu_table() {
       main_menu.items[index++] = (base_menu_item_t *) &settings_menu_ref;
       main_menu.items[index++] = (base_menu_item_t *) &geometry_menu_ref;
       main_menu.items[index++] = (base_menu_item_t *) &sampling_menu_ref;
+      main_menu.items[index++] = (base_menu_item_t *) &custom_profile_ref,
       main_menu.items[index++] = (base_menu_item_t *) &save_ref;
       main_menu.items[index++] = (base_menu_item_t *) &restore_ref;
       if (frontend != FRONTEND_SIMPLE) main_menu.items[index++] = (base_menu_item_t *) &cal_sampling_ref;
       main_menu.items[index++] = (base_menu_item_t *) &test_50hz_ref,
-      main_menu.items[index++] = (base_menu_item_t *) &hdmi_ref;
       main_menu.items[index++] = (base_menu_item_t *) &resolution_ref;
       main_menu.items[index++] = (base_menu_item_t *) &refresh_ref;
       main_menu.items[index++] = (base_menu_item_t *) &scaling_ref;
@@ -1192,6 +1313,87 @@ static void cycle_menus() {
    cycle_menu(&settings_menu);
 }
 
+int lumacode_multiplier() {
+    switch (get_parameter(F_PALETTE_CONTROL)) {
+        default:
+            return 1;
+            break;
+        case PALETTECONTROL_ATARI_GTIA:
+        case PALETTECONTROL_C64_LUMACODE:
+            return 2;
+            break;
+        case PALETTECONTROL_ATARI_LUMACODE:
+            return 3;
+            break;
+        case PALETTECONTROL_ATARI2600_LUMACODE:
+            return 4;
+            break;
+    }
+
+}
+
+static void autoset_geometry() {
+    geometry_set_value(H_ASPECT, 0);
+    geometry_set_value(V_ASPECT, 0);
+
+    geometry_set_value(SYNC_TYPE, capinfo->detected_sync_type & SYNC_BIT_MASK);
+
+    if (get_parameter(F_AUTO_SWITCH) == AUTOSWITCH_MODE7 && geometry_get_value(SYNC_TYPE) < SYNC_COMP) {
+        set_parameter(F_AUTO_SWITCH, AUTOSWITCH_OFF);
+    }
+
+    int fbsize_x2 = 0;
+    if (geometry_get_value(MIN_H_WIDTH) <= 400 ) {
+        fbsize_x2 |= SIZEX2_DOUBLE_WIDTH;
+    }
+    if (geometry_get_value(MIN_V_HEIGHT) <= 262 ) {
+        fbsize_x2 |= SIZEX2_DOUBLE_HEIGHT;
+    }
+
+/*
+    int min_h_width = geometry_get_value(MIN_H_WIDTH);
+    int limit_h_width = (((geometry_get_value(LINE_LEN) * 92 / 100) + 4) >> 3) << 3;
+    if (min_h_width > limit_h_width) {
+        min_h_width = limit_h_width;
+       geometry_set_value(MIN_H_WIDTH, min_h_width);
+       set_parameter(F_H_WIDTH, min_h_width);
+    }
+*/
+
+    int line_len_min = lumacode_multiplier() * geometry_get_value(MIN_H_WIDTH) * 109 / 100;
+    int line_len_max = lumacode_multiplier() * geometry_get_value(MIN_H_WIDTH) * 176 / 100;
+    if (geometry_get_value(LINE_LEN) < line_len_min || geometry_get_value(LINE_LEN) > line_len_max) {
+        set_status_message("Line length invalid for pixel width");
+    }
+
+
+    if (geometry_get_value(MIN_V_HEIGHT) > get_lines_per_vsync(0)) {
+       geometry_set_value(MIN_V_HEIGHT, (get_lines_per_vsync(0) >> 1) << 1);
+       set_parameter(F_V_HEIGHT, (get_lines_per_vsync(0) >> 1) << 1);
+    }
+
+    geometry_set_value(FB_SIZEX2, fbsize_x2);
+    geometry_set_value(LINES_FRAME, get_lines_per_vsync(0));
+
+    int max_h_width = (((geometry_get_value(LINE_LEN) * 75 / 100 / lumacode_multiplier()) + 4) >> 3) << 3;
+    if (max_h_width < geometry_get_value(MIN_H_WIDTH)) {
+        max_h_width = geometry_get_value(MIN_H_WIDTH);
+    }
+    geometry_set_value(MAX_H_WIDTH, max_h_width);
+
+    int max_v_height = (((geometry_get_value(LINES_FRAME) * 90 / 100) + 1) >> 1) << 1;
+    if (max_v_height < geometry_get_value(MIN_V_HEIGHT)) {
+        max_v_height = geometry_get_value(MIN_V_HEIGHT);
+    }
+    geometry_set_value(MAX_V_HEIGHT, max_v_height);
+
+    int h_offset = ((((geometry_get_value(LINE_LEN) / lumacode_multiplier() - geometry_get_value(MIN_H_WIDTH)) / 2) + 2) >> 2) << 2;
+    geometry_set_value(H_OFFSET, h_offset - get_parameter(F_H_OFFSET));
+
+    int v_offset = ((((geometry_get_value(LINES_FRAME) - geometry_get_value(MIN_V_HEIGHT)) / 2) + 1) >> 1) << 1;
+    geometry_set_value(V_OFFSET, v_offset - get_parameter(F_V_OFFSET));
+}
+
 
 static int get_feature(int num) {
     return get_parameter(num);
@@ -1210,13 +1412,67 @@ static void set_feature(int num, int value) {
       set_parameter(num, value);
       break;
 
+   case F_H_OFFSET:
+      set_parameter(num, value);
+      autoset_geometry();
+      break;
+
+   case F_V_OFFSET:
+      set_parameter(num, value);
+      autoset_geometry() ;
+      break;
+
+   case F_H_WIDTH:
+      int line_len = geometry_get_value(LINE_LEN);
+      int line_len_min = lumacode_multiplier() * value * 110 / 100;
+      int line_len_max = lumacode_multiplier() * value * 175 / 100;
+      set_parameter(num, value);
+      geometry_set_value(MIN_H_WIDTH, value);
+      if (line_len < line_len_min) {
+          set_feature(F_LINE_LEN, line_len_min);
+      } else if (line_len > line_len_max) {
+          set_feature(F_LINE_LEN, line_len_max);
+      }
+      autoset_geometry();
+      break;
+
+   case F_V_HEIGHT:
+      set_parameter(num, value);
+      geometry_set_value(MIN_V_HEIGHT, value);
+      autoset_geometry() ;
+      break;
+
+   case F_CLOCK:
+      value = value - (value % 1000);
+      set_parameter(num, value);
+      geometry_set_value(CLOCK, value);
+      double one_clock_cycle_ns = 1000000000.0f / (double)value;
+      int new_line_len = (int) (((double) get_one_line_time_ns() / one_clock_cycle_ns) + 0.5f);
+      geometry_set_value(LINE_LEN, new_line_len);
+      set_parameter(F_LINE_LEN, new_line_len);
+      autoset_geometry();
+      break;
+
+   case F_LINE_LEN:
+      set_parameter(num, value);
+      geometry_set_value(LINE_LEN, value);
+      int new_clock = (int) ((1000000000.0f/((double) get_one_line_time_ns() / value)) + 0.5f);
+      geometry_set_value(CLOCK, new_clock);
+      set_parameter(F_CLOCK, new_clock);
+      autoset_geometry();
+      break;
+
    case F_RESOLUTION:
       set_resolution(value, resolution_names[value], 1);
       break;
    case F_REFRESH:
       set_refresh(value, 1);
       break;
+   case F_HDMI_AUTO:
+      set_hdmi_auto(value, 1);
+      break;
    case F_HDMI_MODE:
+      set_hdmi_auto(0, 1);
       set_hdmi(value, 1);
       break;
    case F_SCALING:
@@ -1304,6 +1560,8 @@ static void set_feature(int num, int value) {
    case F_NTSC_COLOUR:
    case F_OUTPUT_COLOUR:
    case F_OUTPUT_INVERT:
+   case F_PAL_ODD_LEVEL:
+   case F_PAL_ODD_LINE:
       set_parameter(num, value);
       osd_update_palette();
       break;
@@ -1323,10 +1581,24 @@ static void set_feature(int num, int value) {
    }
 }
 
+static void analyse_timing(int line) {
+    set_parameter(F_H_OFFSET, 0);
+    set_parameter(F_V_OFFSET, 0);
+    geometry_set_value(VSYNC_TYPE, 0);
+    geometry_set_value(VIDEO_TYPE, 0);
+    set_feature(F_H_WIDTH, get_parameter(F_H_WIDTH));
+    set_feature(F_LINE_LEN, get_parameter(F_LINE_LEN));
+    line++;
+    osd_set(line++, 0, "Geometry parameters have been set based on");
+    osd_set(line++, 0, "current video source and menu settings.");
+    osd_set(line++, 0, "H & V Offsets have been reset to 0.");
+}
+
 // Wrapper to extract the name of a menu item
 static const char *item_name(base_menu_item_t *item) {
    switch (item->type) {
    case I_MENU:
+   case I_CREATE:
       return ((child_menu_item_t *)item)->child->name;
    case I_FEATURE:
    case I_GEOMETRY:
@@ -1391,7 +1663,11 @@ static void toggle_param(param_menu_item_t *param_item) {
 
 static const char *get_interface_name() {
     if (eight_bit_detected()) {
-    return frontend_names_8[get_parameter(F_FRONTEND)];
+        if (mono_board_detected()) {
+            return frontend_names_mono_luma[get_parameter(F_FRONTEND)];
+        } else {
+            return frontend_names_8[get_parameter(F_FRONTEND)];
+        }
     } else {
     return frontend_names_6[get_parameter(F_FRONTEND)];
     }
@@ -1416,6 +1692,8 @@ static const char *get_param_string(param_menu_item_t *param_item) {
          return resolution_names[value];
       case F_REFRESH:
          return refresh_names[value];
+      case F_HDMI_AUTO:
+         return hdmi_auto_names[value];
       case F_HDMI_MODE:
          return hdmi_names[value];
       case F_SCALING:
@@ -1463,6 +1741,8 @@ static const char *get_param_string(param_menu_item_t *param_item) {
          return ntsctype_names[value];
       case F_NTSC_QUALITY:
          return fringe_names[value];
+      case F_PAL_ODD_LINE:
+         return pal_odd_names[value];
       case F_TIMING_SET:
          return alt_profile_names[value];
       case F_INTEGER_ASPECT:
@@ -1550,11 +1830,7 @@ static void info_system_summary(int line) {
            (cpld->get_version() >> VERSION_MAJOR_BIT) & 0xF,
            (cpld->get_version() >> VERSION_MINOR_BIT) & 0xF);
    osd_set(line++, 0, message);
-   if (mono_board_detected()) {
-       sprintf(message, "      Interface: 8 Bit Analog Mono / LumaCode");
-   } else {
-       sprintf(message, "      Interface: %s", get_interface_name());
-   }
+   sprintf(message, "      Interface: %s", get_interface_name());
    osd_set(line++, 0, message);
 
    switch (_get_hardware_id()) {
@@ -1644,13 +1920,37 @@ static void info_system_summary(int line) {
    osd_set(line++, 0, message);
 }
 
+static void info_help_quickstart(int line) {
+   osd_set(line++, 0, "Connect your computer as indicated in");
+   osd_set(line++, 0, "the project wiki.");
+   osd_set(line++, 0, "");
+   osd_set(line++, 0, "Use the Select Profile Menu to select");
+   osd_set(line++, 0, "the correct profile for your computer.");
+   osd_set(line++, 0, "");
+   osd_set(line++, 0, "Select 'Auto Calibrate Video Sampling' to");
+   osd_set(line++, 0, "set the optimal sampling phase for your");
+   osd_set(line++, 0, "computer. Either select the menu option");
+   osd_set(line++, 0, "or use a long press of SW3 (Up).");
+   osd_set(line++, 0, "Press SW1 (Menu) when complete to save the");
+   osd_set(line++, 0, "new calibration value.");
+   osd_set(line++, 0, "");
+   osd_set(line++, 0, "If your computer uses 50Hz video refresh,");
+   osd_set(line++, 0, "select the 'Test Monitor for 50Hz Support'");
+   osd_set(line++, 0, "option and follow the on screen help.");
+   osd_set(line++, 0, "");
+   osd_set(line++, 0, "Most settings should be set to sensible");
+   osd_set(line++, 0, "defaults but you can customise them as");
+   osd_set(line++, 0, "required then use 'Save Configuration' to");
+   osd_set(line++, 0, "save those changes.");
+}
+
 static void info_help_buttons(int line) {
    osd_set(line++, 0, "SW1 short press: Menu on");
    osd_set(line++, 0, "SW1 long press: Scan lines on/off");
    osd_set(line++, 0, "SW1 in menu: select option");
    osd_set(line++, 0, "");
    osd_set(line++, 0, "SW2 short press: Screencap");
-   osd_set(line++, 0, "SW2 long press: NTSC artifacts on/off");
+   osd_set(line++, 0, "SW2 long press: NTSC/PAL artifacts on/off");
    osd_set(line++, 0, "SW2 in menu: cursor down / increase value");
    osd_set(line++, 0, "");
    osd_set(line++, 0, "SW3 short press depends on setting:");
@@ -1667,7 +1967,6 @@ static void info_help_buttons(int line) {
    osd_set(line++, 0, "During reset:");
    osd_set(line++, 0, "Hold SW1 for default resolution");
    osd_set(line++, 0, "Hold SW1 + SW2 + SW3 for CPLD menu");
-
 }
 
 static void info_help_calibration(int line) {
@@ -1702,7 +2001,7 @@ static void info_help_flashing(int line) {
    osd_set(line++, 0, "match any of the profiles in the currently");
    osd_set(line++, 0, "selected autoswitch sub-profile set.");
    osd_set(line++, 0, "");
-   osd_set(line++, 0, "Try reducing the minimum and maximum sizes");
+   osd_set(line++, 0, "Try reducing the min/max sizes and offsets");
    osd_set(line++, 0, "in the geometry menu. For timing problems,");
    osd_set(line++, 0, "a match is determined by the following:");
    osd_set(line++, 0, "1 'Lines per Frame' matches detected");
@@ -1714,10 +2013,9 @@ static void info_help_flashing(int line) {
    osd_set(line++, 0, "info at the top of the screen and the");
    osd_set(line++, 0, "settings should be adjusted to match.");
    osd_set(line++, 0, "");
-   osd_set(line++, 0, "'Clock Frequency' and 'Line Length' both");
-   osd_set(line++, 0, "affect the PPM error but only one");
-   osd_set(line++, 0, "combination will be correct. See 'Tutorial");
-   osd_set(line++, 0, "on adding a new profile' in the wiki");
+   osd_set(line++, 0, "The 'Create Custom Profile' menu can help");
+   osd_set(line++, 0, "with changing the above settings on a");
+   osd_set(line++, 0, "profile without creating a new one.");
 }
 
 static void info_help_noise(int line) {
@@ -1758,7 +2056,6 @@ static void info_help_artifacts(int line) {
    osd_set(line++, 0, "If Apple II artifacts do not switch");
    osd_set(line++, 0, "automatically, try adjusting the Y lo DAC");
    osd_set(line++, 0, "setting (colour burst detect level).");
-   osd_set(line++, 0, "");
    osd_set(line++, 0, "For single core Pi models (e.g. zero) only");
    osd_set(line++, 0, "CGA mono mode is supported for artifacts.");
    osd_set(line++, 0, "Full CGA artifact emulation for the four");
@@ -1790,10 +2087,58 @@ static void info_help_updates(int line) {
    osd_set(line++, 0, "on the above github pages");
 }
 
+static void info_help_custom_profile(int line) {
+   osd_set(line++, 0, "Either select one of the Base Profiles or");
+   osd_set(line++, 0, "a profile that is similar to the source.");
+   osd_set(line++, 0, "Fill the source screen with alternating");
+   osd_set(line++, 0, "vertical black and white lines or the");
+   osd_set(line++, 0, "letter 'M' or 'W' or similar detail.");
+   osd_set(line++, 0, "Select 'Create Custom Profile' and press");
+   osd_set(line++, 0, "again to analyse sync if requested.");
+   osd_set(line++, 0, "Select Analyse Timing on first entry.");
+   osd_set(line++, 0, "Set the source H & V pixel resolution.");
+   osd_set(line++, 0, "Either set the pixel clock frequency or");
+   osd_set(line++, 0, "Line Length (in clock cycles) if known.");
+   osd_set(line++, 0, "If not known, adjust the line length until");
+   osd_set(line++, 0, "all columns of noise have disappeared");
+   osd_set(line++, 0, "or noise appears across the width of the");
+   osd_set(line++, 0, "screen. (Confirm that such noise cleans");
+   osd_set(line++, 0, "up when selecting Auto Calibration)");
+   osd_set(line++, 0, "Use H and V Offset to centre the image.");
+   osd_set(line++, 0, "Make changes in other menus if required.");
+   osd_set(line++, 0, "Run a final Auto Calibration.");
+   osd_set(line++, 0, "Set custom profile number (0-9).");
+   osd_set(line++, 0, "Select Save Custom Profile and reboot.");
+}
+
+static void info_help_custom_hints(int line) {
+   osd_set(line++, 0, "When selecting Create Profile you will get");
+   osd_set(line++, 0, "an error if sync not detected so re-select");
+   osd_set(line++, 0, "to try to auto detect the sync type.");
+   osd_set(line++, 0, "If the source is analog, the sampling menu");
+   osd_set(line++, 0, "DAC levels have to be adjusted first to");
+   osd_set(line++, 0, "ensure that sync and video are detected.");
+   osd_set(line++, 0, "When adjusting the Pixel Width, the Line");
+   osd_set(line++, 0, "Length will be clipped to be between 110%");
+   osd_set(line++, 0, "and 175% of that value. When changing the");
+   osd_set(line++, 0, "Line Length a warning is displayed if the");
+   osd_set(line++, 0, "value goes outside that sensible range.");
+   osd_set(line++, 0, "When adjusting the Clock, the Line Length");
+   osd_set(line++, 0, "will be altered to match the current");
+   osd_set(line++, 0, "timing and vice-versa and either value");
+   osd_set(line++, 0, "should be adjusted until there are no");
+   osd_set(line++, 0, "columns of noise. When getting close to");
+   osd_set(line++, 0, "the correct value the columns will reduce");
+   osd_set(line++, 0, "in number and be more widely spaced.");
+   osd_set(line++, 0, "If the sample phase is not set correctly");
+   osd_set(line++, 0, "then the correct line length may result in");
+   osd_set(line++, 0, "all pixels being noisy instead of clean.");
+}
+
 static void info_credits(int line) {
    osd_set(line++, 0, "Many thanks to our main developers:");
-   osd_set(line++, 0, "- David Banks (hoglet)");
-   osd_set(line++, 0, "- Ian Bradbury (IanB)");
+   osd_set(line++, 0, "- David Banks (hoglet) - Original Dev.");
+   osd_set(line++, 0, "- Ian Bradbury (IanB) - Current Dev.");
    osd_set(line++, 0, "- Dominic Plunkett (dp11)");
    osd_set(line++, 0, "- Ed Spittles (BigEd)");
    osd_set(line++, 0, "");
@@ -2074,10 +2419,9 @@ static void redraw_menu() {
          char sel_none    = ' ';
          char sel_open    = (i == current) ? '>' : sel_none;
          char sel_close   = (i == current) ? '<' : sel_none;
-         const char *name = item_name(item);
+         char *name = (char*) item_name(item);
          *mp++ = (osd_state != PARAM) ? sel_open : sel_none;
          if ((item)->type == I_PICKMAN) {
-             ;
              if (name[0] == '_') {
                 strcpy(mp, name + 1);
              } else {
@@ -2093,9 +2437,10 @@ static void redraw_menu() {
              }
          } else if ((item)->type == I_PICKPRO) {
              char *index = strchr(name, '/');
-
+             int offset = 0;
              if (index) {
-                int offset = 0;
+                index++;
+
                 if (strncmp(name, current_cpld_prefix, cpld_prefix_length) != 0) {
                     if (strncmp(name, BBC_cpld_prefix, cpld_prefix_length) == 0) {
                         strcpy(mp, BBC_cpld_prefix);
@@ -2110,10 +2455,15 @@ static void redraw_menu() {
                         offset = cpld_prefix_length;
                     }
                 }
-                strcpy(mp + offset, index + 1);
              } else {
-                strcpy(mp, name);
+                 index = name;
              }
+             if (index[0] == '_') {
+                 strcpy(mp + offset, index + 1);
+             } else {
+                 strcpy(mp + offset, index);
+             }
+
              if (mp[strlen(mp) - 1] == '_') {
                 mp[strlen(mp) - 1] = 0;
              }
@@ -2139,9 +2489,14 @@ static void redraw_menu() {
             if ((item)->type == I_FEATURE && ((param_menu_item_t *)item)->param->key == F_PROFILE) {
                 char *index = strchr(get_param_string((param_menu_item_t *)item), '/');
                 if (index) {
+                    index++;
+                } else {
+                    index = (char*) get_param_string((param_menu_item_t *)item);
+                }
+                if (index[0] == '_') {
                     strcpy(mp, index + 1);
                 } else {
-                    strcpy(mp, get_param_string((param_menu_item_t *)item));
+                    strcpy(mp, index);
                 }
             } else {
                 strcpy(mp, get_param_string((param_menu_item_t *)item));
@@ -2658,11 +3013,9 @@ void generate_palettes() {
 #define rm  0x00    // r-y minus
 
 int max_palette_count;
-int luma_palette;
 
     for(int palette = 0; palette < NUM_PALETTES; palette++) {
         max_palette_count = 64;  //default
-        luma_palette = 0;
         for (int i = 0; i < 256; i++) {
             int r = 0;
             int g = 0;
@@ -2728,6 +3081,16 @@ int luma_palette;
                     g = (i & 2) ? m : 0x00;
                     b = (i & 4) ? m : 0x00;
                     max_palette_count = 32;
+                    break;
+
+                 case PALETTE_RGBISPECTRUMLUMACODE:
+                    static int spectrum_translate[] = {0, 8, 9, 3, 1, 2, 11, 5, 10, 4, 13, 14, 12, 6, 7, 15,};
+                    int s = spectrum_translate[i];
+                    m = (s & 8) ? 0xff : 0xd7;
+                    r = (s & 2) ? m : 0x00;
+                    g = (s & 4) ? m : 0x00;
+                    b = (s & 1) ? m : 0x00;
+                    max_palette_count = 16;
                     break;
 
                  case PALETTE_LASER:
@@ -2914,9 +3277,6 @@ int luma_palette;
 
                  case PALETTE_DRAGON_COCO:
                  case PALETTE_DRAGON_COCO_FULL: {
-                  if ((i & 0x40) == 0x40) {
-                    r = 0xff; g = 0; b = 0;
-                  } else {
                     switch (i & 0x2d) {  //these five are luma independent
                         case (bz + rp):
                            yuv2rgb(maxdesat, mindesat, luma_scale, blank_ref, 650, 2000, 2500, &r, &g, &b, &m); r = 254; g =   0; b =  0; break; // red
@@ -2965,14 +3325,10 @@ int luma_palette;
                         }
                         break;
                     }
-                  }
                  }
                  break;
 
                  case PALETTE_ATOM_6847_EMULATORS: {
-                  if ((i & 0x40) == 0x40) {
-                    r = 0xff; g = 0; b = 0;
-                  } else {
                     switch (i & 0x2d) {  //these five are luma independent
                         case (bz + rp):
                            yuv2rgb(maxdesat, mindesat, luma_scale, blank_ref, 650, 2000, 2500, &r, &g, &b, &m); r = 181; g =   5; b =  34; break; // red
@@ -3020,14 +3376,10 @@ int luma_palette;
                         }
                         break;
                     }
-                  }
                  }
                  break;
 
                  case PALETTE_ATOM_MKII: {
-                  if ((i & 0x40) == 0x40) {
-                    r = 0xff; g = 0; b = 0;
-                  } else {
                     switch (i & 0x2d) {  //these five are luma independent
                         case (bz + rp):
                            yuv2rgb(maxdesat, mindesat, luma_scale, blank_ref, 650, 2000, 2500, &r, &g, &b, &m); r=0xff; g=0x00; b=0x00; break; // red
@@ -3075,15 +3427,11 @@ int luma_palette;
                         }
                         break;
                     }
-                  }
                  }
                  break;
 
                  case PALETTE_ATOM_MKII_PLUS:
                  case PALETTE_ATOM_MKII_FULL: {
-                  if ((i & 0x40) == 0x40) {
-                    r = 0xff; g = 0; b = 0;
-                  } else {
                     switch (i & 0x2d) {  //these five are luma independent
                         case (bz + rp):
                            yuv2rgb(maxdesat, mindesat, luma_scale, blank_ref, 650, 2000, 2500, &r, &g, &b, &m); r=0xff; g=0x00; b=0x00; break; // red
@@ -3131,7 +3479,6 @@ int luma_palette;
                         }
                         break;
                     }
-                  }
                  }
                  break;
 
@@ -3151,6 +3498,18 @@ int luma_palette;
                         case 0x10:
                         case 0x02:
                             r = 0x7f; break ;
+                        case 0x12:
+                            r = 0xff; break ;
+                    }
+                    g = r; b = r;
+                    break;
+                 case PALETTE_MONO3_BRIGHT:
+                    switch (i & 0x12) {
+                        case 0x00:
+                            r = 0x00; break ;
+                        case 0x10:
+                        case 0x02:
+                            r = 0xaa; break ;
                         case 0x12:
                             r = 0xff; break ;
                     }
@@ -3412,6 +3771,64 @@ int luma_palette;
                  }
                  break;
 
+                 case PALETTE_TILUMACODE: {
+                    r=g=b=0;
+
+                    switch (i & 0x0f) {
+                        default:
+                        case 0:
+                        r = 0x00;g=0x00;b=0x00; //black
+                        break;
+                        case 1:
+                        r = 0x5b;g=0x56;b=0xd7; //dk blue
+                        break;
+                        case 2:
+                        r = 0xd5;g=0x68;b=0x5d; //md red
+                        break;
+                        case 3:
+                        r = 0xf9;g=0x8c;b=0x81; //lt red
+                        break;
+                        case 4:
+                        r = 0x00;g=0x00;b=0x00; //black
+                        break;
+                        case 5:
+                        r = 0xb5;g=0x60;b=0x54; //dk red
+                        break;
+                        case 6:
+                        r = 0x81;g=0x78;b=0xea; //lt blue
+                        break;
+                        case 7:
+                        r = 0x6c;g=0xda;b=0xec; //cyan
+                        break;
+                        case 8:
+                        r = 0x3f;g=0x9f;b=0x45; //dk green
+                        break;
+                        case 9:
+                        r = 0x44;g=0xb5;b=0x4e; //md green
+                        break;
+                        case 10:
+                        r = 0x79;g=0xce;b=0x70; //lt green
+                        break;
+                        case 11:
+                        r = 0xcc;g=0xcc;b=0xcc; //grey
+                        break;
+                        case 12:
+                        r = 0xb4;g=0x69;b=0xb2; //magenta
+                        break;
+                        case 13:
+                        r = 0xcc;g=0xc3;b=0x66; //dk yellow
+                        break;
+                        case 14:
+                        r = 0xde;g=0xd1;b=0x8d; //lt yellow
+                        break;
+                        case 15:
+                        r = 0xff;g=0xff;b=0xff; //white
+                        break;
+                    }
+                 }
+                 max_palette_count = 16;
+                 break;
+
                  case PALETTE_SPECTRUM48K:
                     r=g=b=0;
 
@@ -3669,666 +4086,701 @@ int luma_palette;
                     }
                  break;
 
+/*
                 case PALETTE_C64_REV1:
                 case PALETTE_C64: {
-                    luma_palette = 1;
                     int revision = palette == PALETTE_C64_REV1 ? 0 : 1;
                     double brightness = 50;
                     double contrast = 100;
                     double saturation = 50;
                     r=g=b=0;
-                    if ((i & 0x7f) < 0x40) {
                         switch (i & 0x3f) {
                             case (g0+b1+r1):
+                            c64_YUV_palette_lookup[i] = 0;
                             create_colodore_colours(0, revision, brightness, contrast, saturation, &r, &g, &b, &m); //black
                             break;
                             case (g3+b1+r1):
+                            c64_YUV_palette_lookup[i] = 15;
                             create_colodore_colours(1, revision, brightness, contrast, saturation, &r, &g, &b, &m); //white
                             break;
                             case (g0+b1+r3):
+                            c64_YUV_palette_lookup[i] = 2;
                             create_colodore_colours(2, revision, brightness, contrast, saturation, &r, &g, &b, &m); //red
                             break;
-
                             case (g3+b3+r0):
+                            c64_YUV_palette_lookup[i] = 7;
                             create_colodore_colours(3, revision, brightness, contrast, saturation, &r, &g, &b, &m); //cyan
                             break;
                             case (g1+b3+r3):
+                            c64_YUV_palette_lookup[i] = 3;
                             create_colodore_colours(4, revision, brightness, contrast, saturation, &r, &g, &b, &m); //violet
                             break;
                             case (g1+b0+r0):
+                            c64_YUV_palette_lookup[i] = 12;
                             create_colodore_colours(5, revision, brightness, contrast, saturation, &r, &g, &b, &m); //green
                             break;
 
                             case (g0+b3+r1):
+                            c64_YUV_palette_lookup[i] = 1;
                             create_colodore_colours(6, revision, brightness, contrast, saturation, &r, &g, &b, &m); //blue
                             break;
                             case (g3+b0+r1):
+                            c64_YUV_palette_lookup[i] = 11;
                             create_colodore_colours(7, revision, brightness, contrast, saturation, &r, &g, &b, &m); //yellow
                             break;
                             case (g1+b0+r3):
+                            c64_YUV_palette_lookup[i] = 8;
                             create_colodore_colours(8, revision, brightness, contrast, saturation, &r, &g, &b, &m); //orange
                             break;
 
                             case (g0+b0+r1):
+                            c64_YUV_palette_lookup[i] = 4;
                             create_colodore_colours(9, revision, brightness, contrast, saturation, &r, &g, &b, &m); //brown
                             break;
                             case (g1+b1+r3):
+                            c64_YUV_palette_lookup[i] = 13;
                             create_colodore_colours(10, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light red
                             break;
                             case (g0+b1+r0):
+                            c64_YUV_palette_lookup[i] = 5;
                             create_colodore_colours(11, revision, brightness, contrast, saturation, &r, &g, &b, &m); //dark grey
                             break;
 
                             case (g1+b1+r1):
+                            c64_YUV_palette_lookup[i] = 6;
                             create_colodore_colours(12, revision, brightness, contrast, saturation, &r, &g, &b, &m); //grey2
                             break;
                             case (g3+b0+r0):
+                            c64_YUV_palette_lookup[i] = 14;
                             create_colodore_colours(13, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light green
                             break;
                             case (g1+b3+r1):
+                            c64_YUV_palette_lookup[i] = 9;
                             create_colodore_colours(14, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light blue
                             break;
 
                             case (g3+b1+r0):
+                            c64_YUV_palette_lookup[i] = 10;
                             create_colodore_colours(15, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light grey
                             break;
 
                         }
-                    } else {
-                        switch (i & 0x0f) {
-                            case (0):
-                            create_colodore_colours(0, revision, brightness, contrast, saturation, &r, &g, &b, &m); //black
-                            break;
-                            case (1):
-                            create_colodore_colours(6, revision, brightness, contrast, saturation, &r, &g, &b, &m); //blue
-                            break;
-                            case (2):
-                            create_colodore_colours(2, revision, brightness, contrast, saturation, &r, &g, &b, &m); //red
-                            break;
-                            case (3):
-                            create_colodore_colours(4, revision, brightness, contrast, saturation, &r, &g, &b, &m); //violet
-                            break;
 
+                 }
+                 break;
+*/
 
-                            case (4):
-                            create_colodore_colours(9, revision, brightness, contrast, saturation, &r, &g, &b, &m); //brown
-                            break;
-                            case (5):
-                            create_colodore_colours(11, revision, brightness, contrast, saturation, &r, &g, &b, &m); //dark grey
-                            break;
-                            case (6):
-                            create_colodore_colours(12, revision, brightness, contrast, saturation, &r, &g, &b, &m); //grey2
-                            break;
-                            case (7):
-                            create_colodore_colours(3, revision, brightness, contrast, saturation, &r, &g, &b, &m); //cyan
-
-
-                            break;
-                            case (8):
-                            create_colodore_colours(8, revision, brightness, contrast, saturation, &r, &g, &b, &m); //orange
-                            break;
-                            case (9):
-                            create_colodore_colours(14, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light blue
-                            break;
-                            case (10):
-                            create_colodore_colours(15, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light grey
-                            break;
-                            case (11):
-                            create_colodore_colours(7, revision, brightness, contrast, saturation, &r, &g, &b, &m); //yellow
-                            break;
-
-
-                            case (12):
-                            create_colodore_colours(5, revision, brightness, contrast, saturation, &r, &g, &b, &m); //green
-                            break;
-                            case (13):
-                            create_colodore_colours(10, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light red
-                            break;
-                            case (14):
-                            create_colodore_colours(13, revision, brightness, contrast, saturation, &r, &g, &b, &m); //light green
-                            break;
-                            case (15):
-                            create_colodore_colours(1, revision, brightness, contrast, saturation, &r, &g, &b, &m); //white
-                            break;
-
-                        }
+                case PALETTE_COMMODORE64_REV1:
+                case PALETTE_COMMODORE64: {
+                    static int c64_translate[] = {0, 6, 2, 4, 9, 11, 12, 3, 8, 14, 15, 7, 5, 10, 13, 1};
+                    max_palette_count = 16;
+                    int revision = palette == PALETTE_COMMODORE64_REV1 ? 0 : 1;
+                    double brightness = 50;
+                    double contrast = 100;
+                    double saturation = 50;
+                    create_colodore_colours(c64_translate[i & 0x0f], revision, brightness, contrast, saturation, &r, &g, &b, &m);
+                    int index = i & 0x3f;
+                    switch (index) {
+                        case (g0+b1+r1):
+                        c64_YUV_palette_lookup[index] = 0; //black 0
+                        break;
+                        case (g3+b1+r1):
+                        c64_YUV_palette_lookup[index] = 15;  //white 1
+                        break;
+                        case (g0+b1+r3):
+                        c64_YUV_palette_lookup[index] = 2;  //red 2
+                        break;
+                        case (g3+b3+r0):
+                        c64_YUV_palette_lookup[index] = 7;  //cyan 3
+                        break;
+                        case (g1+b3+r3):
+                        c64_YUV_palette_lookup[index] = 3;  //violet 4
+                        break;
+                        case (g1+b0+r0):
+                        c64_YUV_palette_lookup[index] = 12;  //green 5
+                        break;
+                        case (g0+b3+r1):
+                        c64_YUV_palette_lookup[index] = 1;  //blue 6
+                        break;
+                        case (g3+b0+r1):
+                        c64_YUV_palette_lookup[index] = 11; //yellow 7
+                        break;
+                        case (g1+b0+r3):
+                        c64_YUV_palette_lookup[index] = 8; //orange 8
+                        break;
+                        case (g0+b0+r1):
+                        c64_YUV_palette_lookup[index] = 4; //brown 9
+                        break;
+                        case (g1+b1+r3):
+                        c64_YUV_palette_lookup[index] = 13; //light red 10
+                        break;
+                        case (g0+b1+r0):
+                        c64_YUV_palette_lookup[index] = 5; //dark grey 11
+                        break;
+                        case (g1+b1+r1):
+                        c64_YUV_palette_lookup[index] = 6; //grey2 12
+                        break;
+                        case (g3+b0+r0):
+                        c64_YUV_palette_lookup[index] = 14; //light green 13
+                        break;
+                        case (g1+b3+r1):
+                        c64_YUV_palette_lookup[index] = 9; //light blue 14
+                        break;
+                        case (g3+b1+r0):
+                        c64_YUV_palette_lookup[index] = 10; //light grey 15
+                        break;
 
                     }
                  }
                  break;
 
-                 case PALETTE_ATARI800_PAL: {
-                        static int atari_palette[] = {
-                                0x00000000,
-                                0x00111111,
-                                0x00252525,
-                                0x00353535,
-                                0x00464646,
-                                0x00575757,
-                                0x006B6B6B,
-                                0x007C7C7C,
-                                0x00838383,
-                                0x00949494,
-                                0x00A8A8A8,
-                                0x00B9B9B9,
-                                0x00CACACA,
-                                0x00DADADA,
-                                0x00EEEEEE,
-                                0x00FFFFFF,
-                                0x0000003C,
-                                0x0000074C,
-                                0x00001B60,
-                                0x00002C71,
-                                0x00003C82,
-                                0x00004D93,
-                                0x000061A6,
-                                0x001172B7,
-                                0x00197ABF,
-                                0x002A8BD0,
-                                0x003E9EE4,
-                                0x004FAFF4,
-                                0x005FC0FF,
-                                0x0070D1FF,
-                                0x0084E4FF,
-                                0x0095F5FF,
-                                0x0000004B,
-                                0x0000005C,
-                                0x00000B70,
-                                0x00001C81,
-                                0x00032D91,
-                                0x00133EA2,
-                                0x002751B6,
-                                0x003862C7,
-                                0x00406ACF,
-                                0x00517BE0,
-                                0x00658FF3,
-                                0x0075A0FF,
-                                0x0086B0FF,
-                                0x0097C1FF,
-                                0x00ABD5FF,
-                                0x00BBE6FF,
-                                0x00150050,
-                                0x00260061,
-                                0x003A0074,
-                                0x004A0985,
-                                0x005B1996,
-                                0x006C2AA7,
-                                0x00803EBB,
-                                0x00914FCB,
-                                0x009857D3,
-                                0x00A968E4,
-                                0x00BD7BF8,
-                                0x00CE8CFF,
-                                0x00DF9DFF,
-                                0x00EFAEFF,
-                                0x00FFC1FF,
-                                0x00FFD2FF,
-                                0x0067003D,
-                                0x0078004E,
-                                0x008C0062,
-                                0x009D0273,
-                                0x00AE1383,
-                                0x00BE2494,
-                                0x00D238A8,
-                                0x00E348B9,
-                                0x00EB50C1,
-                                0x00FC61D1,
-                                0x00FF75E5,
-                                0x00FF86F6,
-                                0x00FF96FF,
-                                0x00FFA7FF,
-                                0x00FFBBFF,
-                                0x00FFCCFF,
-                                0x00840028,
-                                0x00950039,
-                                0x00A9004C,
-                                0x00BA075D,
-                                0x00CB186E,
-                                0x00DB297F,
-                                0x00EF3D93,
-                                0x00FF4EA3,
-                                0x00FF55AB,
-                                0x00FF66BC,
-                                0x00FF7AD0,
-                                0x00FF8BE1,
-                                0x00FF9CF1,
-                                0x00FFACFF,
-                                0x00FFC0FF,
-                                0x00FFD1FF,
-                                0x0094000F,
-                                0x00A5001F,
-                                0x00B90033,
-                                0x00C91144,
-                                0x00DA2255,
-                                0x00EB3365,
-                                0x00FF4779,
-                                0x00FF578A,
-                                0x00FF5F92,
-                                0x00FF70A3,
-                                0x00FF84B7,
-                                0x00FF95C7,
-                                0x00FFA6D8,
-                                0x00FFB6E9,
-                                0x00FFCAFD,
-                                0x00FFDBFF,
-                                0x00860000,
-                                0x00970A00,
-                                0x00AB1E00,
-                                0x00BC2F10,
-                                0x00CC3F20,
-                                0x00DD5031,
-                                0x00F16445,
-                                0x00FF7556,
-                                0x00FF7D5E,
-                                0x00FF8E6E,
-                                0x00FFA182,
-                                0x00FFB293,
-                                0x00FFC3A4,
-                                0x00FFD4B5,
-                                0x00FFE7C8,
-                                0x00FFF8D9,
-                                0x006A0A00,
-                                0x007B1B00,
-                                0x008F2E00,
-                                0x00A03F00,
-                                0x00B0500B,
-                                0x00C1611B,
-                                0x00D5742F,
-                                0x00E68540,
-                                0x00EE8D48,
-                                0x00FF9E59,
-                                0x00FFB26C,
-                                0x00FFC37D,
-                                0x00FFD38E,
-                                0x00FFE49F,
-                                0x00FFF8B3,
-                                0x00FFFFC3,
-                                0x00441900,
-                                0x00542A00,
-                                0x00683E00,
-                                0x00794F00,
-                                0x008A5F00,
-                                0x009A700C,
-                                0x00AE841F,
-                                0x00BF9530,
-                                0x00C79D38,
-                                0x00D8AE49,
-                                0x00ECC15D,
-                                0x00FCD26E,
-                                0x00FFE37E,
-                                0x00FFF48F,
-                                0x00FFFFA3,
-                                0x00FFFFB4,
-                                0x00002D00,
-                                0x00003E00,
-                                0x00105100,
-                                0x00206200,
-                                0x00317300,
-                                0x00428407,
-                                0x0056971B,
-                                0x0067A82C,
-                                0x006EB034,
-                                0x007FC144,
-                                0x0093D558,
-                                0x00A4E669,
-                                0x00B5F67A,
-                                0x00C5FF8B,
-                                0x00D9FF9E,
-                                0x00EAFFAF,
-                                0x00002E00,
-                                0x00003F00,
-                                0x00005300,
-                                0x0000630E,
-                                0x0000741E,
-                                0x0000852F,
-                                0x00009943,
-                                0x0000AA54,
-                                0x0000B15C,
-                                0x0010C26C,
-                                0x0024D680,
-                                0x0034E791,
-                                0x0045F8A2,
-                                0x0056FFB3,
-                                0x006AFFC6,
-                                0x007BFFD7,
-                                0x00002400,
-                                0x00003502,
-                                0x00004916,
-                                0x00005927,
-                                0x00006A38,
-                                0x00007B48,
-                                0x00008F5C,
-                                0x0000A06D,
-                                0x0000A875,
-                                0x0000B886,
-                                0x0014CC9A,
-                                0x0025DDAA,
-                                0x0036EEBB,
-                                0x0046FFCC,
-                                0x005AFFE0,
-                                0x006BFFF0,
-                                0x0000170C,
-                                0x0000271D,
-                                0x00003B31,
-                                0x00004C42,
-                                0x00005D52,
-                                0x00006E63,
-                                0x00008177,
-                                0x00009288,
-                                0x00009A90,
-                                0x0000ABA1,
-                                0x0013BFB4,
-                                0x0024CFC5,
-                                0x0035E0D6,
-                                0x0046F1E7,
-                                0x005AFFFB,
-                                0x006AFFFF,
-                                0x00000726,
-                                0x00001837,
-                                0x00002B4A,
-                                0x00003C5B,
-                                0x00004D6C,
-                                0x00005E7D,
-                                0x00007191,
-                                0x000082A1,
-                                0x00008AA9,
-                                0x000E9BBA,
-                                0x0022AFCE,
-                                0x0033C0DF,
-                                0x0043D0EF,
-                                0x0054E1FF,
-                                0x0068F5FF,
-                                0x0079FFFF,
-                                0x0000003C,
-                                0x0000074C,
-                                0x00001B60,
-                                0x00002C71,
-                                0x00003C82,
-                                0x00004D93,
-                                0x000061A6,
-                                0x001172B7,
-                                0x00197ABF,
-                                0x002A8BD0,
-                                0x003E9EE4,
-                                0x004FAFF4,
-                                0x005FC0FF,
-                                0x0070D1FF,
-                                0x0084E4FF,
-                                0x0095F5FF
+
+                case PALETTE_VIC20: {
+                       static int c64_translate[] = {0, 6, 2, 4, 9, 11, 12, 3, 8, 14, 15, 7, 5, 10, 13, 1};
+                       static int palette[] = {
+                            0x000000,
+                            0xf0f0f0,
+                            0x671317,
+                            0x60C8C1,
+                            0x7D2188,
+                            0x4BB241,
+                            0x181695,
+                            0xC8CB3E,
+                            0x8E451A,
+                            0xD19065,
+                            0xC87479,
+                            0x8FE6E1,
+                            0xD17ADB,
+                            0x8FE986,
+                            0x716EE7,
+                            0xEAED74
+
+/*
+                            0x000000,
+                            0xffffff,
+                            0x6d2327,
+                            0xa0fef8,
+                            0x8e3c97,
+                            0x7eda75,
+                            0x252390,
+                            0xffff86,
+                            0xa4643b,
+                            0xffc8a1,
+                            0xf2a7ab,
+                            0xdbffff,
+                            0xffb4ff,
+                            0xd7ffce,
+                            0x9d9aff,
+                            0xffffc9
+*/
+
+
 
                         };
-                        int index = ((i << 1) | (i >> 7)) & 0xff;
-                        r = atari_palette[index] & 0xff;
-                        g = (atari_palette[index] >> 8) & 0xff;
-                        b = (atari_palette[index] >> 16) & 0xff;
-                        max_palette_count = 256;
+                        b = palette[c64_translate[i]] & 0xff;
+                        g = (palette[c64_translate[i]] >> 8) & 0xff;
+                        r = (palette[c64_translate[i]] >> 16) & 0xff;
+                        max_palette_count = 16;
                  }
                  break;
-                 case PALETTE_ATARI800_NTSC: {
-                        static int atari_palette[] = {
-                                0x00000000,
-                                0x00010101,
-                                0x00171516,
-                                0x002B292A,
-                                0x003F3C3E,
-                                0x00534E51,
-                                0x006A6467,
-                                0x007C767A,
-                                0x00857E83,
-                                0x00989095,
-                                0x00ADA4AA,
-                                0x00C0B5BC,
-                                0x00D2C6CD,
-                                0x00E3D7DF,
-                                0x00F8EBF3,
-                                0x00FFFCFF,
-                                0x00000200,
-                                0x00001400,
-                                0x00002A07,
-                                0x00003D21,
-                                0x00004F36,
-                                0x0000604B,
-                                0x00007562,
-                                0x00008676,
-                                0x00008E7F,
-                                0x00009F92,
-                                0x0027B3A7,
-                                0x003FC4BA,
-                                0x0055D5CB,
-                                0x006AE6DD,
-                                0x0081F9F2,
-                                0x0094FFFF,
-                                0x0000000C,
-                                0x00000223,
-                                0x0000183D,
-                                0x00002B51,
-                                0x00003D65,
-                                0x00004F78,
-                                0x0000648F,
-                                0x000075A1,
-                                0x00007EAA,
-                                0x001C8FBC,
-                                0x003AA3D2,
-                                0x0050B4E4,
-                                0x0064C5F5,
-                                0x0078D6FF,
-                                0x008FEAFF,
-                                0x00A2FBFF,
-                                0x00000028,
-                                0x0000003F,
-                                0x0000005A,
-                                0x0000156F,
-                                0x00002983,
-                                0x00003C96,
-                                0x001652AD,
-                                0x002F64C0,
-                                0x00396DC8,
-                                0x004E7EDB,
-                                0x006593F0,
-                                0x0079A4FF,
-                                0x008CB6FF,
-                                0x009EC7FF,
-                                0x00B4DBFF,
-                                0x00C6ECFF,
-                                0x00000036,
-                                0x0000004D,
-                                0x00000067,
-                                0x0013007C,
-                                0x00291890,
-                                0x003E2EA4,
-                                0x005645BB,
-                                0x006957CD,
-                                0x007260D6,
-                                0x008572E9,
-                                0x009B87FE,
-                                0x00AD99FF,
-                                0x00BFAAFF,
-                                0x00D1BCFF,
-                                0x00E7D0FF,
-                                0x00F8E1FF,
-                                0x00100033,
-                                0x00250049,
-                                0x003D0263,
-                                0x00510878,
-                                0x00651A8C,
-                                0x00782CA0,
-                                0x008E42B7,
-                                0x00A055C9,
-                                0x00A95DD2,
-                                0x00BB6FE5,
-                                0x00D184FA,
-                                0x00E396FF,
-                                0x00F4A7FF,
-                                0x00FFB8FF,
-                                0x00FFCCFF,
-                                0x00FFDDFF,
-                                0x00420A1A,
-                                0x00560F32,
-                                0x006D154C,
-                                0x00801B62,
-                                0x00932777,
-                                0x00A6368B,
-                                0x00BB4AA1,
-                                0x00CD5BB4,
-                                0x00D664BD,
-                                0x00E875CF,
-                                0x00FD89E5,
-                                0x00FF9AF6,
-                                0x00FFABFF,
-                                0x00FFBCFF,
-                                0x00FFD0FF,
-                                0x00FFE1FF,
-                                0x005F1300,
-                                0x00721900,
-                                0x00891F22,
-                                0x009C273B,
-                                0x00AE3451,
-                                0x00C14366,
-                                0x00D6567D,
-                                0x00E86790,
-                                0x00F16F99,
-                                0x00FF80AC,
-                                0x00FF94C1,
-                                0x00FFA5D3,
-                                0x00FFB6E5,
-                                0x00FFC6F6,
-                                0x00FFDAFF,
-                                0x00FFEBFF,
-                                0x00631400,
-                                0x00761A00,
-                                0x008D2300,
-                                0x00A02F00,
-                                0x00B23E12,
-                                0x00C44E31,
-                                0x00DA624C,
-                                0x00EC7361,
-                                0x00F47C6A,
-                                0x00FF8D7D,
-                                0x00FFA194,
-                                0x00FFB2A6,
-                                0x00FFC2B9,
-                                0x00FFD3CB,
-                                0x00FFE7E0,
-                                0x00FFF8F1,
-                                0x004D0E00,
-                                0x00611500,
-                                0x00782500,
-                                0x008B3600,
-                                0x009D4800,
-                                0x00B05A00,
-                                0x00C56E00,
-                                0x00D88017,
-                                0x00E0882A,
-                                0x00F29945,
-                                0x00FFAE60,
-                                0x00FFBF75,
-                                0x00FFD089,
-                                0x00FFE09C,
-                                0x00FFF4B3,
-                                0x00FFFFC5,
-                                0x00210400,
-                                0x00361500,
-                                0x004D2C00,
-                                0x00613F00,
-                                0x00745200,
-                                0x00876400,
-                                0x009D7900,
-                                0x00AF8B00,
-                                0x00B89300,
-                                0x00CAA500,
-                                0x00DFB922,
-                                0x00F1CA45,
-                                0x00FFDB5E,
-                                0x00FFEC75,
-                                0x00FFFF8E,
-                                0x00FFFFA2,
-                                0x00000B00,
-                                0x00001F00,
-                                0x00123500,
-                                0x00284800,
-                                0x003C5B00,
-                                0x00506D00,
-                                0x00678200,
-                                0x007A9400,
-                                0x00839C00,
-                                0x0096AD00,
-                                0x00ABC200,
-                                0x00BED328,
-                                0x00D0E34A,
-                                0x00E1F464,
-                                0x00F6FF7F,
-                                0x00FFFF94,
-                                0x00001200,
-                                0x00002500,
-                                0x00003B00,
-                                0x00004D00,
-                                0x00005F00,
-                                0x000E7100,
-                                0x002B8600,
-                                0x00419700,
-                                0x004A9F00,
-                                0x005EB100,
-                                0x0075C526,
-                                0x0088D648,
-                                0x009AE661,
-                                0x00ADF777,
-                                0x00C2FF90,
-                                0x00D4FFA4,
-                                0x00000F00,
-                                0x00002300,
-                                0x00003900,
-                                0x00004B00,
-                                0x00005D00,
-                                0x00006E00,
-                                0x00008300,
-                                0x00009421,
-                                0x000D9C31,
-                                0x002BAD4B,
-                                0x0046C165,
-                                0x005AD27A,
-                                0x006EE38E,
-                                0x0082F3A1,
-                                0x0098FFB7,
-                                0x00ABFFC9,
-                                0x00000500,
-                                0x00001800,
-                                0x00002F00,
-                                0x00004104,
-                                0x00005323,
-                                0x0000643A,
-                                0x00007953,
-                                0x00008A67,
-                                0x00009270,
-                                0x0000A384,
-                                0x0029B79A,
-                                0x0041C8AC,
-                                0x0056D9BE,
-                                0x006BE9D0,
-                                0x0082FDE5,
-                                0x0095FFF7,
-                                0x00000003,
-                                0x00000719,
-                                0x00001E32,
-                                0x00003046,
-                                0x0000435A,
-                                0x0000546D,
-                                0x00006984,
-                                0x00007A96,
-                                0x0000839F,
-                                0x000D94B1,
-                                0x0031A8C7,
-                                0x0048B9D9,
-                                0x005DCAEA,
-                                0x0071DBFC,
-                                0x0088EFFF,
-                                0x009BFFFF
 
+                case PALETTE_ATARI2600_PAL: {
+                       static int palette[] = {
+                            0x00000000,
+                            0x28282828,
+                            0x50505050,
+                            0x74747474,
+                            0x94949494,
+                            0xB4B4B4B4,
+                            0xCFD0D0D0,
+                            0xEBECECEC,
+                            0x00000000,
+                            0x28282828,
+                            0x50505050,
+                            0x74747474,
+                            0x94949494,
+                            0xB4B4B4B4,
+                            0xCFD0D0D0,
+                            0xEBECECEC,
+                            0x59005880,
+                            0x71207094,
+                            0x863C84A8,
+                            0x9D589CBC,
+                            0xAE70ACCC,
+                            0xC184C0DC,
+                            0xD29CD0EC,
+                            0xE2B0E0FC,
+                            0x4A005C44,
+                            0x6520785C,
+                            0x7E3C9074,
+                            0x9858AC8C,
+                            0xAD70C0A0,
+                            0xC084D4B0,
+                            0xD49CE8C4,
+                            0xE7B0FCD4,
+                            0x40003470,
+                            0x5B205088,
+                            0x733C68A0,
+                            0x8D5884B4,
+                            0xA17098C8,
+                            0xB584ACDC,
+                            0xC99CC0EC,
+                            0xDBB0D4FC,
+                            0x3C146400,
+                            0x5A348020,
+                            0x7450983C,
+                            0x8D6CB058,
+                            0xA384C470,
+                            0xB89CD884,
+                            0xCBB4E89C,
+                            0xDFC8FCB0,
+                            0x23140070,
+                            0x41342088,
+                            0x5C503CA0,
+                            0x756C58B4,
+                            0x8C8470C8,
+                            0xA19C84DC,
+                            0xB6B49CEC,
+                            0xC9C8B0FC,
+                            0x405C5C00,
+                            0x5A747420,
+                            0x748C8C3C,
+                            0x8DA4A458,
+                            0xA2B8B870,
+                            0xB3C8C884,
+                            0xC8DCDC9C,
+                            0xDAECECB0,
+                            0x2B5C0070,
+                            0x47742084,
+                            0x5E883C94,
+                            0x779C58A8,
+                            0x8BB070B4,
+                            0x9DC084C4,
+                            0xB1D09CD0,
+                            0xC3E0B0E0,
+                            0x2F703C00,
+                            0x4B88581C,
+                            0x67A07438,
+                            0x7EB48C50,
+                            0x96C8A468,
+                            0xAADCB87C,
+                            0xBDECCC90,
+                            0xD1FCE0A4,
+                            0x27700058,
+                            0x4288206C,
+                            0x5BA03C80,
+                            0x74B45894,
+                            0x89C870A4,
+                            0x9CDC84B4,
+                            0xB1EC9CC4,
+                            0xC3FCB0D4,
+                            0x1F702000,
+                            0x3B883C1C,
+                            0x56A05838,
+                            0x70B47450,
+                            0x85C88868,
+                            0x9CDCA07C,
+                            0xAFECB490,
+                            0xC3FCC8A4,
+                            0x2080003C,
+                            0x3C942054,
+                            0x56A83C6C,
+                            0x6FBC5880,
+                            0x85CC7094,
+                            0x98DC84A8,
+                            0xADEC9CB8,
+                            0xBFFCB0C8,
+                            0x0F880000,
+                            0x2E9C2020,
+                            0x49B03C3C,
+                            0x63C05858,
+                            0x7AD07070,
+                            0x8EE08484,
+                            0xA5EC9C9C,
+                            0xB8FCB0B0,
+                            0x00000000,
+                            0x28282828,
+                            0x50505050,
+                            0x74747474,
+                            0x94949494,
+                            0xB4B4B4B4,
+                            0xCFD0D0D0,
+                            0xEBECECEC,
+                            0x00000000,
+                            0x28282828,
+                            0x50505050,
+                            0x74747474,
+                            0x94949494,
+                            0xB4B4B4B4,
+                            0xCFD0D0D0,
+                            0xEBECECEC
                         };
-                        int index = ((i << 1) | (i >> 7)) & 0xff;
-                        r = atari_palette[index] & 0xff;
-                        g = (atari_palette[index] >> 8) & 0xff;
-                        b = (atari_palette[index] >> 16) & 0xff;
-                        max_palette_count = 256;
+                        r = palette[i & 0x7f] & 0xff;
+                        g = (palette[i & 0x7f] >> 8) & 0xff;
+                        b = (palette[i & 0x7f] >> 16) & 0xff;
+                        m = (palette[i & 0x7f] >> 24) & 0xff;
+                        max_palette_count = 128;
+                 }
+                 break;
+
+                case PALETTE_ATARI2600_NTSC: {
+                       static int palette[] = {
+                            0x00000000,
+                            0x3F404040,
+                            0x6B6C6C6C,
+                            0x90909090,
+                            0xAFB0B0B0,
+                            0xC8C8C8C8,
+                            0xDCDCDCDC,
+                            0xEBECECEC,
+                            0x3C004444,
+                            0x5A106464,
+                            0x79248484,
+                            0x9334A0A0,
+                            0xAA40B8B8,
+                            0xC150D0D0,
+                            0xD85CE8E8,
+                            0xEB68FCFC,
+                            0x38002870,
+                            0x51144484,
+                            0x68285C98,
+                            0x803C78AC,
+                            0x934C8CBC,
+                            0xA55CA0CC,
+                            0xB768B4DC,
+                            0xC978C8EC,
+                            0x35001884,
+                            0x4E183498,
+                            0x673050AC,
+                            0x7E4868C0,
+                            0x935C80D0,
+                            0xA67094E0,
+                            0xB780A8EC,
+                            0xCA94BCFC,
+                            0x28000088,
+                            0x4520209C,
+                            0x5E3C3CB0,
+                            0x775858C0,
+                            0x8C7070D0,
+                            0xA28888E0,
+                            0xB6A0A0EC,
+                            0xC9B4B4FC,
+                            0x2E5C0078,
+                            0x4974208C,
+                            0x62883CA0,
+                            0x7A9C58B0,
+                            0x8FB070C0,
+                            0xA1C084D0,
+                            0xB5D09CDC,
+                            0xC7E0B0EC,
+                            0x23780048,
+                            0x3F902060,
+                            0x59A43C78,
+                            0x72B8588C,
+                            0x88CC70A0,
+                            0x9CDC84B4,
+                            0xB1EC9CC4,
+                            0xC3FCB0D4,
+                            0x15840014,
+                            0x32982030,
+                            0x4DAC3C4C,
+                            0x68C05868,
+                            0x7ED0707C,
+                            0x95E08894,
+                            0xABECA0A8,
+                            0xBEFCB4BC,
+                            0x0F880000,
+                            0x2C9C201C,
+                            0x4AB04038,
+                            0x63C05C50,
+                            0x7AD07468,
+                            0x90E08C7C,
+                            0xA6ECA490,
+                            0xB9FCB8A4,
+                            0x1C7C1800,
+                            0x3990381C,
+                            0x55A85438,
+                            0x6FBC7050,
+                            0x86CC8868,
+                            0x99DC9C7C,
+                            0xAFECB490,
+                            0xC3FCC8A4,
+                            0x245C2C00,
+                            0x42784C1C,
+                            0x5E906838,
+                            0x79AC8450,
+                            0x90C09C68,
+                            0xA6D4B47C,
+                            0xBDE8CC90,
+                            0xD1FCE0A4,
+                            0x282C3C00,
+                            0x46485C1C,
+                            0x64647C38,
+                            0x82809C50,
+                            0x9994B468,
+                            0xB2ACD07C,
+                            0xC6C0E490,
+                            0xDDD4FCA4,
+                            0x23003C00,
+                            0x43205C20,
+                            0x63407C40,
+                            0x815C9C5C,
+                            0x9974B474,
+                            0xB38CD08C,
+                            0xC9A4E4A4,
+                            0xDFB8FCB8,
+                            0x26003814,
+                            0x481C5C34,
+                            0x67387C50,
+                            0x8250986C,
+                            0x9C68B484,
+                            0xB47CCC9C,
+                            0xCC90E4B4,
+                            0xE2A4FCC8,
+                            0x2900302C,
+                            0x481C504C,
+                            0x66347068,
+                            0x824C8C84,
+                            0x9C64A89C,
+                            0xB478C0B4,
+                            0xC888D4CC,
+                            0xDF9CECE0,
+                            0x2B002844,
+                            0x4A184864,
+                            0x69306884,
+                            0x854484A0,
+                            0x9C589CB8,
+                            0xB46CB4D0,
+                            0xCB7CCCE8,
+                            0xDE8CE0FC
+                        };
+                        r = palette[i & 0x7f] & 0xff;
+                        g = (palette[i & 0x7f] >> 8) & 0xff;
+                        b = (palette[i & 0x7f] >> 16) & 0xff;
+                        m = (palette[i & 0x7f] >> 24) & 0xff;
+                        max_palette_count = 128;
+                 }
+                 break;
+
+                 case PALETTE_ATARI800_PAL: {
+                    max_palette_count = 256;
+                    //from https://github.com/atari800/atari800/blob/master/src/colours_pal.c#L192
+
+                    //static Colours_setup_t const presets[] = {
+                    //    /* Hue, Saturation, Contrast, Brightness, Gamma adjustment, GTIA delay, Black level, White level */
+                    //    { 0.0, 0.0, 0.0, 0.0, 2.35, 0.0, 16, 235 }, /* Standard preset */
+                    //    { 0.0, 0.0, 0.08, -0.08, 2.35, 0.0, 16, 235 }, /* Deep blacks preset */
+                    //    { 0.0, 0.26, 0.72, -0.16, 2.00, 0.0, 16, 235 } /* Vibrant colours & levels preset */
+
+                    static double atari_sat = 0.36f;
+                    static double atari_cont = 0.00f;
+                    static double atari_brt = 0.00f;
+
+                    double const scaled_black_level = (double)0.0f; //(double)16.0f / 255.0f;  //COLOURS_PAL_setup.black_level
+                    double const scaled_white_level = (double)1.0f; //(double)235.0f / 255.0f;  //COLOURS_PAL_setup.white_level
+
+
+                    struct del_coeff {
+                        int add;
+                        int mult;
+                    };
+
+                    /* Delay coefficients for each hue. */
+                    static struct {
+                        struct del_coeff even[15];
+                        struct del_coeff odd[15];
+                    } const del_coeffs = {
+                        { { 1, 5 }, /* Hue $1 in even lines */
+                          { 1, 6 }, /* Hue $2 in even lines */
+                          { 1, 7 },
+                          { 0, 0 },
+                          { 0, 1 },
+                          { 0, 2 },
+                          { 0, 4 },
+                          { 0, 5 },
+                          { 0, 6 },
+                          { 0, 7 },
+                          { 1, 1 },
+                          { 1, 2 },
+                          { 1, 3 },
+                          { 1, 4 },
+                          { 1, 5 } /* Hue $F in even lines */
+                        },
+                        { { 1, 1 }, /* Hue $1 in odd lines */
+                          { 1, 0 }, /* Hue $2 in odd lines */
+                          { 0, 7 },
+                          { 0, 6 },
+                          { 0, 5 },
+                          { 0, 4 },
+                          { 0, 2 },
+                          { 0, 1 },
+                          { 0, 0 },
+                          { 1, 7 },
+                          { 1, 5 },
+                          { 1, 4 },
+                          { 1, 3 },
+                          { 1, 2 },
+                          { 1, 1 } /* Hue $F in odd lines */
+                        }
+                    };
+                    int cr, lm;
+
+
+
+                    /* NTSC luma multipliers from CGIA.PDF */
+                    static double const luma_mult[16] = {
+                        0.6941, 0.7091, 0.7241, 0.7401,
+                        0.7560, 0.7741, 0.7931, 0.8121,
+                        0.8260, 0.8470, 0.8700, 0.8930,
+                        0.9160, 0.9420, 0.9690, 1.0000};
+
+                    /* When phase shift between even and odd colorbursts is close to 180 deg, the
+                       TV stops interpreting color signal. This value determines how close to 180
+                       deg that phase shift must be. It is specific to a TV set. */
+                    static double const color_disable_threshold = 0.05;
+                    /* Base delay - 1/4.43MHz * base_del = ca. 95.2ns */
+                    static double const base_del = 0.421894970414201;
+                    /* Additional delay - 1/4.43MHz * add_del = ca. 100.7ns */
+                    static double const add_del = 0.446563064859117;
+                    /* Delay introduced by the DEL pin voltage. */
+                    double const del_adj = 23.2f / 360.0;  //COLOURS_PAL_setup.color_delay chosen by eye to give a smooth rainbow
+
+                    /* Phase delays of colorbursts in even and odd lines. They are equal to
+                       Hue 1. */
+                    double const even_burst_del = base_del + add_del * del_coeffs.even[0].add + del_adj * del_coeffs.even[0].mult;
+                    double const odd_burst_del = base_del + add_del * del_coeffs.odd[0].add + del_adj * del_coeffs.odd[0].mult;
+
+                    /* Reciprocal of the recreated subcarrier's amplitude. */
+                    double saturation_mult;
+                    /* Phase delay of the recreated amplitude. */
+                    double subcarrier_del = (even_burst_del + odd_burst_del + 0.0f) / 2.0;  //COLOURS_PAL_setup.hue
+
+                    /* Phase difference between colorbursts in even and odd lines. */
+                    double burst_diff = even_burst_del - odd_burst_del;
+                    burst_diff -= floor(burst_diff); /* Normalize to 0..1. */
+
+                    if (burst_diff > 0.5 - color_disable_threshold && burst_diff < 0.5 + color_disable_threshold)
+                        /* Shift between colorbursts close to 180 deg. Don't produce color. */
+                        saturation_mult = 0.0;
+                    else {
+                        /* Subcarrier is a sum of two waves with equal frequency and amplitude,
+                           but phase-shifted by 2pi*burst_diff. The formula is derived from
+                           http://2000clicks.com/mathhelp/GeometryTrigEquivPhaseShift.aspx */
+                        double subcarrier_amplitude = sqrt(2.0 * cos(burst_diff*2.0*M_PI) + 2.0);
+                        /* Normalise saturation_mult by multiplying by sqrt(2), so that it
+                           equals 1.0 when odd & even colorbursts are shifted by 90 deg (ie.
+                           burst_diff == 0.25). */
+                        saturation_mult = sqrt(2.0) / subcarrier_amplitude;
+                    }
+
+                    cr = (i >> 3) & 0x0f;
+                    lm = ((i & 7) << 1) | ((i & 0x80) >> 7);
+
+                    double even_u = 0.0;
+                    double odd_u = 0.0;
+                    double even_v = 0.0;
+                    double odd_v = 0.0;
+                    if (cr) {
+                        struct del_coeff const *even_delay = &(del_coeffs.even[cr - 1]);
+                        struct del_coeff const *odd_delay = &(del_coeffs.odd[cr - 1]);
+                        double even_del = base_del + add_del * even_delay->add + del_adj * even_delay->mult;
+                        double odd_del = base_del + add_del * odd_delay->add + del_adj * odd_delay->mult;
+                        double even_angle = (0.5 - (even_del - subcarrier_del)) * 2.0 * M_PI;
+                        double odd_angle = (0.5 + (odd_del - subcarrier_del)) * 2.0 * M_PI;
+                        double saturation = (atari_sat + 1) * 0.175 * saturation_mult; //COLOURS_PAL_setup.saturation
+                        even_u = cos(even_angle) * saturation;
+                        even_v = sin(even_angle) * saturation;
+                        odd_u = cos(odd_angle) * saturation;
+                        odd_v = sin(odd_angle) * saturation;
+                    }
+
+                    /* calculate yuv for color entry */
+                    double y = (luma_mult[lm] - luma_mult[0]) / (luma_mult[15] - luma_mult[0]);
+
+                    y *= atari_cont * 0.5 + 1;  //COLOURS_PAL_setup.contrast
+                    y += atari_brt * 0.5;  //COLOURS_PAL_setup.brightness
+                    /* Scale the Y signal's range from 0..1 to
+                       scaled_black_level..scaled_white_level */
+                    y = y * (scaled_white_level - scaled_black_level) + scaled_black_level;
+
+                    /* The different colors in odd and even lines are not
+                       emulated - instead the palette contains averaged values. */
+                    double u = (even_u + odd_u) / 2.0;
+                    double v = (even_v + odd_v) / 2.0;
+
+                    r = gamma_correct(y + v * 1.13983f, 1);
+                    g = gamma_correct(y - u * 0.39465f - v * 0.58060f, 1);
+                    b = gamma_correct(y + u * 2.03211f, 1);
+
+
+/*
+                    r = gamma_correct(y + 1.140 * v, 1);
+                    g = gamma_correct(y - 0.395 * u - 0.581 * v, 1);
+                    b = gamma_correct(y + 2.032 * u, 1);
+   */
+
+                    m = gamma_correct(y, 1);
+
+                 }
+                 break;
+
+
+
+                 case PALETTE_ATARI800_NTSC: {
+                    max_palette_count = 256;
+                    //from https://github.com/atari800/atari800/blob/master/src/colours_ntsc.c
+
+                    //static Colours_setup_t const presets[] = {
+                    //    /* Hue, Saturation, Contrast, Brightness, Gamma adjustment, GTIA delay, Black level, White level */
+                    //    { 0.0, 0.0, 0.0, 0.0, 2.35, 0.0, 16, 235 }, /* Standard preset */
+                    //    { 0.0, 0.0, 0.08, -0.08, 2.35, 0.0, 16, 235 }, /* Deep blacks preset */
+                    //    { 0.0, 0.26, 0.72, -0.16, 2.00, 0.0, 16, 235 } /* Vibrant colours & levels preset */
+
+                    static double atari_hue = 0.00f;
+                    static double atari_sat = 0.26f;
+                    static double atari_cont = 0.00f;
+                    static double atari_brt = 0.00f;
+                    double scaled_black_level = (double)0.0f; //(double) 16.0f / 255.0;  //COLOURS_NTSC_setup.black_level
+                    double scaled_white_level = (double)1.0f; //(double) 235.0f / 255.0;  //COLOURS_NTSC_setup.white_level
+
+                    static double const colorburst_angle = (303.0f) * PI / 180.0f;
+                    double start_angle = colorburst_angle + atari_hue * M_PI;
+                    double start_saturation = atari_sat;
+
+                    /* Difference between two consecutive chrominances, in radians. */
+                    double color_diff = 26.8f * M_PI / 180.0;   /* color delay, chosen to match color names given in GTIA.PDF */
+
+                    int cr, lm;
+
+                    /* NTSC luma multipliers from CGIA.PDF */
+                    double luma_mult[16]={
+                        0.6941, 0.7091, 0.7241, 0.7401,
+                        0.7560, 0.7741, 0.7931, 0.8121,
+                        0.8260, 0.8470, 0.8700, 0.8930,
+                        0.9160, 0.9420, 0.9690, 1.0000};
+
+                    cr = (i >> 3) & 0x0f;
+                    lm = ((i & 7) << 1) | ((i & 0x80) >> 7);
+
+                    double angle = start_angle + (cr - 1) * color_diff;
+                    double saturation = (cr ? (start_saturation + 1) * 0.175f: 0.0);
+                    double ii = cos(angle) * saturation;
+                    double qq = sin(angle) * saturation;
+
+
+                    /* calculate yiq for color entry */
+                    double y = (luma_mult[lm] - luma_mult[0]) / (luma_mult[15] - luma_mult[0]);
+                    y *= atari_cont * 0.5 + 1;  //COLOURS_NTSC_setup.contrast
+                    y += atari_brt * 0.5;  //COLOURS_NTSC_setup.brightness
+                    /* Scale the Y signal's range from 0..1 to
+                    * scaled_black_level..scaled_white_level */
+                    y = y * (scaled_white_level - scaled_black_level) + scaled_black_level;
+
+                    r = gamma_correct(y + 0.9563 * ii + 0.6210 * qq, 1);
+                    g = gamma_correct(y - 0.2721 * ii - 0.6474 * qq, 1);
+                    b = gamma_correct(y - 1.1070 * ii + 1.7046 * qq, 1);
+                    m = gamma_correct(y, 1);
+
                  }
                  break;
 
@@ -4443,7 +4895,7 @@ int luma_palette;
                  break;
             }
 
-            if ((i & 0x40) && max_palette_count <= 0x40 && luma_palette == 0) {
+            if ((i & 0x40) && max_palette_count <= 0x40) {
                 r ^= 0xff;  //vsync indicator
             }
 
@@ -4569,18 +5021,6 @@ void osd_update_palette() {
         palette_data[i] = adjust_palette(palette_data[i]);
     }
 
-    if (max_palette_count <= 64) {
-        if (get_parameter(F_PALETTE_CONTROL) ==  PALETTECONTROL_C64_LUMACODE) {
-            for (int i = 0; i < 64; i++) {
-                palette_data[i] = palette_data[i + 64];
-                palette_data[i + 128] = palette_data[i + 64 + 128];
-            }
-        }
-        for (int i = 0; i < 64; i++) {
-            palette_data[i + 64] = palette_data[i] ^ 0xff;                //for red vsync line
-            palette_data[i + 64 + 128] = palette_data[i + 128] ^ 0xff;    //for red vsync line
-        }
-    }
 
 /*
     //scan translated palette for equivalences
@@ -4646,7 +5086,7 @@ void osd_update_palette() {
             }
         }
 
-        if ((i >= (num_colours >> 1)) && get_feature(F_SCANLINES)) {
+        if ((i >= (num_colours >> 1)) && get_feature(F_SCANLINES) && max_palette_count <= 128) {
             int scanline_intensity = get_feature(F_SCANLINE_LEVEL) ;
             r = (r * scanline_intensity) / 15;
             g = (g * scanline_intensity) / 15;
@@ -4661,6 +5101,61 @@ void osd_update_palette() {
             osd_palette_data[i] |= 0x00101010;
         }
     }
+
+    if (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_LUMACODE || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_YUV) {
+        for (int i=0; i < 256; i++) {
+            double R = (double)(palette_data[i & 0x0f] & 0xff) / 255;
+            double G = (double)((palette_data[i & 0x0f] >> 8) & 0xff) / 255;
+            double B = (double)((palette_data[i & 0x0f] >> 16) & 0xff) / 255;
+
+            double R2 = (double)(palette_data[i >> 4] & 0xff) / 255;
+            double G2 = (double)((palette_data[i >> 4] >> 8) & 0xff) / 255;
+            double B2 = (double)((palette_data[i >> 4] >> 16) & 0xff) / 255;
+
+            double Y = 0.299 * R + 0.587 * G + 0.114 * B;
+            double U = -0.14713 * R - 0.28886 * G + 0.436 * B;
+            double V = 0.615 * R - 0.51499 * G - 0.10001 * B;
+
+            //double Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2;
+            double U2 = -0.14713 * R2 - 0.28886 * G2 + 0.436 * B2;
+            double V2 = 0.615 * R2 - 0.51499 * G2 - 0.10001 * B2;
+
+            double hue = get_parameter(F_PAL_ODD_LEVEL) * PI / 180.0f;
+            double U3 = (U2 * cos(hue) - V2 * sin(hue));
+            double V3 = (V2 * cos(hue) - U2 * sin(hue));
+
+            if (get_parameter(F_PAL_ODD_LINE) == PAL_ODD_ALL || (get_parameter(F_PAL_ODD_LINE) == PAL_ODD_BLENDED && (i & 0x0f) != (i >> 4))){
+                U3 = (U + U3) / 2;
+                V3 = (V + V3) / 2;
+            } else {
+                U3 = (U + U2) / 2;
+                V3 = (V + V2) / 2;
+            }
+
+            U = (U + U2) / 2;
+            V = (V + V2) / 2;
+
+            R = (Y + 1.140 * V);
+            G = (Y - 0.396 * U - 0.581 * V);
+            B = (Y + 2.029 * U);
+
+            R2 = (Y + 1.140 * V3);
+            G2 = (Y - 0.396 * U3 - 0.581 * V3);
+            B2 = (Y + 2.029 * U3);
+
+            double normalised_gamma = 1.0f;
+            R = gamma_correct(R, normalised_gamma) / 16;
+            G = gamma_correct(G, normalised_gamma) / 16;
+            B = gamma_correct(B, normalised_gamma) / 16;
+
+            R2 = gamma_correct(R2, normalised_gamma) / 16;
+            G2 = gamma_correct(G2, normalised_gamma) / 16;
+            B2 = gamma_correct(B2, normalised_gamma) / 16;
+            //log_info("%d = %04f, %04f, %04f : %04f, %04f, %04f", i,R,G,B,R2,G2,B2);
+            c64_artifact_palette_16[i] = ((int)R2 << 24) | ((int)G2 << 20) | ((int)B2 << 16) | ((int)R << 8) | ((int)G << 4) | (int)B;
+        }
+    }
+
 
     if (capinfo->bpp < 16) {
         RPI_PropertyInit();
@@ -4694,7 +5189,7 @@ void osd_clear_no_palette() {
    osd_hwm = 0;
 }
 
-int save_profile(char *path, char *name, char *buffer, char *default_buffer, char *sub_default_buffer)
+int save_profile(char *path, char *name, char *buffer, char *default_buffer, char *sub_default_buffer, signed int custom_profile)
 {
    char *pointer = buffer;
    char param_string[80];
@@ -4758,7 +5253,7 @@ int save_profile(char *path, char *name, char *buffer, char *default_buffer, cha
 
    i = 0;
    while (features[i].key >= 0) {
-      if ((default_buffer != NULL && i != F_TIMING_SET && i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_HDMI_MODE && (i != F_AUTO_SWITCH || sub_default_buffer == NULL))
+      if ((default_buffer != NULL && i != F_TIMING_SET && i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN && (i != F_AUTO_SWITCH || sub_default_buffer == NULL))
           || (default_buffer == NULL && i == F_TIMING_SET && get_feature(F_AUTO_SWITCH) > AUTOSWITCH_MODE7)
           || (default_buffer == NULL && i == F_AUTO_SWITCH) ) {
          strcpy(param_string, features[i].property_name);
@@ -4784,10 +5279,17 @@ int save_profile(char *path, char *name, char *buffer, char *default_buffer, cha
       i++;
    }
    *pointer = 0;
-   if (path != NULL) {
-       return file_save(path + cpld_prefix_length, name, buffer, pointer - buffer, get_parameter(F_SAVED_CONFIG));
+
+   if(custom_profile >= 0 ) {
+       char custom_name[MAX_STRING_SIZE];
+       sprintf(custom_name, "%s/%s%d_", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, custom_profile);
+       return file_save_custom_profile(custom_name, buffer, pointer - buffer);
    } else {
-       return file_save(path, name + cpld_prefix_length, buffer, pointer - buffer, get_parameter(F_SAVED_CONFIG));
+       if (path != NULL) {
+           return file_save(path + cpld_prefix_length, name, buffer, pointer - buffer, get_parameter(F_SAVED_CONFIG));
+       } else {
+           return file_save(path, name + cpld_prefix_length, buffer, pointer - buffer, get_parameter(F_SAVED_CONFIG));
+       }
    }
 }
 
@@ -4859,7 +5361,7 @@ void process_single_profile(char *buffer) {
 
    i = 0;
    while(features[i].key >= 0) {
-      if (i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_HDMI_MODE) {
+      if (i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN) {
          strcpy(param_string, features[i].property_name);
          prop = get_prop(buffer, param_string);
          if (prop) {
@@ -5006,8 +5508,13 @@ void get_autoswitch_geometry(char *buffer, int index)
    double window = (double) autoswitch_info[index].clock_ppm * line_time / 1000000;
    autoswitch_info[index].lower_limit = (int) line_time - window;
    autoswitch_info[index].upper_limit = (int) line_time + window;
-   log_info("Autoswitch timings %d (%s) = %d, %d, %d, %d, %d", index, sub_profile_names[index], autoswitch_info[index].lower_limit, (int) line_time,
-            autoswitch_info[index].upper_limit, autoswitch_info[index].lines_per_frame, autoswitch_info[index].sync_type);
+
+   int frame_window = autoswitch_info[index].clock_ppm * autoswitch_info[index].lines_per_frame / 1000000;
+   autoswitch_info[index].lower_frame_limit = autoswitch_info[index].lines_per_frame - frame_window;
+   autoswitch_info[index].upper_frame_limit = (int) autoswitch_info[index].lines_per_frame + frame_window;
+
+   log_info("Autoswitch timings %d (%s) = %d, %d, %d, %d, %d, %d, %d", index, sub_profile_names[index], autoswitch_info[index].lower_limit, (int) line_time,
+            autoswitch_info[index].upper_limit, autoswitch_info[index].lower_frame_limit, autoswitch_info[index].lines_per_frame, autoswitch_info[index].upper_frame_limit, autoswitch_info[index].sync_type);
 }
 
 void process_profile(int profile_number) {
@@ -5075,10 +5582,11 @@ int autoswitch_detect(int one_line_time_ns, int lines_per_vsync, int sync_type) 
          //          autoswitch_info[i].upper_limit, autoswitch_info[i].lines_per_frame, autoswitch_info[i].sync_type );
          if (   one_line_time_ns > autoswitch_info[i].lower_limit
                 && one_line_time_ns < autoswitch_info[i].upper_limit
-                && (lines_per_vsync == autoswitch_info[i].lines_per_frame || lines_per_vsync == (autoswitch_info[i].lines_per_frame - 1) || lines_per_vsync == (autoswitch_info[i].lines_per_frame + 1))
+                && lines_per_vsync >= autoswitch_info[i].lower_frame_limit
+                && lines_per_vsync <= autoswitch_info[i].upper_frame_limit
                 && sync_type == autoswitch_info[i].sync_type ) {
-            log_info("Autoswitch match: %s (%d) = %d, %d, %d, %d", sub_profile_names[i], i, autoswitch_info[i].lower_limit,
-                     autoswitch_info[i].upper_limit, autoswitch_info[i].lines_per_frame, autoswitch_info[i].sync_type );
+            log_info("Autoswitch match: %s (%d) = %d, %d, %d, %d, %d", sub_profile_names[i], i, autoswitch_info[i].lower_limit,
+                     autoswitch_info[i].upper_limit, autoswitch_info[i].lower_frame_limit, autoswitch_info[i].upper_frame_limit, autoswitch_info[i].sync_type );
             return (i);
          }
       }
@@ -5181,14 +5689,16 @@ void osd_show_cpld_recovery_menu(int cpld_fail_state) {
                osd_set(line++, 0, "   original RGBtoHD (c) 2018 board");
                osd_set(line++, 0, "Use 6-12_BIT_BBC_CPLD_vxx for IanB's");
                osd_set(line++, 0, "   6-bit Issue 2 to 12-bit Issue 4 boards");
-               line++;
                osd_set(line++, 0, "See Wiki for Atom board CPLD programming");
                line++;
-               osd_set(line++, 0, "Programming the wrong CPLD type may");
-               osd_set(line++, 0, "cause damage to your RGBtoHDMI board.");
-               osd_set(line++, 0, "Please ask for help if you are not sure.");
-               line++;
                osd_set(line++, 0, "Hold 3 buttons during reset for this menu.");
+               line++;
+               osd_set(line++, 0, "Note: CPLDs bought from unofficial sources");
+               osd_set(line++, 0, "may have already been programmed and that");
+               osd_set(line++, 0, "can prevent initial reprogramming.");
+               osd_set(line++, 0, "To fix this cut the jumpers JP1,JP2 & JP4.");
+               osd_set(line++, 0, "After reprogramming, remake the jumpers");
+               osd_set(line++, 0, "with solder blobs for normal operation.");
            }
        }
    }
@@ -5236,21 +5746,22 @@ void osd_refresh() {
    }
 }
 
+
 void save_configuration() {
     int result = 0;
     int asresult = -1;
     char msg[MAX_STRING_SIZE * 2];
     char path[MAX_STRING_SIZE];
     if (has_sub_profiles[get_feature(F_PROFILE)]) {
-       asresult = save_profile(profile_names[get_feature(F_PROFILE)], "Default", save_buffer, NULL, NULL);
-       result = save_profile(profile_names[get_feature(F_PROFILE)], sub_profile_names[get_feature(F_SUB_PROFILE)], save_buffer, default_buffer, sub_default_buffer);
+       asresult = save_profile(profile_names[get_feature(F_PROFILE)], "Default", save_buffer, NULL, NULL, -1);
+       result = save_profile(profile_names[get_feature(F_PROFILE)], sub_profile_names[get_feature(F_SUB_PROFILE)], save_buffer, default_buffer, sub_default_buffer, -1);
        if (get_parameter(F_SAVED_CONFIG) == 0) {
           sprintf(path, "%s/%s.txt", profile_names[get_feature(F_PROFILE)], sub_profile_names[get_feature(F_SUB_PROFILE)]);
        } else {
           sprintf(path, "%s/%s_%d.txt", profile_names[get_feature(F_PROFILE)], sub_profile_names[get_feature(F_SUB_PROFILE)], get_parameter(F_SAVED_CONFIG));
        }
     } else {
-       result = save_profile(NULL, profile_names[get_feature(F_PROFILE)], save_buffer, default_buffer, NULL);
+       result = save_profile(NULL, profile_names[get_feature(F_PROFILE)], save_buffer, default_buffer, NULL, -1);
        if (get_parameter(F_SAVED_CONFIG) == 0) {
           sprintf(path, "%s.txt", profile_names[get_feature(F_PROFILE)]);
        } else {
@@ -5435,12 +5946,14 @@ int osd_key(int key) {
 
    case TIMINGSET_MESSAGE:
       clear_menu_bits();
+      char msg[256];
       if (get_parameter(F_AUTO_SWITCH) == AUTOSWITCH_MANUAL) {
           if (get_feature(F_TIMING_SET)) {
-             osd_set(0, ATTR_DOUBLE_SIZE, "Timing Set 2");
+             sprintf(msg, "Timing Set 2 (%dMhz)", geometry_get_value(CLOCK) / 1000000);
           } else {
-             osd_set(0, ATTR_DOUBLE_SIZE, "Timing Set 1");
+             sprintf(msg, "Timing Set 1 (%dMhz)", geometry_get_value(CLOCK) / 1000000);
           }
+          osd_set(0, ATTR_DOUBLE_SIZE, msg);
       } else {
           if (get_feature(F_TIMING_SET)) {
              osd_set(0, ATTR_DOUBLE_SIZE, "IIGS SHR (Set 2)");
@@ -5458,7 +5971,7 @@ int osd_key(int key) {
       clear_menu_bits();
       osd_set(0, ATTR_DOUBLE_SIZE, "Auto Calibration");
       osd_set(1, 0, "Video must be static during calibration");
-      action_calibrate_auto();
+      action_calibrate_auto(1);
       // Fire OSD_EXPIRED in 125 frames time
       ret = 300;
       // come back to IDLE
@@ -5501,15 +6014,23 @@ int osd_key(int key) {
 
    case NTSC_MESSAGE:
       clear_menu_bits();
-      if (get_parameter(F_PALETTE_CONTROL) >= PALETTECONTROL_NTSCARTIFACT_CGA) {
+      if (get_parameter(F_PALETTE_CONTROL) >= PALETTECONTROL_NTSCARTIFACT_CGA && get_parameter(F_PALETTE_CONTROL) <= PALETTECONTROL_NTSCARTIFACT_BW_AUTO) {
           if (get_feature(F_NTSC_COLOUR)) {
-             osd_set(0, ATTR_DOUBLE_SIZE, "NTSC Colour on");
+             osd_set(0, ATTR_DOUBLE_SIZE, "NTSC Color on");
           } else {
-             osd_set(0, ATTR_DOUBLE_SIZE, "NTSC Colour off");
+             osd_set(0, ATTR_DOUBLE_SIZE, "NTSC Color off");
           }
+      } else if (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_LUMACODE || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_YUV) {
+          if (get_feature(F_NTSC_COLOUR)) {
+             osd_set(0, ATTR_DOUBLE_SIZE, "PAL Colour on");
+          } else {
+             osd_set(0, ATTR_DOUBLE_SIZE, "PAL Colour off");
+          }
+
       } else {
           set_feature(F_NTSC_COLOUR, 0);
-          osd_set(0, ATTR_DOUBLE_SIZE, "Not NTSC Artifacting");
+          osd_set(0, ATTR_DOUBLE_SIZE, "No PAL/NTSC Artifact");
+
       }
       // Fire OSD_EXPIRED in 50 frames time
       ret = 50;
@@ -5531,7 +6052,11 @@ int osd_key(int key) {
    case CLOCK_CAL0:
       // Fire OSD_EXPIRED in 50 frames time
       ret = 50;
-      if (is_genlocked()) {
+      if (key == key_enter) {
+         osd_state = CLOCK_CAL1;
+         osd_set(0, ATTR_DOUBLE_SIZE, "Genlock Aborted");
+         ret = 5;
+      } else if (is_genlocked()) {
          // move on when locked
          osd_set(0, ATTR_DOUBLE_SIZE, "Genlock Succeeded");
          osd_state = CLOCK_CAL1;
@@ -5609,6 +6134,44 @@ int osd_key(int key) {
             osd_clear_no_palette();
             redraw_menu();
             break;
+
+         case I_CREATE:
+            if (get_sync_detected() == 0) {
+                if (first_time_press == 0) {
+                    set_status_message("No sync: Press again to analyse");
+                    first_time_press = 1;
+                } else {
+                    set_status_message("");
+                    first_time_press = 0;
+                    int sync_type;
+                    if (any_DAC_detected()) {
+                        sync_type = cpld->analyse(capinfo->detected_sync_type | SYNC_BIT_COMPOSITE_SYNC, 1);     // always force composite sync for analog board
+                    } else {
+                        sync_type = cpld->analyse(capinfo->detected_sync_type ^ SYNC_BIT_COMPOSITE_SYNC, 1);     // toggle composite / separate for digital board
+                    }
+                    geometry_set_value(SYNC_TYPE, sync_type & SYNC_BIT_MASK);
+                    if (get_parameter(F_AUTO_SWITCH) == AUTOSWITCH_MODE7 && geometry_get_value(SYNC_TYPE) < SYNC_COMP) {
+                        set_parameter(F_AUTO_SWITCH, AUTOSWITCH_OFF);
+                    }
+                }
+            } else {
+                first_time_press = 0;
+                set_parameter(F_H_WIDTH, geometry_get_value(MIN_H_WIDTH));
+                set_parameter(F_V_HEIGHT, geometry_get_value(MIN_V_HEIGHT));
+                set_parameter(F_CLOCK, geometry_get_value(CLOCK));
+                set_parameter(F_LINE_LEN, geometry_get_value(LINE_LEN));
+                depth++;
+                current_menu[depth] = child_item->child;
+                current_item[depth] = 0;
+                // Rebuild dynamically populated menus, e.g. the sampling and geometry menus that are mode specific
+                if (child_item->child && child_item->child->rebuild) {
+                   child_item->child->rebuild(child_item->child);
+                }
+                osd_clear_no_palette();
+                redraw_menu();
+            }
+            break;
+
 
          case I_PICKMAN:
              strcpy(selected_manufacturer, item_name(item));
@@ -5744,7 +6307,8 @@ int osd_key(int key) {
                osd_state = PARAM;
               //  if (!inhibit_palette_dimming && type == I_FEATURE
               //      && (param_item->param->key == F_TINT || param_item->param->key == F_SAT || param_item->param->key == F_CONT || param_item->param->key == F_BRIGHT || param_item->param->key == F_GAMMA)
-                if (!inhibit_palette_dimming && current_menu[depth] == &palette_menu) {
+                if (!inhibit_palette_dimming && current_menu[depth] == &palette_menu
+                 && (param_item->param->key == F_TINT || param_item->param->key == F_SAT || param_item->param->key == F_CONT || param_item->param->key == F_BRIGHT || param_item->param->key == F_GAMMA) ){
                     inhibit_palette_dimming = 1;
                     osd_update_palette();
                 }
@@ -5880,7 +6444,7 @@ int osd_key(int key) {
                     osd_clear();
                     osd_set(0, ATTR_DOUBLE_SIZE, "Auto Calibration");
                     osd_set(1, 0, "Video must be static during calibration");
-                    action_calibrate_auto();
+                    action_calibrate_auto(1);
                 } else {
                     first_time_press = 0;
                     osd_clear();
@@ -5889,7 +6453,111 @@ int osd_key(int key) {
                 }
             }
             break;
+
+         case I_CALIBRATE_NO_SAVE:
+            if (first_time_press == 0) {
+                set_status_message("Press again to confirm calibration");
+                first_time_press = 1;
+            } else {
+                if (first_time_press == 1) {
+                    first_time_press = 2;
+                    osd_clear();
+                    osd_set(0, ATTR_DOUBLE_SIZE, "Auto Calibration");
+                    osd_set(1, 0, "Video must be static during calibration");
+                    action_calibrate_auto(0);
+                } else {
+                    first_time_press = 0;
+                    osd_clear();
+                    redraw_menu();
+                }
+            }
+            break;
+
+         case I_SAVE_CUSTOM:
+            {
+                char path[MAX_STRING_SIZE];
+                sprintf(path, "%s/%s/%s/%s%d_.txt", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                if (first_time_press == 0 && test_file(path)) {
+                    set_status_message("Press again to confirm file overwrite");
+                    first_time_press = 1;
+                } else if (first_time_press < 2){
+                    first_time_press = 2;
+                    osd_clear();
+                    osd_set(0, ATTR_DOUBLE_SIZE, "Save Custom Profile");
+                    int result = 0;
+                    geometry_set_value(H_ASPECT, get_haspect());
+                    geometry_set_value(V_ASPECT, get_vaspect());
+                    result = save_profile(NULL, NULL, save_buffer, default_buffer, NULL, get_feature(F_PROFILE_NUM));
+                    int line = 3;
+                    if (result == 0) {
+                        char temp[MAX_STRING_SIZE];
+                        sprintf(temp, "Profile saved as: %s%d", CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                        osd_set(line++, 0, temp);
+                        osd_set(line++, 0, "To folder:");
+                        sprintf(path, "%s/%s/%s", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER);
+                        osd_set(line++, 0, path);
+                        line++;
+                        osd_set(line++, 0, "After rebooting, the new profile will");
+                        osd_set(line++, 0, "be selected automatically. Following that");
+                        osd_set(line++, 0, "the profile can also be accessed from the");
+                        osd_set(line++, 0, "Custom entry in the Select Profile menu.");
+                        sprintf(path, "%s/%s%d_", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                        write_profile_choice(path, get_parameter(F_SAVED_CONFIG), (char*) cpld->name);
+                        set_general_reboot();
+                    } else {
+                        set_status_message("Error saving Custom Profile");
+                    }
+                } else {
+                        first_time_press = 0;
+                        osd_clear();
+                        redraw_menu();
+                }
+            }
+            break;
+
+         case I_DELETE_CUSTOM:
+             {
+                char path[MAX_STRING_SIZE];
+                sprintf(path, "%s/%s/%s/%s%d_.txt", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                if (test_file(path) || first_time_press > 0) {
+                    if (first_time_press == 0) {
+                        set_status_message("Press again to confirm file delete");
+                        first_time_press = 1;
+                    } else if (first_time_press < 2){
+                        first_time_press = 2;
+                        osd_clear();
+                        osd_set(0, ATTR_DOUBLE_SIZE, "Delete Custom Profile");
+                        int result = file_delete(path);
+                        int line = 3;
+                        if (result == 0) {
+                            char temp[MAX_STRING_SIZE];
+                            sprintf(temp, "Profile: %s%d deleted", CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                            osd_set(line++, 0, temp);
+                            osd_set(line++, 0, "From folder:");
+                            sprintf(path, "%s/%s/%s", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER);
+                            osd_set(line++, 0, path);
+                            line++;
+                            osd_set(line++, 0, "After rebooting, the profile will");
+                            osd_set(line++, 0, "be removed from the profile list");
+                            sprintf(path, "%s/%s%d_", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                            set_general_reboot();
+                        } else {
+                            set_status_message("Error Deleting Custom Profile");
+                        }
+                    } else {
+                            first_time_press = 0;
+                            osd_clear();
+                            redraw_menu();
+                    }
+                } else {
+                    set_status_message("No profile to delete");
+                }
+             }
+             break;
+
          }
+
+
       } else if (key == key_menu_up) {
          first_time_press = 0;
          // PREVIOUS
@@ -6317,6 +6985,11 @@ void osd_init() {
    cpu_clock = get_clock_rate(ARM_CLK_ID)/1000000;
    set_clock_rate_cpu(cpu_clock * 1000000); //sets the old value
    core_clock = get_clock_rate(CORE_CLK_ID)/1000000;
+//#ifdef RPI4
+//   if (core_clock > 500) {
+//      core_clock = 500;
+//   }
+//#endif
    set_clock_rate_core(core_clock * 1000000);
    sdram_clock = get_clock_rate(SDRAM_CLK_ID)/1000000;
    set_clock_rate_sdram(sdram_clock * 1000000);
@@ -6358,12 +7031,12 @@ void osd_init() {
    buf = RPI_PropertyGet(TAG_GET_EDID_BLOCK);
    int year = 1990;
    int manufacturer = 0;
-   int EDID_extension = 0;
    int supports1080i = 0;
    int supports1080p = 0;
    int detectedwidth = 0;
    int detectedheight = 0;
-
+   int EIA_CEA_861_extension = 0;
+   char EDID_name[MAX_STRING_SIZE] = "";
 
    if (buf) {
        //for(int a=2;a<34;a++){
@@ -6386,6 +7059,18 @@ void osd_init() {
                }
                log_info("Standard EDID lowest vertical refresh detected as %d Hz", Vrefresh_lo);
            }
+
+           if (buf->data.buffer_8[d] == 0 && buf->data.buffer_8[d + 1] == 0 && buf->data.buffer_8[d + 3] == 0xFC) { //search for EDID Display Name
+               for(int ni = 5; ni < 18; ni++) {
+                   if (buf->data.buffer_8[d + ni] == 0x0a) {
+                      EDID_name[ni - 5] = 0;
+                   } else {
+                      EDID_name[ni - 5] = buf->data.buffer_8[d + ni];
+                   }
+                   EDID_name[ni - 4] = 0;
+               }
+               log_info("EDID Display name is: %s", EDID_name);
+           }
        }
 
        manufacturer = buf->data.buffer_8[table_offset + 9] | (buf->data.buffer_8[table_offset + 8] << 8);  //big endian
@@ -6394,7 +7079,6 @@ void osd_init() {
        int extensionblocks = buf->data.buffer_8[table_offset + 126];
 
        if (extensionblocks > 0 && extensionblocks < 8) {
-           EDID_extension = 1;
            for (blocknum = 1; blocknum <= extensionblocks; blocknum++) {
                log_info("Reading EDID extension block #%d", blocknum);
                RPI_PropertyInit();
@@ -6409,27 +7093,30 @@ void osd_init() {
                    //}
                    int endptr = buf->data.buffer_8[table_offset + 2];
                    int ptr = 4;
-                   if (buf->data.buffer_8[table_offset] == 0x02 && buf->data.buffer_8[table_offset + 1] == 0x03 && endptr != (table_offset + 4)) {   //is it EIA/CEA-861 extension block version 3 with data blocks (HDMI V1 or later)
-                       do {
-                           //log_info("hdr %x %x", buf->data.buffer_8[table_offset + ptr] & 0xe0,buf->data.buffer_8[table_offset +ptr] & 0x1f);
-                           int ptrlen = (buf->data.buffer_8[table_offset + ptr] & 0x1f) + ptr + 1;
-                           if ((buf->data.buffer_8[table_offset +ptr] & 0xe0) == 0x40){     // search for Video Data Blocks with Short Video Descriptors
-                                ptr++;
-                                do {
-                                    int mode_num = buf->data.buffer_8[table_offset + ptr] & 0x7f; //mask out preferred bit
-                                    if (mode_num >= 17 && mode_num <= 31)  {   // 50Hz Short Video Descriptors
-                                        Vrefresh_lo = 50;
-                                        if (mode_num == 20) supports1080i = 1;
-                                        if (mode_num == 31) supports1080p = 1;
-                                    }
-                                    //log_info("mode %d", mode_num);
+                   if (buf->data.buffer_8[table_offset] == 0x02 && buf->data.buffer_8[table_offset + 1] == 0x03) { //is it EIA/CEA-861 extension block version 3 (HDMI V1 or later)
+                       EIA_CEA_861_extension = 1;
+                       if (endptr != (table_offset + 4)) {  // extension with data blocks
+                           do {
+                               //log_info("hdr %x %x", buf->data.buffer_8[table_offset + ptr] & 0xe0,buf->data.buffer_8[table_offset +ptr] & 0x1f);
+                               int ptrlen = (buf->data.buffer_8[table_offset + ptr] & 0x1f) + ptr + 1;
+                               if ((buf->data.buffer_8[table_offset +ptr] & 0xe0) == 0x40){     // search for Video Data Blocks with Short Video Descriptors
                                     ptr++;
-                                } while(ptr < ptrlen);
-                                log_info("EIA/CEA-861 EDID SVD lowest vertical refresh detected as %d Hz", Vrefresh_lo);
-                           }
-                           ptr = ptrlen;
-                         //log_info("ptr %x", ptr);
-                       } while (ptr < endptr);
+                                    do {
+                                        int mode_num = buf->data.buffer_8[table_offset + ptr] & 0x7f; //mask out preferred bit
+                                        if (mode_num >= 17 && mode_num <= 31)  {   // 50Hz Short Video Descriptors
+                                            Vrefresh_lo = 50;
+                                            if (mode_num == 20) supports1080i = 1;
+                                            if (mode_num == 31) supports1080p = 1;
+                                        }
+                                        //log_info("mode %d", mode_num);
+                                        ptr++;
+                                    } while(ptr < ptrlen);
+                                    log_info("EIA/CEA-861 EDID SVD lowest vertical refresh detected as %d Hz", Vrefresh_lo);
+                               }
+                               ptr = ptrlen;
+                             //log_info("ptr %x", ptr);
+                           } while (ptr < endptr);
+                       }
                    }
                 }
            }
@@ -6438,12 +7125,31 @@ void osd_init() {
 
    log_info("Manufacturer = %4X, year = %d", manufacturer, year);
 
-   if (EDID_extension && supports1080i && !supports1080p) {      //could add year limit here as well
+   if (EIA_CEA_861_extension && supports1080i && !supports1080p) {      //could add year limit here as well
        log_info("Monitor has EIA/CEA-861 extension, supports 1080i@50 but doesn't support 1080p@50, limiting 50Hz support");
        Vrefresh_lo = 60;
    }
 
    log_info("Lowest vertical frequency supported by monitor = %d Hz", Vrefresh_lo);
+
+   int checksum = 0;
+   for (int ix = 0; ix < EDID_bufptr; ix++) {
+       checksum +=  (int) EDID_buf[ix];
+       //log_info("EDID %02X", EDID_buf[ix]);
+   }
+   log_info("EDID checksum = %X", checksum);
+
+   if ((checksum % 0x100) != 0) {
+       log_info("***EDID checksum FAIL! ...rebooting");
+       delay_in_arm_cycles_cpu_adjust(200000000);
+       reboot();
+    }
+
+   int valid_edid = 1;
+   if (strcmp(EDID_name, "MZ0404") == 0) {
+       log_info("***EDID name matches MZ0404 embedder ...ignoring declared resolution");
+       valid_edid = 0;
+   }
 
    int cbytes = file_load("/config.txt", config_buffer, MAX_CONFIG_BUFFER_SIZE);
 
@@ -6527,9 +7233,9 @@ void osd_init() {
       prop = "1";
    }
    log_info("HDMI drive: %s", prop);
-   int val = (atoi(prop) - 1) & 1;
+   int hdmi_mode = (atoi(prop) - 1) & 1;
 
-   if (val !=0 ) {
+   if (hdmi_mode !=0 ) {
        if (cbytes) {
           prop = get_prop_no_space(config_buffer, "hdmi_pixel_encoding");
        }
@@ -6537,10 +7243,22 @@ void osd_init() {
           prop = "0";
        }
        log_info("HDMI pixel encoding: %s", prop);
-       val += atoi(prop);
+       hdmi_mode += atoi(prop);
    }
 
-   set_hdmi(val, 0);
+   set_hdmi(hdmi_mode, 0);
+
+   if (cbytes) {
+      prop = get_prop_no_space(config_buffer, "#hdmi_auto");
+   }
+
+   if (!prop || !cbytes) {
+      prop = "1";
+   }
+
+   int hdmi_auto = atoi(prop);
+   set_hdmi_auto(hdmi_auto, 0);
+
 
    if (cbytes) {
       prop = get_prop_no_space(config_buffer, "#refresh");
@@ -6549,7 +7267,7 @@ void osd_init() {
       prop = "0";
    }
    log_info("Read refresh: %s", prop);
-   val = atoi(prop);
+   int val = atoi(prop);
 
    set_refresh(val, 0);
 
@@ -6608,7 +7326,12 @@ void osd_init() {
 
    int auto_workaround = 0;
    char auto_workaround_path[MAX_NAMES_WIDTH] = "";
+
+#ifdef RPI4
+   if (strcmp(prop, DEFAULT_RESOLUTION) == 0 && ((detectedwidth == 2560 && detectedheight == 1440) || (detectedwidth == 3840 && detectedheight == 2160))) { //special handling for Auto as Pi won't auto detect
+#else
    if (strcmp(prop, DEFAULT_RESOLUTION) == 0 && detectedwidth == 2560 && detectedheight == 1440) { //special handling for Auto in 2560x1440 as Pi won't auto detect
+#endif
        sprintf(auto_workaround_path, "%dx%d/", detectedwidth, detectedheight);
        auto_workaround = 1;
    }
@@ -6630,8 +7353,9 @@ void osd_init() {
    } else {
        log_info("noreboot %d %d '%s'", hdmi_mode_detected,auto_workaround, auto_workaround_path);
    }
+   if (valid_edid) {
    set_auto_workaround_path(auto_workaround_path, reboot);
-
+   }
 
    if (cbytes) {
       prop = get_prop_no_space(config_buffer, "#scaling");
@@ -6668,6 +7392,16 @@ void osd_init() {
    }
    set_frontend(all_frontends[(cpld->get_version() >> VERSION_DESIGN_BIT) & 0x0F], 0);
 
+   log_info("HDMI_auto = %d, HDMI_Mode = %d, EIA_CEA_861_extension = %d", hdmi_auto, hdmi_mode, EIA_CEA_861_extension);
+   if (hdmi_auto == 1) {                   // auto dvi / hdmi
+      if (EIA_CEA_861_extension == 0 && hdmi_mode != 0) {
+          log_info("Setting HDMI mode to 0");
+          set_hdmi(0, 1);
+      } else if (EIA_CEA_861_extension != 0 && hdmi_mode != 1) {
+          log_info("Setting HDMI mode to 1");
+          set_hdmi(1, 1);
+      }
+   }
 
    char name[100];
    char cpld_path[100] = "/Profiles/";
@@ -6775,10 +7509,28 @@ void osd_init() {
                }
             }
             if (!found_profile) {
-                  set_parameter(F_PROFILE, 0);
-                  load_profiles(0, 0);
-                  process_profile(0);
-                  set_feature(F_SUB_PROFILE, 0);
+                set_parameter(F_SAVED_CONFIG, 0);
+                prop = cpld->default_profile;
+                if (mono_board_detected() && (cpld->get_version() >> VERSION_DESIGN_BIT) == DESIGN_YUV_ANALOG) {
+                    prop = MONO_BOARD_DEFAULT;
+                }
+                for (int i=0; i<= features[F_PROFILE].max; i++) {
+                   if (strcmp(profile_names[i] + cpld_prefix_length, prop) == 0) {
+                      set_parameter(F_PROFILE, i);
+                      load_profiles(i, 0);
+                      process_profile(i);
+                      set_feature(F_SUB_PROFILE, 0);
+                      log_info("Profile default = %s", prop);
+                      found_profile = 1;
+                      break;
+                   }
+                }
+                if (!found_profile) {
+                    set_parameter(F_PROFILE, 0);
+                    load_profiles(0, 0);
+                    process_profile(0);
+                    set_feature(F_SUB_PROFILE, 0);
+                }
             }
 
          }
@@ -6798,11 +7550,16 @@ void osd_update(uint32_t *osd_base, int bytes_per_line, int relocate) {
         osd_base += (CACHED_SCREEN_OFFSET >> 2);
    }
 #endif
-
+//************** should be capinfo->detected_sync_type below?
    if (capinfo->bpp == 16) {
        if (capinfo->video_type == VIDEO_INTERLACED && (capinfo->sync_type & SYNC_BIT_INTERLACED) && get_parameter(F_NORMAL_DEINTERLACE) == DEINTERLACE_NONE) {
            clear_full_screen();
        }
+   }
+
+   if (get_true_vdisplay() <= 288) {
+       osd_base += ((capinfo->nlines * 2 / 100) * bytes_per_line);
+       osd_base += ((capinfo->chars_per_line * 5 / 100) << 2);
    }
 
    // SAA5050 character data is 12x20
@@ -7031,6 +7788,12 @@ void __attribute__ ((aligned (64))) osd_update_fast(uint32_t *osd_base, int byte
    if (capinfo->bpp == 16 && capinfo->video_type == VIDEO_INTERLACED && (capinfo->detected_sync_type & SYNC_BIT_INTERLACED) && get_parameter(F_NORMAL_DEINTERLACE) == DEINTERLACE_NONE) {
       clear_screen();
    }
+
+   if (get_true_vdisplay() <= 288) {
+       osd_base += ((capinfo->nlines * 2 / 100) * bytes_per_line);
+       osd_base += ((capinfo->chars_per_line * 5 / 100) << 2);
+   }
+
    // SAA5050 character data is 12x20
    int bufferCharWidth = (capinfo->chars_per_line << 3) / 12;         // SAA5050 character data is 12x20
    uint32_t *line_ptr = osd_base;

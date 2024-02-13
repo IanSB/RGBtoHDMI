@@ -21,6 +21,7 @@
 .global dummyscreen
 .global elk_mode
 .global vsync_period
+.global vsync_width
 .global vsync_comparison_lo
 .global vsync_comparison_hi
 .global hsync_period
@@ -227,11 +228,11 @@ skip_swap:
 
         // Setup r1 with the number of active characters per line (as per before) and adjust to number of psyncs required
         ldr    r1, param_chars_per_line
-        ldr    r9, param_palette_control
-        bic    r9, r9, #INHIBIT_PALETTE_DIMMING_16_BIT
-        cmp    r9, #PALETTECONTROL_ATARI_GTIA
-        movge  r1, r1, lsl #4
-        movlt  r1, r1, lsl #3
+    //    ldr    r9, param_palette_control
+    //    bic    r9, r9, #INHIBIT_PALETTE_DIMMING_16_BIT
+    //    cmp    r9, #PALETTECONTROL_ATARI_GTIA
+    //    movge  r1, r1, lsl #4
+        mov    r1, r1, lsl #3
         ldr    r9, param_fb_sizex2
         ands   r9, r9, #SIZEX2_DOUBLE_WIDTH
         movne  r1, r1, lsr #1
@@ -292,8 +293,8 @@ skip_double_check:
         moveq  r10, #1
         movmi  r10, #1
 
-        cmp    r8, #PALETTECONTROL_ATARI_GTIA
-        movge  r10, r10, lsl #1                // if so double the offset as sample rate is 2x pixel rate
+    //    cmp    r8, #PALETTECONTROL_ATARI_GTIA
+    //    movge  r10, r10, lsl #1                // if so double the offset as sample rate is 2x pixel rate
         add    r10, r10, #1                    // first psync test is wait for a zero after csync
         str    r10, param_h_offset
 
@@ -308,9 +309,9 @@ skip_double_check:
 
         orr    r10, r7, r8, lsl #1    // slow index in r10 now 0-9
         tst    r9, #2                 // double width?
-        addne  r10, r10, #16          // slow index in r10 now 10-19
+        addne  r10, r10, #(NUM_CONTROLS << 1)          // slow index in r10 now 10-19
 
-        add    r7, r7, #32            // main index initially points to fast 4bpp or fast 8bpp (20-21)
+        add    r7, r7, #(NUM_CONTROLS << 2)            // main index initially points to fast 4bpp or fast 8bpp (20-21)
 
         cmp    r8, #0                 // palette control?
         tsteq  r9, #3                 // double size?
@@ -348,6 +349,15 @@ skip_double_check:
 
         .align 6               // so cache loads align
 frame:
+
+        ldr    r8, sync_detected
+        cmp    r8, #0
+        bne    no_refresh
+        push   {r0-r12}
+        bl     refresh_cpld
+        pop    {r0-r12}
+no_refresh:
+
         ldr    r8, =inBandPointer
         ldr    r9, =inBandData
         str    r9, [r8]
@@ -553,9 +563,10 @@ skip_switch_test:
         str    r9, frame_countdown
         ldr    r9, param_detected_sync_type
         tst    r9, #SYNC_BIT_INTERLACED
-        tstne  r3, #BIT_OSD
+        tstne  r3, #BIT_OSD  |  BIT_SKIP_ALT_FRAME
         tstne  r3, #BIT_FIELD_TYPE    // test for interlaced sync with OSD on and wrong field
         bne    frame                  // wait for next fieldsync so always start on the same field to prevent interlace 'bounce'
+
 not_first_frame:
         cmp    r9, #0
         bne    skip_interlace_test
@@ -1271,7 +1282,7 @@ noInBandData:
         ldr    r0, param_video_type
         cmp    r0, #VIDEO_TELETEXT
         beq    skip_osd_update
-        tst    r3, #BIT_OSD
+        tst    r3, #BIT_OSD | BIT_SKIP_ALT_FRAME
         beq    skip_osd_update
 
         push   {r1-r5, r11}
@@ -1435,6 +1446,9 @@ vsync_period:
 vsync_period_1:
         .word 0
 
+vsync_width:
+        .word 0
+
 vsync_comparison_lo:
         .word 0
 
@@ -1511,23 +1525,6 @@ hsync_measured:
         .word 0
 
         .ltorg
-
-        .align 6
-
-key_press_reset:
-        push   {r4-r12, lr}
-        bl     _get_GPLEV0_r4
-        ldr    r8, [r4]
-        mov    r0, #0
-        tst    r8, #SW1_MASK
-        orreq  r0, r0, #1
-        tst    r8, #SW2_MASK
-        orreq  r0, r0, #2
-        tst    r8, #SW3_MASK
-        orreq  r0, r0, #4
-        pop    {r4-r12, lr}
-        mov     pc, lr
-
 
 frame_timeout:
         .word 24000000
@@ -1645,12 +1642,7 @@ abort_vsync:
         str    r6, last_vsync_time
         subs   r8, r6, r8
         rsbmi  r8, r8, #0
-        ldr    r9, vsync_period_1
-        str    r8, vsync_period_1
-        add    r8, r8, r9
-        mov    r8, r8, lsr #1
-        str    r8, vsync_period
-        pop    {pc}
+        b      exit_vsync
 
 
 separate_syncs:
@@ -1704,6 +1696,7 @@ noresetPSA:
         cmp    r8, r7                     // has it been low for ~10us?
         blt    waitPSA
 
+        READ_CYCLE_COUNTER r5             //save start of vsync
 resetPSB:
         READ_CYCLE_COUNTER r9
 waitPSB:
@@ -1769,21 +1762,23 @@ abortvs:
         READ_CYCLE_COUNTER r6
 
 skip_interlace_detect:
+        cmp    r10, #0
+        moveq  r7, r6                           // make all fields look the same
+        moveq  r5, r7                           // set length of vsync pulse to 0 so electron test fails
 
-        mov    r5, r7                           // set length of vsync pulse to 0 so electron test fails
         SWITCH_VSYNC_TO_PSYNC
 
         ldr    r8, last_vsync_time
         str    r7, last_vsync_time
         subs   r8, r7, r8
         rsbmi  r8, r8, #0
+
+exit_vsync:
         ldr    r9, vsync_period_1
         str    r8, vsync_period_1
         add    r8, r8, r9
         mov    r8, r8, lsr #1
         str    r8, vsync_period
-
-
         pop    {pc}
 
 // ======================================================================
@@ -1859,6 +1854,10 @@ test_again:
 
         // Wait for a second field of frame
         bl     wait_for_vsync_with_line_delay
+
+        subs   r8, r6, r5        // work out length of vsync pulse
+        rsbmi  r8, r0, #0
+        str    r8, vsync_width
 
         // Return the time for a complete frame (should be 40ms)
         subs   r0, r6, r0
@@ -1985,7 +1984,7 @@ clear_screen:
         tst    r9, #0x80
         cmpeq  r10, #0
         moveq  r9, #0
-        andne  r9, r9, #0x7f
+        andne  r9, r9, #0x3f
         cmp    r7, #4
         andeq  r9, #7
         orreq  r9, r9, lsl #4
@@ -2120,13 +2119,15 @@ restfull:
         mov    pc, lr   //entry point for capture_line_null cache pre-load
 capture_line_null:
         push    {lr}
-        ldr    r8, =param_fb_bpp
-        ldr    r8, [r8]
         ldr    r12, =param_border
         ldr    r12, [r12]
-
+        cmp    r12, #248
+        bge    do_colour_bars
+        ldr    r8, =param_fb_bpp
+        ldr    r8, [r8]
         cmp    r8, #4
-        movne  r1, r1, lsl #1
+        moveq  r1, r1, lsr #3
+        movne  r1, r1, lsr #2
         andne  r12, r12, #0x7f
         andeq  r12, r12, #7
         orreq  r12, r12, lsl #4
@@ -2141,6 +2142,48 @@ loop_null:
         subs    r1, r1, #1
         bne     loop_null
         pop     {r0, pc}
+do_colour_bars:
+        SKIP_PSYNC
+        ldr    r8, =param_fb_bpp
+        ldr    r8, [r8]
+        cmp    r8, #4
+        moveq  r6, r1, lsr #3+3
+        movne  r6, r1, lsr #2+3
+        cmp    r6, #0
+        moveq  r6, #1
+
+        mov    r12, #7
+        bl     draw_bar
+        mov    r12, #3
+        bl     draw_bar
+        mov    r12, #6
+        bl     draw_bar
+        mov    r12, #2
+        bl     draw_bar
+        mov    r12, #5
+        bl     draw_bar
+        mov    r12, #1
+        bl     draw_bar
+        mov    r12, #4
+        bl     draw_bar
+        mov    r12, #0
+        bl     draw_bar
+        pop     {r0, pc}
+draw_bar:
+        push {r14}
+        cmp    r8, #4
+        orreq  r12, r12, lsl #4
+        orr    r12, r12, lsl #8
+        orr    r12, r12, lsl #16
+        mov    r1, r6
+loop_null_bar:
+        mov    r7, r12
+        mov    r10, r12
+        WRITE_R7_R10
+        subs    r1, r1, #1
+        bne     loop_null_bar
+        pop     {pc}
+
         .ltorg
 
 set_hardware_id_r3:
@@ -2365,6 +2408,22 @@ wait_for_source_fieldsync:
         // wait for vsync
         bl     wait_for_vsync
         pop  {r0-r12, pc}
+        .align 6
+
+key_press_reset:
+        push   {r4-r12, lr}
+        bl     _get_GPLEV0_r4
+        ldr    r8, [r4]
+        mov    r0, #0
+        tst    r8, #SW1_MASK
+        orreq  r0, r0, #1
+        tst    r8, #SW2_MASK
+        orreq  r0, r0, #2
+        tst    r8, #SW3_MASK
+        orreq  r0, r0, #4
+        pop    {r4-r12, lr}
+        mov     pc, lr
+
         .ltorg
 
 #ifdef USE_MULTICORE
@@ -2442,6 +2501,10 @@ capture_line_normal_1bpp_table:
         .word capture_line_default_onebit_8bpp
         .word capture_line_default_onebit_4bpp
         .word capture_line_default_onebit_8bpp
+        .word capture_line_default_onebit_4bpp
+        .word capture_line_default_onebit_8bpp
+        .word capture_line_default_onebit_4bpp
+        .word capture_line_default_onebit_8bpp
 
         .word capture_line_default_onebit_double_4bpp
         .word capture_line_default_onebit_double_8bpp
@@ -2453,6 +2516,10 @@ capture_line_normal_1bpp_table:
         .word capture_line_default_onebit_double_8bpp    // placeholder ntsc
         .word capture_line_default_onebit_double_4bpp   // placeholder ntsc
         .word capture_line_default_onebit_double_8bpp    // placeholder ntsc
+        .word capture_line_default_onebit_double_4bpp
+        .word capture_line_default_onebit_double_8bpp
+        .word capture_line_default_onebit_double_4bpp
+        .word capture_line_default_onebit_double_8bpp
         .word capture_line_default_onebit_double_4bpp
         .word capture_line_default_onebit_double_8bpp
         .word capture_line_default_onebit_double_4bpp
@@ -2482,6 +2549,10 @@ capture_line_normal_3bpp_table:
         .word capture_line_atari_8bpp
         .word capture_line_default_4bpp
         .word capture_line_default_8bpp
+        .word capture_line_default_4bpp
+        .word capture_line_default_8bpp
+        .word capture_line_default_4bpp
+        .word capture_line_default_8bpp
 
         .word capture_line_default_double_4bpp
         .word capture_line_default_double_8bpp
@@ -2497,8 +2568,12 @@ capture_line_normal_3bpp_table:
         .word capture_line_default_double_8bpp
         .word capture_line_default_double_4bpp
         .word capture_line_atari_double_8bpp
+        .word capture_line_default_double_4bpp
         .word capture_line_default_double_8bpp
         .word capture_line_default_double_4bpp
+        .word capture_line_default_double_8bpp
+        .word capture_line_default_double_4bpp
+        .word capture_line_default_double_8bpp
 
         .word capture_line_fast_4bpp
         .word capture_line_fast_8bpp
@@ -2515,11 +2590,15 @@ capture_line_normal_6bpp_table:
         .word capture_line_ntsc_sixbits_16bpp_mono_auto
         .word capture_line_ntsc_sixbits_8bpp_mono_auto
         .word capture_line_default_sixbits_16bpp
-        .word capture_line_default_sixbits_8bpp
+        .word capture_line_c64yuv_sixbits_8bpp
         .word capture_line_default_sixbits_16bpp
         .word capture_line_atari_sixbits_8bpp
         .word capture_line_default_sixbits_16bpp
         .word capture_line_c64lc_sixbits_8bpp
+        .word capture_line_default_sixbits_16bpp
+        .word capture_line_atarilc_sixbits_8bpp
+        .word capture_line_default_sixbits_16bpp
+        .word capture_line_atarilc2600_sixbits_8bpp
 
         .word capture_line_default_sixbits_double_16bpp
         .word capture_line_default_sixbits_double_8bpp
@@ -2531,15 +2610,20 @@ capture_line_normal_6bpp_table:
         .word capture_line_ntsc_sixbits_double_8bpp_mono         // for tandy coco 1 & 2
         .word capture_line_default_sixbits_double_16bpp          // placeholder ntsc
         .word capture_line_ntsc_sixbits_double_8bpp_mono_auto    // for tandy coco 1 & 2 auto switches if UV = no colour
-        .word capture_line_default_sixbits_double_16bpp
-        .word capture_line_default_sixbits_double_8bpp
+        .word capture_line_c64yuv_sixbits_double_16bpp
+        .word capture_line_c64yuv_sixbits_double_8bpp
         .word capture_line_default_sixbits_double_16bpp
         .word capture_line_atari_sixbits_double_8bpp
-        .word capture_line_default_sixbits_double_16bpp
+        .word capture_line_c64lc_sixbits_double_16bpp
         .word capture_line_c64lc_sixbits_double_8bpp
+        .word capture_line_atarilc_sixbits_double_16bpp
+        .word capture_line_atarilc_sixbits_double_8bpp
+        .word capture_line_default_sixbits_double_16bpp
+        .word capture_line_atarilc2600_sixbits_double_8bpp
 
         .word capture_line_fast_sixbits_16bpp
         .word capture_line_fast_sixbits_8bpp
+
 
 capture_line_normal_odd_even_6bpp_table:
         .word capture_line_default_sixbits_16bpp
@@ -2553,11 +2637,15 @@ capture_line_normal_odd_even_6bpp_table:
         .word capture_line_ntsc_sixbits_16bpp_mono_auto
         .word capture_line_ntsc_sixbits_8bpp_mono_auto
         .word capture_line_default_sixbits_16bpp
-        .word capture_line_default_sixbits_8bpp
+        .word capture_line_c64yuv_sixbits_8bpp
         .word capture_line_default_sixbits_16bpp
         .word capture_line_atari_sixbits_8bpp
         .word capture_line_default_sixbits_16bpp
         .word capture_line_c64lc_sixbits_8bpp
+        .word capture_line_default_sixbits_16bpp
+        .word capture_line_atarilc_sixbits_8bpp
+        .word capture_line_default_sixbits_16bpp
+        .word capture_line_atarilc2600_sixbits_8bpp
 
         .word capture_line_default_sixbits_double_16bpp
         .word capture_line_default_odd_even_sixbits_double_8bpp
@@ -2570,11 +2658,15 @@ capture_line_normal_odd_even_6bpp_table:
         .word capture_line_default_sixbits_double_16bpp          // placeholder ntsc
         .word capture_line_ntsc_sixbits_double_8bpp_mono_auto    // for tandy coco 1 & 2 auto switches if UV = no colour
         .word capture_line_default_sixbits_double_16bpp
-        .word capture_line_default_sixbits_double_8bpp
+        .word capture_line_c64yuv_sixbits_double_8bpp
         .word capture_line_default_sixbits_double_16bpp
         .word capture_line_atari_sixbits_double_8bpp
-        .word capture_line_default_sixbits_double_16bpp
+        .word capture_line_c64lc_sixbits_double_16bpp
         .word capture_line_c64lc_sixbits_double_8bpp
+        .word capture_line_default_sixbits_double_16bpp
+        .word capture_line_atarilc_sixbits_double_8bpp
+        .word capture_line_default_sixbits_double_16bpp
+        .word capture_line_atarilc2600_sixbits_double_8bpp
 
         .word capture_line_default_sixbits_double_16bpp
         .word capture_line_default_odd_even_sixbits_double_8bpp
@@ -2596,7 +2688,15 @@ capture_line_normal_9bpplo_table:
         .word capture_line_default_eightbits_8bpp
         .word capture_line_default_ninebitslo_16bpp
         .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_ninebitslo_16bpp
+        .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_ninebitslo_16bpp
+        .word capture_line_default_eightbits_8bpp
 
+        .word capture_line_default_ninebitslo_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
+        .word capture_line_default_ninebitslo_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitslo_double_16bpp
         .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitslo_double_16bpp
@@ -2634,7 +2734,15 @@ capture_line_normal_9bpphi_table:
         .word capture_line_default_eightbits_8bpp
         .word capture_line_default_ninebitshi_16bpp
         .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_ninebitshi_16bpp
+        .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_ninebitshi_16bpp
+        .word capture_line_default_eightbits_8bpp
 
+        .word capture_line_default_ninebitshi_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
+        .word capture_line_default_ninebitshi_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitshi_double_16bpp
         .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitshi_double_16bpp
@@ -2672,7 +2780,15 @@ capture_line_normal_12bpp_table:
         .word capture_line_default_eightbits_8bpp
         .word capture_line_default_twelvebits_16bpp
         .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_twelvebits_16bpp
+        .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_twelvebits_16bpp
+        .word capture_line_default_eightbits_8bpp
 
+        .word capture_line_default_twelvebits_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
+        .word capture_line_default_twelvebits_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_twelvebits_double_16bpp
         .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_twelvebits_double_16bpp
@@ -2711,6 +2827,10 @@ capture_line_simple_6bpp_table:
         .word capture_line_default_simple_sixbits_8bpp
         .word capture_line_default_sixbits_16bpp
         .word capture_line_default_simple_sixbits_8bpp
+        .word capture_line_default_sixbits_16bpp
+        .word capture_line_default_simple_sixbits_8bpp
+        .word capture_line_default_sixbits_16bpp
+        .word capture_line_default_simple_sixbits_8bpp
 
         .word capture_line_default_sixbits_double_16bpp
         .word capture_line_default_sixbits_double_8bpp
@@ -2722,6 +2842,10 @@ capture_line_simple_6bpp_table:
         .word capture_line_default_sixbits_double_8bpp         // for tandy coco 1 & 2
         .word capture_line_default_sixbits_double_16bpp          // placeholder ntsc
         .word capture_line_default_sixbits_double_8bpp    // for tandy coco 1 & 2 auto switches if UV = no colour
+        .word capture_line_default_sixbits_double_16bpp
+        .word capture_line_default_sixbits_double_8bpp
+        .word capture_line_default_sixbits_double_16bpp
+        .word capture_line_default_sixbits_double_8bpp
         .word capture_line_default_sixbits_double_16bpp
         .word capture_line_default_sixbits_double_8bpp
         .word capture_line_default_sixbits_double_16bpp
@@ -2750,7 +2874,15 @@ capture_line_simple_9bpplo_table:
         .word capture_line_default_eightbits_8bpp
         .word capture_line_default_simple_ninebitslo_16bpp
         .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_ninebitslo_16bpp
+        .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_ninebitslo_16bpp
+        .word capture_line_default_eightbits_8bpp
 
+        .word capture_line_default_ninebitslo_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
+        .word capture_line_default_ninebitslo_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitslo_double_16bpp
         .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitslo_double_16bpp
@@ -2788,7 +2920,15 @@ capture_line_simple_9bpplo_blank_table:
         .word capture_line_default_eightbits_8bpp
         .word capture_line_default_simple_ninebitslo_16bpp_blank
         .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_ninebitslo_16bpp_blank
+        .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_ninebitslo_16bpp_blank
+        .word capture_line_default_eightbits_8bpp
 
+        .word capture_line_default_ninebitslo_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
+        .word capture_line_default_ninebitslo_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitslo_double_16bpp
         .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitslo_double_16bpp
@@ -2826,7 +2966,15 @@ capture_line_simple_9bpphi_table:
         .word capture_line_default_eightbits_8bpp
         .word capture_line_default_simple_ninebitshi_16bpp
         .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_ninebitshi_16bpp
+        .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_ninebitshi_16bpp
+        .word capture_line_default_eightbits_8bpp
 
+        .word capture_line_default_ninebitshi_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
+        .word capture_line_default_ninebitshi_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitshi_double_16bpp
         .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_ninebitshi_double_16bpp
@@ -2865,7 +3013,15 @@ capture_line_simple_12bpp_table:
         .word capture_line_default_eightbits_8bpp
         .word capture_line_default_simple_16bpp
         .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_16bpp
+        .word capture_line_default_eightbits_8bpp
+        .word capture_line_default_simple_16bpp
+        .word capture_line_default_eightbits_8bpp
 
+        .word capture_line_default_twelvebits_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
+        .word capture_line_default_twelvebits_double_16bpp
+        .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_twelvebits_double_16bpp
         .word capture_line_default_eightbits_double_8bpp
         .word capture_line_default_twelvebits_double_16bpp
@@ -2907,7 +3063,15 @@ capture_line_odd_6bpp_table:  //no six bit versions
         .word capture_line_odd_8bpp
         .word capture_line_odd_4bpp
         .word capture_line_odd_8bpp
+        .word capture_line_odd_4bpp
+        .word capture_line_odd_8bpp
+        .word capture_line_odd_4bpp
+        .word capture_line_odd_8bpp
 
+        .word capture_line_odd_4bpp
+        .word capture_line_odd_8bpp
+        .word capture_line_odd_4bpp
+        .word capture_line_odd_8bpp
         .word capture_line_odd_4bpp
         .word capture_line_odd_8bpp
         .word capture_line_odd_4bpp
@@ -2947,7 +3111,15 @@ capture_line_even_6bpp_table: //no six bit versions
         .word capture_line_even_8bpp
         .word capture_line_even_4bpp
         .word capture_line_even_8bpp
+        .word capture_line_even_4bpp
+        .word capture_line_even_8bpp
+        .word capture_line_even_4bpp
+        .word capture_line_even_8bpp
 
+        .word capture_line_even_4bpp
+        .word capture_line_even_8bpp
+        .word capture_line_even_4bpp
+        .word capture_line_even_8bpp
         .word capture_line_even_4bpp
         .word capture_line_even_8bpp
         .word capture_line_even_4bpp
@@ -2985,7 +3157,15 @@ capture_line_half_odd_3bpp_table:
         .word capture_line_half_odd_8bpp
         .word capture_line_half_odd_4bpp
         .word capture_line_half_odd_8bpp
+        .word capture_line_half_odd_4bpp
+        .word capture_line_half_odd_8bpp
+        .word capture_line_half_odd_4bpp
+        .word capture_line_half_odd_8bpp
 
+        .word capture_line_half_odd_4bpp
+        .word capture_line_half_odd_8bpp
+        .word capture_line_half_odd_4bpp
+        .word capture_line_half_odd_8bpp
         .word capture_line_half_odd_4bpp
         .word capture_line_half_odd_8bpp
         .word capture_line_half_odd_4bpp
@@ -3023,7 +3203,15 @@ capture_line_half_even_3bpp_table:
         .word capture_line_half_even_8bpp
         .word capture_line_half_even_4bpp
         .word capture_line_half_even_8bpp
+        .word capture_line_half_even_4bpp
+        .word capture_line_half_even_8bpp
+        .word capture_line_half_even_4bpp
+        .word capture_line_half_even_8bpp
 
+        .word capture_line_half_even_4bpp
+        .word capture_line_half_even_8bpp
+        .word capture_line_half_even_4bpp
+        .word capture_line_half_even_8bpp
         .word capture_line_half_even_4bpp
         .word capture_line_half_even_8bpp
         .word capture_line_half_even_4bpp

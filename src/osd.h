@@ -15,6 +15,8 @@ extern int customPalette[];
 extern char paletteHighNibble[];
 extern int paletteFlags;
 extern int palette_data_16[];
+extern int c64_artifact_palette_16[];
+extern char c64_YUV_palette_lookup[];
 
 enum {
    HDMI_EXACT,
@@ -33,6 +35,7 @@ enum {
    PALETTE_XRGB,
    PALETTE_LASER,
    PALETTE_RGBISPECTRUM,
+   PALETTE_RGBISPECTRUMLUMACODE,
    PALETTE_SPECTRUM,
    PALETTE_AMSTRAD,
    PALETTE_RrGgBb,
@@ -46,19 +49,24 @@ enum {
    PALETTE_ATOM_MKII_FULL,
    PALETTE_MONO2,
    PALETTE_MONO3,
+   PALETTE_MONO3_BRIGHT,
    PALETTE_MONO4,
    PALETTE_MONO6,
    PALETTE_MONO8_RGB,
    PALETTE_MONO8_YUV,
    PALETTE_TI,
+   PALETTE_TILUMACODE,
    PALETTE_SPECTRUM48K,
    PALETTE_CGS24,
    PALETTE_CGS25,
    PALETTE_CGN25,
-   PALETTE_C64,
-   PALETTE_C64_REV1,
+   PALETTE_COMMODORE64,
+   PALETTE_COMMODORE64_REV1,
+   PALETTE_VIC20,
    PALETTE_ATARI800_PAL,
    PALETTE_ATARI800_NTSC,
+   PALETTE_ATARI2600_PAL,
+   PALETTE_ATARI2600_NTSC,
    PALETTE_TEA1002,
    PALETTE_INTELLIVISION,
    PALETTE_YG_4,
@@ -161,8 +169,11 @@ enum {
 };
 
 enum {
-   GENLOCK_ADJUST_NARROW,
-   GENLOCK_ADJUST_165MHZ,
+   GENLOCK_ADJUST_FULL,
+   GENLOCK_ADJUST_LIMIT,
+   GENLOCK_ADJUST_50_60_5,
+   GENLOCK_ADJUST_50_60_2,
+   GENLOCK_ADJUST_50_60_1,
    NUM_GENLOCK_ADJUST
 };
 
@@ -222,9 +233,17 @@ enum {
 };
 
 enum {
+    PAL_ODD_NORMAL,
+    PAL_ODD_BLENDED,
+    PAL_ODD_ALL,
+    NUM_PAL_ODD
+};
+
+enum {
    F_AUTO_SWITCH,
    F_RESOLUTION,
    F_REFRESH,
+   F_HDMI_AUTO,
    F_HDMI_MODE,
    F_HDMI_MODE_STANDBY,
    F_SCALING,
@@ -237,6 +256,8 @@ enum {
    F_NTSC_PHASE,
    F_NTSC_TYPE,
    F_NTSC_QUALITY,
+   F_PAL_ODD_LEVEL,
+   F_PAL_ODD_LINE,
    F_TINT,
    F_SAT,
    F_CONT,
@@ -247,6 +268,7 @@ enum {
    F_NORMAL_DEINTERLACE,
    F_MODE7_SCALING,
    F_NORMAL_SCALING,
+   F_DROP_FRAME,
    F_FFOSD,
    F_SWAP_ASPECT,
    F_OUTPUT_COLOUR,
@@ -274,6 +296,15 @@ enum {
    F_POWERUP_MESSAGE,
    F_YUV_PIXEL_DOUBLE,
    F_INTEGER_ASPECT,
+
+   F_PROFILE_NUM,
+   F_H_WIDTH,
+   F_V_HEIGHT,
+   F_CLOCK,
+   F_LINE_LEN,
+   F_H_OFFSET,
+   F_V_OFFSET,
+
    F_FRONTEND,       //must be last
 
    MAX_PARAMETERS
@@ -292,6 +323,7 @@ void osd_refresh();
 void osd_update(uint32_t *osd_base, int bytes_per_line, int relocate);
 void osd_update_fast(uint32_t *osd_base, int bytes_per_line);
 void osd_display_interface(int line);
+int lumacode_multiplier();
 int  osd_active();
 int menu_active();
 int  osd_key(int key);

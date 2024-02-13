@@ -595,8 +595,12 @@ static void sendDAC(int dac, int value)
         }
         RPI_SetGpioValue(STROBE_PIN, 1);
     } else if (new_DAC_detected() == 2) {
-        int packet = (dac + 1) | (value << 6);
-        //log_info("bu2506 dac:%d = %02X, %03X", dac, value, packet);
+        int value_10bit = value << 2;
+        if (value_10bit >= 2) {
+            value_10bit -= 2;
+        }
+        int packet = (dac + 1) | (value_10bit << 4);
+        //log_info("bu2506 dac:%d = %03X, %03X", dac, value_10bit, packet);
         RPI_SetGpioValue(STROBE_PIN, 0);
 
         for (int i = 0; i < 14; i++) {
@@ -1032,7 +1036,6 @@ static int cpld_analyse(int selected_sync_state, int analyse) {
          } else {
             log_info("Analyze Csync: polarity changed to non-inverted");
          }
-         write_config(config, DAC_UPDATE);
       } else {
          if (invert) {
             log_info("Analyze Csync: polarity unchanged (inverted)");
@@ -1040,6 +1043,7 @@ static int cpld_analyse(int selected_sync_state, int analyse) {
             log_info("Analyze Csync: polarity unchanged (non-inverted)");
          }
       }
+      write_config(config, DAC_UPDATE);
       int polarity = selected_sync_state;
       if (analyse) {
           polarity = analyse_sync();

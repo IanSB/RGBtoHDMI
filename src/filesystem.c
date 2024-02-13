@@ -10,6 +10,7 @@
 #include "geometry.h"
 #include "rgb_to_hdmi.h"
 #include "startup.h"
+#include "defs.h"
 
 #define USE_LODEPNG
 
@@ -18,13 +19,6 @@
 #else
 #include "tiny_png_out.h"
 #endif
-
-#define CAPTURE_FILE_BASE "capture"
-#define CAPTURE_BASE "/Captures"
-#define PROFILE_BASE "/Profiles"
-#define SAVED_PROFILE_BASE "/Saved_Profiles"
-#define PALETTES_BASE "/Palettes"
-#define PALETTES_TYPE ".bin"
 
 static FATFS fsObject;
 static int capture_id = -1;
@@ -436,6 +430,7 @@ void capture_screenshot(capture_info_t *capinfo, char *profile) {
 
    } else {
       osd_clear();
+      clear_menu_bits();
       osd_set_noupdate(0, ATTR_DOUBLE_SIZE, "Screen Capture");
       osd_set_clear(2, 0, filepath);
 
@@ -620,6 +615,7 @@ void scan_profiles(char *prefix, char manufacturer_names[MAX_PROFILES][MAX_PROFI
     char fpath[MAX_STRING_SIZE];
     static FILINFO fno;
     init_filesystem();
+    log_info("Reading path: %s", path);
     res = f_opendir(&dir, path);
     if (res == FR_OK) {
         for (;;) {
@@ -831,6 +827,67 @@ int file_load(char *path, char *buffer, unsigned int buffer_size) {
     int result = file_load_raw(path, buffer, buffer_size);
     close_filesystem();
     return result;
+}
+
+int file_save_custom_profile(char *name, char *buffer, unsigned int buffer_size) {
+   FRESULT result;
+   FIL file;
+   unsigned int num_written = 0;
+   char path[MAX_STRING_SIZE];
+   char temp_buffer[MAX_BUFFER_SIZE];
+   int status = 0;
+   init_filesystem();
+
+   result = f_mkdir(PROFILE_BASE);
+   if (result != FR_OK && result != FR_EXIST) {
+       log_warn("Failed to create dir %s (result = %d)",SAVED_PROFILE_BASE, result);
+   }
+   sprintf(path, "%s/%s", PROFILE_BASE, cpld->name);
+
+   result = f_mkdir(path);
+   if (result != FR_OK && result != FR_EXIST) {
+       log_warn("Failed to create dir1 %s (result = %d)",path, result);
+   }
+
+   strcpy(temp_buffer, name);
+   char *index = strchr(temp_buffer, '/');
+   if (index) {
+      *index = 0;
+   }
+   sprintf(path, "%s/%s/%s", PROFILE_BASE, cpld->name, temp_buffer);
+   result = f_mkdir(path);
+   if (result != FR_OK && result != FR_EXIST) {
+       log_warn("Failed to create dir2 %s (result = %d)",path, result);
+   }
+
+   sprintf(path, "%s/%s/%s.txt", PROFILE_BASE, cpld->name, name);
+
+   log_info("Saving custom file %s", path);
+
+   result = f_open(&file, path, FA_WRITE | FA_CREATE_ALWAYS);
+   if (result != FR_OK) {
+      log_warn("Failed to open %s (result = %d)", path, result);
+      close_filesystem();
+      return result;
+   }
+
+   result = f_write(&file, buffer, buffer_size, &num_written);
+
+   if (result != FR_OK) {
+      log_warn("Failed to read %s (result = %d)", path, result);
+      close_filesystem();
+      return result;
+   }
+
+   result = f_close(&file);
+   if (result != FR_OK) {
+      log_warn("Failed to close %s (result = %d)", path, result);
+      close_filesystem();
+      return result;
+   }
+   log_info("%s writing complete", path);
+   close_filesystem();
+   return status;
 }
 
 int file_save(char *dirpath, char *name, char *buffer, unsigned int buffer_size, int saved_config_number) {
@@ -1047,7 +1104,21 @@ int file_restore(char *dirpath, char *name, int saved_config_number) {
    return 1;
 }
 
-int file_save_config(char *resolution_name, int refresh, int scaling, int filtering, int current_frontend, int current_hdmi_mode, char *auto_workaround_path) {
+int file_delete(char* path) {
+FRESULT result;
+       init_filesystem();
+       log_info("Deleting %s", path);
+       result = f_unlink(path);
+       if (result != FR_OK && result != FR_NO_FILE) {
+           log_warn("Failed to delete %s (result = %d)", path, result);
+           close_filesystem();
+           return result;
+       }
+       log_info("%s deleting complete", path);
+       return result;
+}
+
+int file_save_config(char *resolution_name, int refresh, int scaling, int filtering, int current_frontend, int current_hdmi_mode, int current_hdmi_auto, char *auto_workaround_path) {
    FRESULT result;
    char path[MAX_STRING_SIZE];
    char buffer [16384];
@@ -1096,10 +1167,17 @@ int file_save_config(char *resolution_name, int refresh, int scaling, int filter
    sprintf((char*)(buffer + bytes_read), "\r\n");
    bytes_read += 2;
 
-   if (current_hdmi_mode == 0) {
-       sprintf((char*)(buffer + bytes_read), "\r\nhdmi_drive=1\r\n");
+   if (current_hdmi_auto == 0) {
+       sprintf((char*)(buffer + bytes_read), "\r\n#hdmi_auto=0\r\n");
    } else {
-       sprintf((char*)(buffer + bytes_read), "\r\nhdmi_drive=2\r\n");
+       sprintf((char*)(buffer + bytes_read), "\r\n#hdmi_auto=1\r\n");
+   }
+   bytes_read += strlen((char*) (buffer + bytes_read));
+
+   if (current_hdmi_mode == 0) {
+       sprintf((char*)(buffer + bytes_read), "hdmi_drive=1\r\n");
+   } else {
+       sprintf((char*)(buffer + bytes_read), "hdmi_drive=2\r\n");
        bytes_read += strlen((char*) (buffer + bytes_read));
        sprintf((char*)(buffer + bytes_read), "hdmi_pixel_encoding=%d\r\n", current_hdmi_mode - 1);
    }
@@ -1173,6 +1251,8 @@ int file_save_config(char *resolution_name, int refresh, int scaling, int filter
        }
    }
 
+   log_info(endptr);
+
    buffer[bytes_read]=0;
    result = f_open(&file, "/config.txt", FA_WRITE | FA_CREATE_ALWAYS);
    if (result != FR_OK) {
@@ -1202,6 +1282,7 @@ int file_save_config(char *resolution_name, int refresh, int scaling, int filter
    }
 
    close_filesystem();
+  
    log_info("Config.txt update is complete");
    return 1;
 }

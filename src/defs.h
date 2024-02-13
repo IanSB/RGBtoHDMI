@@ -39,7 +39,11 @@
 
 // Define the legal range of HDMI pixel clocks
 #define MIN_PIXEL_CLOCK      24.5 //  24.5MHz
+#ifdef RPI4
+#define MAX_PIXEL_CLOCK     600.0 // 600MHz
+#else
 #define MAX_PIXEL_CLOCK     340.0 // 340MHz
+#endif
 
 // Enable multiple buffering and vsync based page flipping
 #define MULTI_BUFFER
@@ -93,10 +97,10 @@
 #define MASK_INTERLACE   (7 << OFFSET_INTERLACE)
 
 #define BIT_FIELD_TYPE1           0x00800000  // bit 23, indicates the field type of the previous field
-#define BITDUP_IIGS_DETECT         0x00800000  // bit 23, if set then apple IIGS mode detection enabled
+#define BITDUP_IIGS_DETECT        0x00800000  // bit 23, if set then apple IIGS mode detection enabled
 
 #define BIT_FIELD_TYPE            0x01000000  // bit 24, indicates the field type (0 = odd, 1 = even) of the last field
-#define BITDUP_MODE2_16COLOUR      0x01000000  // bit 24, if set then 16 colour mode 2 is emulated by decoding mode 0
+#define BITDUP_MODE2_16COLOUR     0x01000000  // bit 24, if set then 16 colour mode 2 is emulated by decoding mode 0
 
 #define BIT_OLD_FIRMWARE_SUPPORT  0x02000000  // bit 25, indicates old CPLD v1 or v2
                                              // then a second time to capture stable data. The v3 CPLD delays PSYNC a
@@ -106,8 +110,8 @@
 #define BIT_NO_SKIP_HSYNC         0x08000000  // bit 27, clear if hsync is ignored (used by cache preload)
 #define BIT_HSYNC_EDGE            0x10000000  // bit 28, clear if trailing edge
 #define BIT_RPI234                0x20000000  // bit 29, set if Pi 2, 3 or 4 detected
-//#define BIT_                     0x40000000  // bit 30,
-//#define_BIT_                     0x80000000  // bit 31, may get corrupted - check
+#define BIT_SKIP_ALT_FRAME        0x40000000  // bit 30, set to skip capture of alternate frames used in 4K@25/30Hz
+//#define BIT_                    0x80000000  // bit 31, may get corrupted - check
 
 // R0 return value bits
 #define RET_MODESET                0x01
@@ -302,7 +306,7 @@ typedef struct {
 #define SYNC_BIT_COMPOSITE_SYNC   0x04      // bit  2, indicates composite sync
 #define SYNC_BIT_MIXED_SYNC       0x08      // bit  3, indicates H and V syncs eored in CPLD
 #define SYNC_BIT_INTERLACED       0x10      // bit  4, indicates interlaced sync detected
-#define SYNC_BIT_MASK             0x07      // masks out bit 3
+#define SYNC_BIT_MASK             0x07      // masks out bits 3 + 4
 
 #define VSYNC_RETRY_MAX 10
 
@@ -313,7 +317,7 @@ typedef struct {
 
 #define MAX_CPLD_FILENAMES 24
 #define MAX_FILENAME_WIDTH 40
-#define MAX_PROFILES 256
+#define MAX_PROFILES 512
 #define MAX_SUB_PROFILES 64
 #define MAX_FAVOURITES 10
 #define MAX_PROFILE_WIDTH 256
@@ -330,6 +334,16 @@ typedef struct {
 #define MAX_NAMES 64
 #define MAX_NAMES_WIDTH 32
 #define MAX_JITTER_LINES 8
+
+#define CUSTOM_PROFILE_FOLDER "_Custom_"
+#define CUSTOM_PROFILE_NAME "Custom_Profile_"
+
+#define CAPTURE_FILE_BASE "capture"
+#define CAPTURE_BASE "/Captures"
+#define PROFILE_BASE "/Profiles"
+#define SAVED_PROFILE_BASE "/Saved_Profiles"
+#define PALETTES_BASE "/Palettes"
+#define PALETTES_TYPE ".bin"
 
 #define ONE_BUTTON_FILE "/Button_Mode.txt"
 #define FORCE_BLANK_FILE "/cpld_firmware/Delete_This_File_To_Erase_CPLD.txt"
@@ -384,7 +398,7 @@ typedef struct {
 #define AUTO_REFRESH 2
 #define DEFAULT_SCALING 0
 #define DEFAULT_FILTERING 8
-#define DEFAULT_HDMI_MODE 0
+#define DEFAULT_HDMI_AUTO 1
 
 #define DISABLE_PI1_PI2_OVERCLOCK 1
 #define DISABLE_SETTINGS_OVERCLOCK 2
@@ -413,7 +427,7 @@ typedef struct {
 #define GENLOCK_THRESHOLDS {0, 5, 10, 16, 25, 35}
 #define GENLOCK_LOCKED_THRESHOLD 2
 #define GENLOCK_FRAME_DELAY 12
-#define GENLOCK_SLEW_RATE_THRESHOLD 5000
+#define GENLOCK_SLEW_RATE_THRESHOLD 10000
 
 #define MEASURE_NLINES 100
 #define PLL_PPM_LO 1
@@ -537,10 +551,12 @@ typedef struct {
 #define   PALETTECONTROL_NTSCARTIFACT_CGA      2
 #define   PALETTECONTROL_NTSCARTIFACT_BW       3
 #define   PALETTECONTROL_NTSCARTIFACT_BW_AUTO  4
-#define   PALETTECONTROL_PALARTIFACT           5
+#define   PALETTECONTROL_C64_YUV               5
 #define   PALETTECONTROL_ATARI_GTIA            6
 #define   PALETTECONTROL_C64_LUMACODE          7
-#define   NUM_CONTROLS                         8
+#define   PALETTECONTROL_ATARI_LUMACODE        8
+#define   PALETTECONTROL_ATARI2600_LUMACODE    9
+#define   NUM_CONTROLS                         10
 
 #define   INHIBIT_PALETTE_DIMMING_16_BIT 0x80000000
 
@@ -561,7 +577,8 @@ typedef struct {
 #define  VSYNC_NONINTERLACED_DEJITTER  4
 #define  VSYNC_BLANKING                5
 #define  VSYNC_POLARITY                6
-#define  NUM_VSYNC                     7
+#define  VSYNC_FORCE_INTERLACE         7
+#define  NUM_VSYNC                     8
 
 #define  VIDEO_PROGRESSIVE   0
 #define  VIDEO_INTERLACED    1

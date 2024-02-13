@@ -33,7 +33,8 @@ static const char *vsync_names[] = {
    "Non Interlaced",
    "Flywheel",
    "Blanking",
-   "Polarity"
+   "Polarity",
+   "Force Interlaced"
 };
 
 static const char *setup_names[] = {
@@ -68,12 +69,12 @@ static param_t params[] = {
    {  SETUP_MODE,         "Setup Mode",         "setup_mode",         0,NUM_SETUP-1, 1 },
    {    H_OFFSET,           "H Offset",           "h_offset",         1,        384, 4 },
    {    V_OFFSET,           "V Offset",           "v_offset",         0,        256, 1 },
-   { MIN_H_WIDTH,        "Min H Width",        "min_h_width",       150,       1920, 8 },
+   { MIN_H_WIDTH,        "Min H Width",        "min_h_width",       100,       1920, 8 },
    {MIN_V_HEIGHT,       "Min V Height",       "min_v_height",       100,       1200, 2 },
-   { MAX_H_WIDTH,        "Max H Width",        "max_h_width",       200,       1920, 8 },
+   { MAX_H_WIDTH,        "Max H Width",        "max_h_width",       120,       1920, 8 },
    {MAX_V_HEIGHT,       "Max V Height",       "max_v_height",       120,       1200, 2 },
-   {    H_ASPECT,     "H Pixel Aspect",           "h_aspect",         0,          8, 1 },
-   {    V_ASPECT,     "V Pixel Aspect",           "v_aspect",         0,          8, 1 },
+   {    H_ASPECT,     "H Pixel Aspect",           "h_aspect",         0,         12, 1 },
+   {    V_ASPECT,     "V Pixel Aspect",           "v_aspect",         0,         12, 1 },
    {   FB_SIZEX2,            "FB Size",            "fb_size",         0,          3, 1 },
    {      FB_BPP,      "FB Bits/Pixel",      "fb_bits_pixel",         0,  NUM_BPP-1, 1 },
    {       CLOCK,    "Clock Frequency",    "clock_frequency",   1000000,64000000, 1000 },
@@ -376,6 +377,10 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         capinfo->video_type = VIDEO_PROGRESSIVE;
     }
 
+    if (capinfo->vsync_type == VSYNC_FORCE_INTERLACE) {
+        capinfo->vsync_type = VSYNC_INTERLACED;
+    }
+
     capinfo->sizex2 = geometry->fb_sizex2;
     switch(geometry->fb_bpp) {
         case BPP_4:
@@ -406,8 +411,20 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         capinfo->bpp = 4; //force 4bpp for teletext
     } else if (capinfo->sample_width >= SAMPLE_WIDTH_9LO && capinfo->bpp == 4) {
         capinfo->bpp = 8; //force at least 8bpp in 12 bit modes as no capture loops for capture into 4bpp buffer
-    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && (capinfo->bpp < 8 || (capinfo->bpp > 8 && (get_core_1_available() == 0 || get_parameter(F_NTSC_TYPE) == NTSCTYPE_SIMPLE)))) {
-        capinfo->bpp = 8; //force 8bpp in 6 bit modes as no capture loops for 6 bit capture into 4 or 16 bpp buffer
+    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp < 8) {
+        capinfo->bpp = 8; //force 8bpp in 6 bit modes as no capture loops for 6 bit capture into 4 bpp buffer
+    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_LUMACODE || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_YUV)
+              && (get_parameter(F_NTSC_COLOUR) == 0 || (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) == 0)) {
+        capinfo->bpp = 8; //force 8bpp in 6 bit modes when pal artifact disabled
+    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI_LUMACODE)
+              && (get_parameter(F_SCANLINES) == 0 || (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) == 0)) {
+        capinfo->bpp = 8; //force 8bpp in 6 bit modes when scanlines disabled
+    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI_GTIA || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI2600_LUMACODE)) {
+        capinfo->bpp = 8; //force 8bpp in 6 bit modes when Atari GTIA or 2600 as no 16 bit capture loops
+    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8
+               && get_parameter(F_PALETTE_CONTROL) >= PALETTECONTROL_NTSCARTIFACT_CGA && get_parameter(F_PALETTE_CONTROL) <= PALETTECONTROL_NTSCARTIFACT_BW_AUTO
+               && (get_core_1_available() == 0 || get_parameter(F_NTSC_TYPE) == NTSCTYPE_SIMPLE)) {
+        capinfo->bpp = 8; //force 8bpp in 6 bit modes when simple ntsc artifact
     } else if (capinfo->sample_width <= SAMPLE_WIDTH_3 && capinfo->bpp > 8) {
         capinfo->bpp = 8; //force 8bpp in 1 & 3 bit modes as no capture loops for 1 or 3 bit capture into 16bpp buffer
     }
@@ -421,6 +438,10 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
     }
 #endif
 
+    if (capinfo->bpp <= 8 && get_parameter(F_SCANLINES) && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI_LUMACODE || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI_GTIA)) {
+        capinfo->sizex2 &= SIZEX2_DOUBLE_WIDTH;  //inhibit double height for Atari 800 in 8bpp mode
+    }
+
     if ((capinfo->detected_sync_type & SYNC_BIT_INTERLACED) && capinfo->video_type != VIDEO_PROGRESSIVE) {
         capinfo->sizex2 |= SIZEX2_DOUBLE_HEIGHT;
     } else {
@@ -430,6 +451,10 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
             }
             capinfo->sizex2 |= SIZEX2_DOUBLE_HEIGHT;    // force double height
         }
+    }
+
+    if (get_true_vdisplay() <= 288) {
+        capinfo->sizex2 &= SIZEX2_DOUBLE_WIDTH;  //inhibit double height when using 288 or 240 pixel modes
     }
 
     int geometry_h_offset = geometry->h_offset;
@@ -449,6 +474,11 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
             } else if ((h_aspect << 1) == v_aspect) {
                 h_aspect = 2;
                 v_aspect = 5;
+            } else if (h_aspect == (v_aspect << 1)) {
+                h_aspect = 8;
+                v_aspect = 5;
+            } else if (h_aspect == 7 && v_aspect == 4) {
+                v_aspect = 5;
             }
             if (geometry_min_v_height > 250) {
                 geometry_min_v_height = geometry_min_v_height * 4 / 5;
@@ -458,6 +488,10 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
             if (h_aspect == 4 && v_aspect == 5) {
                 v_aspect = 4;
             } else if (h_aspect == 2 && v_aspect == 5) {
+                v_aspect = 4;
+            } else if (h_aspect == 8 && v_aspect == 5) {
+                v_aspect = 4;
+            } else if (h_aspect == 7 && v_aspect == 5) {
                 v_aspect = 4;
             }
             //geometry_max_v_height = geometry_max_v_height * 5 / 4;
@@ -541,10 +575,15 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
 
     if (scaling == GSCALING_INTEGER && v_size43 == v_size && h_size > h_size43) {
         //if ((geometry_max_h_width >= 512 && geometry_max_h_width <= 800) || (geometry_max_h_width > 360 && geometry_max_h_width <= 400)) {
-            h_size43 = (h_size43 * 912) / 720;           //adjust 4:3 ratio on widescreen resolutions to account for up to 900 pixel wide integer sample capture
-            if (h_size43 > h_size) {
-                h_size43 = h_size;
-            }
+        //h_size43 = (h_size43 * 912) / 720;           //adjust 4:3 ratio on widescreen resolutions to account for up to 900 pixel wide integer sample capture
+        if (geometry_min_h_width > 800) {
+            h_size43 = h_size;
+        } else {
+            h_size43 = (h_size43 * 800) / 720;           //adjust 4:3 ratio on widescreen resolutions to account for up to 800 pixel wide integer sample capture
+        }
+
+        //if (h_size43 > h_size) {
+        //    h_size43 = h_size;
         //}
     }
 
@@ -640,6 +679,12 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         vscale = 1;
     }
 
+
+    if (get_hdisplay() > 3000 && hscale > 4 && vscale > 4) {       //even up scaling of small sources on 4K monitors
+        hscale = (hscale >> 1) << 1;
+        vscale = (vscale >> 1) << 1;
+    }
+
     if (h_aspect != 0 && v_aspect !=0 && get_parameter(F_INTEGER_ASPECT) == 0) {
         int new_hs = hscale;
         int new_vs = vscale;
@@ -684,7 +729,8 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
     }
 
     capinfo->delay = (cpld->get_delay() ^ 3) & 3;               // save delay for simple mode software implementation
-    geometry_h_offset -= ((cpld->get_delay() >> 2) << 2);       // mask out simple mode delay bits (already masked on CPLD versions)
+
+    geometry_h_offset = geometry_h_offset * lumacode_multiplier() - ((cpld->get_delay() >> 2) << 2);
 
     if (geometry_h_offset < 0) {
        geometry_min_h_width += (geometry_h_offset << 1);
@@ -823,9 +869,10 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
     if (capinfo->nlines > (capinfo->height >> double_height)) {
        capinfo->nlines = (capinfo->height >> double_height);
     }
-    int lines = get_lines_per_vsync();
-    if ((capinfo->nlines + capinfo->v_offset) > (lines - 5)) {
-        capinfo->nlines = (lines - 5) - capinfo->v_offset;
+    int lines = get_lines_per_vsync(1);
+    int width = get_vsync_width_lines();
+    if ((capinfo->nlines + capinfo->v_offset) > (lines - width - 1)) {
+        capinfo->nlines = (lines - width - 1) - capinfo->v_offset;
         //log_info("Clipping capture height to %d", capinfo->nlines);
     }
 
@@ -868,7 +915,8 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         double_width = (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) >> 1;
         double_height = capinfo->sizex2 & SIZEX2_DOUBLE_HEIGHT;
         hscale >>= double_width;
-        if (_get_hardware_id() == _RPI && capinfo->bpp == 16 && !uneven) {
+        //if (_get_hardware_id() == _RPI && !uneven && (capinfo->bpp == 16 || (capinfo->bpp != 16 && capinfo->nlines > 288))) {
+        if (_get_hardware_id() == _RPI && capinfo->bpp == 16 && !uneven && get_true_vdisplay() > 288) {
             if (get_gscaling() == GSCALING_INTEGER) {
                 int actual_width = (capinfo->chars_per_line << 3);
                 int actual_height = capinfo->nlines;
@@ -910,6 +958,7 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         }
         set_config_overscan(left, right, top, bottom);
     }
+
 }
 
 int get_hscale() {
@@ -926,23 +975,27 @@ int get_vaspect() {
 }
 
 int get_hdisplay() {
+    int v_size = (*PIXELVALVE2_VERTB) & 0xFFFF;
 #if defined(RPI4)
     int h_size = ((*PIXELVALVE2_HORZB) & 0xFFFF) << 1;
+    if (v_size <= 288) {
+        h_size <<= 1;
+    }
+    if (h_size == 0 && v_size == 0) {
 #else
     int h_size = (*PIXELVALVE2_HORZB) & 0xFFFF;
+    if (h_size == 720 && v_size == 240) {
 #endif
-    int v_size = (*PIXELVALVE2_VERTB) & 0xFFFF;
-    if (h_size < 640 || h_size > 8192 || v_size < 480 || v_size > 4096) {
-          log_info("HDMI readback of screen size invalid (%dx%d) - rebooting", h_size, v_size);
-          delay_in_arm_cycles_cpu_adjust(1000000000);
-          reboot();
+        log_info("HDMI readback of screen size indicates HDMI not connected (%dx%d) - rebooting", h_size, v_size);
+        delay_in_arm_cycles_cpu_adjust(1000000000);
+        reboot();
     }
     //workaround for 640x480 and 800x480 @50Hz using double rate clock so width gets doubled
     if (v_size == 480 && h_size == 1280) {
         h_size = 640;
     } else if (v_size == 480 && h_size == 1600) {
         h_size = 800;
-    } else if (v_size == 240 || v_size == 288) {
+    } else if (v_size <= 288) {
         h_size >>= 1;
     }
     return h_size;
@@ -952,6 +1005,8 @@ int get_vdisplay() {
     int v_size = (*PIXELVALVE2_VERTB) & 0xFFFF;
     if (v_size == 2160 && get_hdisplay() == 1920){
         v_size = 1080;
+    } else if (v_size <= 288) {
+        v_size <<= 1;
     }
     return v_size;
 }
