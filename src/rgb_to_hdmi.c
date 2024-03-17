@@ -433,30 +433,36 @@ int height = 0;
     adj_h_overscan = 0;
     adj_v_overscan = 0;
 
+    int double_width = (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) >> 1;
+    int double_height = capinfo->sizex2 & SIZEX2_DOUBLE_HEIGHT;
+
     int adjusted_width = capinfo->width;
     int adjusted_height = capinfo->height;
 
     if (get_gscaling() == GSCALING_INTEGER) {
         if (!((capinfo->mode7 && parameters[F_MODE7_SCALING] == SCALING_UNEVEN)
          ||(!capinfo->mode7 && parameters[F_NORMAL_SCALING] == SCALING_UNEVEN)))  {
-            int width = adjusted_width >> ((capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) >> 1);
+            int width = adjusted_width >> double_width;
             int hscale = h_size / width;
             h_overscan = h_size - (hscale * width);
             adj_h_overscan = h_overscan;
+            hscale >>= double_width;
             if ((hscale & 1) != 0 && hscale > 1) {  // add 1 when scale is odd number to work around pixel column duplication scaler rounding error
               adj_h_overscan++;
             }
         }
-        int height = capinfo->height >> (capinfo->sizex2 & SIZEX2_DOUBLE_HEIGHT);
+        int height = capinfo->height >> double_height;
         if (geometry_get_value(VIDEO_TYPE) == VIDEO_LINE_DOUBLED) {
             height >>= 1;
         }
         int vscale = v_size / height;
         v_overscan = v_size - (vscale * height);
         adj_v_overscan = v_overscan;
-        //if ((vscale & 1) != 0 && vscale > 1) {  // add 1  when scale is odd number
-        //   adj_v_overscan++;
-        //}
+        vscale >>= double_height;
+        if ((vscale & 1) != 0 && vscale > 1) {  // add 1  when scale is odd number
+           adj_v_overscan++;
+        }
+        //log_info("VSCALE %d, %d, %d", vscale, v_overscan, adj_v_overscan);
     }
 
     int left_overscan = adj_h_overscan >> 1;

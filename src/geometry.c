@@ -468,33 +468,53 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
 
     if (get_parameter(F_SWAP_ASPECT)) {
         if (geometry->lines_per_frame > 287) {
-            if (h_aspect == v_aspect) {
-                h_aspect = 4;
-                v_aspect = 5;
-            } else if ((h_aspect << 1) == v_aspect) {
-                h_aspect = 2;
-                v_aspect = 5;
-            } else if (h_aspect == (v_aspect << 1)) {
-                h_aspect = 8;
-                v_aspect = 5;
-            } else if (h_aspect == 7 && v_aspect == 4) {
+            while (h_aspect < 4 && v_aspect < 4) { //un-normalise aspect ratios to 4 or greater
+                h_aspect <<= 1;
+                v_aspect <<= 1;
+            }
+            if (v_aspect == 4) {
                 v_aspect = 5;
             }
             if (geometry_min_v_height > 250) {
                 geometry_min_v_height = geometry_min_v_height * 4 / 5;
+                geometry_v_offset += ((geometry->min_v_height - geometry_min_v_height) >> 1);
             }
             geometry_max_v_height = geometry_max_v_height * 4 / 5;
         } else {
-            if (h_aspect == 4 && v_aspect == 5) {
-                v_aspect = 4;
-            } else if (h_aspect == 2 && v_aspect == 5) {
-                v_aspect = 4;
-            } else if (h_aspect == 8 && v_aspect == 5) {
-                v_aspect = 4;
-            } else if (h_aspect == 7 && v_aspect == 5) {
+            if (v_aspect == 5) {
                 v_aspect = 4;
             }
-            //geometry_max_v_height = geometry_max_v_height * 5 / 4;
+        }
+    }
+
+    if (h_aspect <= 4 && v_aspect <= 4) { //normalise 2:2, 3:3, 4:4 to 1:1
+        if (h_aspect == v_aspect) {
+            h_aspect = 1;
+            v_aspect = 1;
+        }
+        if ((h_aspect << 1) == v_aspect) { //normalise 2:4 to 1:2
+            h_aspect = 1;
+            v_aspect = 2;
+        }
+    }
+
+    if (get_vdisplay() > 1200 && get_vdisplay() < 2160 && get_parameter(F_INTEGER_ASPECT) == INTEGER_ASPECT_AUTO) {   //adjust the scaling aspect ratios slightly for screens above 1920x1200 and below 4K to better fill the screen in integer mode
+        if (h_aspect == 1 && v_aspect == 1) {
+            if (get_vdisplay() == 1440 && geometry_min_v_height > 240) {
+                h_aspect = 6;
+                v_aspect = 5;
+            }
+        } else if (h_aspect == 1 && v_aspect == 2) {
+            if (get_vdisplay() == 1440 && geometry_min_v_height > 240) {
+                h_aspect = 3;
+                v_aspect = 5;
+            }
+        } else if (h_aspect == 4 && v_aspect == 5) {
+            h_aspect = 6;
+            v_aspect = 7;
+        } else if (h_aspect == 2 && v_aspect == 5) {
+            h_aspect = 3;
+            v_aspect = 7;
         }
     }
 
@@ -574,17 +594,34 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
     }
 
     if (scaling == GSCALING_INTEGER && v_size43 == v_size && h_size > h_size43) {
-        //if ((geometry_max_h_width >= 512 && geometry_max_h_width <= 800) || (geometry_max_h_width > 360 && geometry_max_h_width <= 400)) {
-        //h_size43 = (h_size43 * 912) / 720;           //adjust 4:3 ratio on widescreen resolutions to account for up to 900 pixel wide integer sample capture
-        if (geometry_min_h_width > 800) {
+        if (geometry_min_h_width > 800 || get_parameter(F_INTEGER_SCALING) == INTEGER_SCALING_FULL_WIDTH) {
             h_size43 = h_size;
-        } else {
-            h_size43 = (h_size43 * 800) / 720;           //adjust 4:3 ratio on widescreen resolutions to account for up to 800 pixel wide integer sample capture
+        } else if (get_parameter(F_INTEGER_SCALING) == INTEGER_SCALING_ENHANCED_4_3) {
+            if (h_size43 == 640){ //increase width for 800x480
+                h_size43 = 720;
+            } else if (h_size43 == 800){ //increase width for 1024x600
+                h_size43 = 912;
+            } else if (h_size43 == 960){ //increase width for 1280x720
+                h_size43 = 1120;
+            } else if (h_size43 == 1024){ //increase width for 1366x768
+                h_size43 = 1080;
+            } else if (h_size43 == 1066){ //increase width for 1280x800
+                h_size43 = 1200;
+            } else if (h_size43 == 1200){ //increase width for 1600x900
+                h_size43 = 1320;
+            } else if (h_size43 == 1400){ //increase width for 1680x1050
+                h_size43 = 1560;
+            } else if (h_size43 == 1440){ //increase width for 1920x1080
+                h_size43 = 1600;
+            } else if (h_size43 == 1600){ //increase width for 1920x1200
+                h_size43 = 1600;
+            } else if (h_size43 == 1920){ //increase width for 2560x1440
+                h_size43 = 2160;
+            } else if (h_size43 == 2880){ //increase width for 3840x2880
+                h_size43 = 3200;
+                //h_size43 = (((h_size43 * 800) / 720) / 40 ) * 40;           //adjust 4:3 ratio on 16:9 widescreen resolutions to account for up to 800 pixel wide integer sample capture
+            }
         }
-
-        //if (h_size43 > h_size) {
-        //    h_size43 = h_size;
-        //}
     }
 
     int double_width = (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) >> 1;
@@ -685,7 +722,7 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         vscale = (vscale >> 1) << 1;
     }
 
-    if (h_aspect != 0 && v_aspect !=0 && get_parameter(F_INTEGER_ASPECT) == 0) {
+    if (h_aspect != 0 && v_aspect !=0 && get_parameter(F_INTEGER_ASPECT) != INTEGER_ASPECT_DISABLED) {
         int new_hs = hscale;
         int new_vs = vscale;
         double h_ratio;
@@ -767,9 +804,6 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
     capinfo->chars_per_line = ((geometry_min_h_width + 7) >> 3) << double_width;
     capinfo->nlines         = geometry_min_v_height;
 
-    //log_info("scaling size = %d, %d, %d, %f",standard_width, adjusted_width, adjusted_height, ratio);
-    //log_info("scaling h = %d, %d, %f, %d, %d, %d, %d",h_size, h_size43, hscalef, hscale, hborder, hborder43, newhborder43);
-    //log_info("scaling v = %d, %d, %f, %d, %d, %d, %d",v_size, v_size43, vscalef, vscale, vborder, vborder43, newvborder43);
 
     caphscale = hscale;
     capvscale = vscale;
@@ -824,6 +858,9 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
                 caphscale = ((h_size << double_width) / capinfo->width);
                 capvscale = ((v_size << double_height) / capinfo->height);
             }
+
+            //log_info("scaling h = %d, %d, %d, %d, %d, %d",h_size, h_size43, hscale, hborder);
+            //log_info("scaling v = %d, %d, %d, %d, %d, %d",v_size, v_size43, vscale, vborder);
         }
         break;
         case    GSCALING_MANUAL43:

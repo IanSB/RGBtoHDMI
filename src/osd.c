@@ -369,9 +369,16 @@ static const char *saved_config_names[] = {
    "Alt 4"
 };
 
-static const char *integer_names[] = {
-   "Normal",
-   "Maximise"
+static const char *integer_scaling_names[] = {
+   "Exact 4:3",
+   "Enhanced 4:3",
+   "Full Width"
+};
+
+static const char *integer_aspect_names[] = {
+   "Fixed",
+   "Auto Adjust",
+   "Disabled (Fill)"
 };
 
 
@@ -450,8 +457,9 @@ static param_t features[] = {
    {     F_OVERCLOCK_SDRAM,   "Overclock SDRAM",   "overclock_sdram", 0,                  200, 1 },
    {     F_POWERUP_MESSAGE,   "Powerup Message",   "powerup_message", 0,                    1, 1 },
 
-   {    F_YUV_PIXEL_DOUBLE,  "YUV Pixel Double",  "yuv_pixel_double", 0,                    1, 1 },
-   {      F_INTEGER_ASPECT,    "Integer Aspect",    "integer_aspect", 0,                    1, 1 },
+   {    F_YUV_PIXEL_DOUBLE,  "YUV Pixel Double",  "yuv_pixel_double", 0,                    2, 1 },
+   {      F_INTEGER_ASPECT,"Integer Aspect Ratio",    "integer_aspect", 0, NUM_INTEGER_ASPECT-1, 1 },
+   {     F_INTEGER_SCALING,"16:9 Integer Scaling", "integer_scaling", 0, NUM_INTEGER_SCALING-1, 1 },
 
    {         F_PROFILE_NUM,"Custom Profile Num",    "profile_number", 0,                  9, 1 },
    {             F_H_WIDTH,       "Pixel Width",       "pixel_width", 120,               1920, 8 },
@@ -761,6 +769,7 @@ static param_menu_item_t oclock_sdram_ref    = { I_FEATURE, &features[F_OVERCLOC
 static param_menu_item_t res_status_ref      = { I_FEATURE, &features[F_POWERUP_MESSAGE]        };
 static param_menu_item_t yuv_pixel_ref       = { I_FEATURE, &features[F_YUV_PIXEL_DOUBLE]      };
 static param_menu_item_t aspect_ref          = { I_FEATURE, &features[F_INTEGER_ASPECT]         };
+static param_menu_item_t integer16_9_ref     = { I_FEATURE, &features[F_INTEGER_SCALING]         };
 
 static param_menu_item_t profile_num_ref     = { I_FEATURE, &features[F_PROFILE_NUM]   };
 static param_menu_item_t h_width_ref         = { I_FEATURE, &features[F_H_WIDTH]       };
@@ -872,6 +881,7 @@ static menu_t preferences_menu = {
       (base_menu_item_t *) &capscale_ref,
       (base_menu_item_t *) &yuv_pixel_ref,
       (base_menu_item_t *) &aspect_ref,
+      (base_menu_item_t *) &integer16_9_ref,
       (base_menu_item_t *) &res_status_ref,
       NULL
    }
@@ -1746,7 +1756,9 @@ static const char *get_param_string(param_menu_item_t *param_item) {
       case F_TIMING_SET:
          return alt_profile_names[value];
       case F_INTEGER_ASPECT:
-         return integer_names[value];
+         return integer_aspect_names[value];
+      case F_INTEGER_SCALING:
+         return integer_scaling_names[value];
       }
    } else if (type == I_GEOMETRY) {
       const char *value_str = geometry_get_value_string(param->key);
@@ -7325,33 +7337,35 @@ void osd_init() {
    }
 
    int auto_workaround = 0;
-   char auto_workaround_path[MAX_NAMES_WIDTH] = "";
+   char auto_workaround_path[MAX_STRING_SIZE];
 
+   sprintf(auto_workaround_path, "/Resolutions/60Hz/%dx%d/Auto@60Hz.txt", detectedwidth, detectedheight);
 #ifdef RPI4
-   if (strcmp(prop, DEFAULT_RESOLUTION) == 0 && ((detectedwidth == 2560 && detectedheight == 1440) || (detectedwidth == 3840 && detectedheight == 2160))) { //special handling for Auto as Pi won't auto detect
+   if (test_file(auto_workaround_path)) {
 #else
-   if (strcmp(prop, DEFAULT_RESOLUTION) == 0 && detectedwidth == 2560 && detectedheight == 1440) { //special handling for Auto in 2560x1440 as Pi won't auto detect
+   if (test_file(auto_workaround_path) && detectedwidth != 3840 && detectedheight != 2160) {
 #endif
-       sprintf(auto_workaround_path, "%dx%d/", detectedwidth, detectedheight);
-       auto_workaround = 1;
+      auto_workaround = 1;
+      log_info("Auto %dx%d workaround = %d",detectedwidth, detectedheight, auto_workaround);
+      sprintf(auto_workaround_path, "%dx%d/", detectedwidth, detectedheight);
+   } else {
+      auto_workaround_path[0] = 0;
    }
 
-   log_info("Auto %dx%d workaround = %d",detectedwidth, detectedheight, auto_workaround);
-
-   int hdmi_mode_detected = 1;
+   int auto_workaround_detected = 1;
    if (cbytes) {
       prop = get_prop_no_space(config_buffer, "hdmi_mode");
    }
    if (!prop || !cbytes) {
-       hdmi_mode_detected = 0;
+       auto_workaround_detected = 0;
    }
 
    int reboot = 0;
-   if (auto_detected != 0 && hdmi_mode_detected != auto_workaround) {
-       log_info("reboot %d %d '%s'", hdmi_mode_detected, auto_workaround, auto_workaround_path);
+   if (auto_detected && (auto_workaround_detected != auto_workaround || (auto_workaround && (detectedwidth != get_hdisplay() || detectedheight != get_true_vdisplay() )))) {
+       log_info("reboot %d %d '%s'", auto_workaround_detected, auto_workaround, auto_workaround_path);
        reboot = 1;
    } else {
-       log_info("noreboot %d %d '%s'", hdmi_mode_detected,auto_workaround, auto_workaround_path);
+       log_info("noreboot %d %d '%s'", auto_workaround_detected, auto_workaround, auto_workaround_path);
    }
    if (valid_edid) {
    set_auto_workaround_path(auto_workaround_path, reboot);
