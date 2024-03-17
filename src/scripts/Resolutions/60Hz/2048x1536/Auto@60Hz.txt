@@ -2,4 +2,4 @@
 hdmi_pixel_freq_limit=340000000
 hdmi_group=2
 hdmi_mode=87
-hdmi_timings=2560 0 47 32 81 1440 0 3 5 33 0 0 0 60 0 241500000 3
+hdmi_timings=2048 0 48 32 144 1536 0 3 4 93 0 0 0 60 0 223000000 1
