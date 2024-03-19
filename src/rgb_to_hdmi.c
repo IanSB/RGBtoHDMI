@@ -446,9 +446,11 @@ int height = 0;
             int hscale = h_size / width;
             h_overscan = h_size - (hscale * width);
             adj_h_overscan = h_overscan;
-            hscale >>= double_width;
-            if ((hscale & 1) != 0 && hscale > 1) {  // add 1 when scale is odd number to work around pixel column duplication scaler rounding error
-              adj_h_overscan++;
+            int hscale2 = hscale >> double_width;
+            if (hscale == (hscale2 << double_width)) {
+                if ((hscale2 & 1) != 0 && hscale2 > 1) {  // add 1  when scale is odd number to work around pixel column duplication scaler rounding error
+                    adj_h_overscan++;
+                }
             }
         }
         int height = capinfo->height >> double_height;
@@ -458,11 +460,14 @@ int height = 0;
         int vscale = v_size / height;
         v_overscan = v_size - (vscale * height);
         adj_v_overscan = v_overscan;
-        vscale >>= double_height;
-        if ((vscale & 1) != 0 && vscale > 1) {  // add 1  when scale is odd number
-           adj_v_overscan++;
+        //log_info("VSCALE1 %d, %d, %d", vscale, v_overscan, adj_v_overscan);
+        int vscale2 = vscale >> double_height;
+        if (vscale == (vscale2 << double_height)) {
+            if ((vscale2 & 1) != 0 && vscale2 > 1) {  // add 1  when scale is odd number to work around line duplication scaler rounding error
+               adj_v_overscan++;
+            }
         }
-        //log_info("VSCALE %d, %d, %d", vscale, v_overscan, adj_v_overscan);
+        //log_info("VSCALE2 %d, %d, %d", vscale, v_overscan, adj_v_overscan);
     }
 
     int left_overscan = adj_h_overscan >> 1;

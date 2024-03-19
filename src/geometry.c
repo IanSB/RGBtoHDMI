@@ -510,8 +510,14 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
                 v_aspect = 5;
             }
         } else if (h_aspect == 4 && v_aspect == 5) {
-            h_aspect = 6;
-            v_aspect = 7;
+            if (get_vdisplay() == 1440)
+            {
+                h_aspect = 5;
+                v_aspect = 6;
+            } else {
+                h_aspect = 6;
+                v_aspect = 7;
+            }
         } else if (h_aspect == 2 && v_aspect == 5) {
             h_aspect = 3;
             v_aspect = 7;
@@ -951,7 +957,7 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         int apparent_height = get_vdisplay();
         double_width = (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) >> 1;
         double_height = capinfo->sizex2 & SIZEX2_DOUBLE_HEIGHT;
-        hscale >>= double_width;
+        //hscale >>= double_width;
         //if (_get_hardware_id() == _RPI && !uneven && (capinfo->bpp == 16 || (capinfo->bpp != 16 && capinfo->nlines > 288))) {
         if (_get_hardware_id() == _RPI && capinfo->bpp == 16 && !uneven && get_true_vdisplay() > 288) {
             if (get_gscaling() == GSCALING_INTEGER) {
@@ -962,7 +968,7 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
                 if (left >=0 && top >=0) {
                     right = left;
                     bottom = top;
-                    capinfo->width = actual_width;
+                    capinfo->width = actual_width << double_width;
                     capinfo->height = actual_height << double_height;
                 } else {
                     left = 0;

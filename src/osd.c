@@ -150,7 +150,8 @@ static const char *palette_control_names[] = {
    "Atari GTIA YUV",
    "4 Bit Lumacode",
    "6/8 Bit Lumacode",
-   "8 Bit Lumacode"
+   "8 Bit Lumacode",
+   "9 Bit (6+3) Lumacode"
 };
 
 static const char *return_names[] = {
@@ -1254,8 +1255,10 @@ void set_menu_table() {
       main_menu.items[index++] = (base_menu_item_t *) &manufacturer_menu_ref;
       if (single_button_mode) main_menu.items[index++] = (base_menu_item_t *) &direction_ref;
       main_menu.items[index++] = NULL;
-      if (!any_DAC_detected()) {
+      if (!any_DAC_detected() && strstr(profile_names[get_parameter(F_PROFILE)], "__Test") == NULL) {
           features[F_PALETTE_CONTROL].max = PALETTECONTROL_NTSCARTIFACT_BW_AUTO;
+      } else {
+          features[F_PALETTE_CONTROL].max = NUM_CONTROLS - 1;
       }
       switch (_get_hardware_id()) {
         case 4:                                  //pi 4
