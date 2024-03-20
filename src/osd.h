@@ -199,6 +199,13 @@ enum {
 };
 
 enum {
+    HDMI_AUTO_OFF,
+    HDMI_AUTO_FORCE_DVI,
+    HDMI_AUTO_FULL,
+    NUM_HDMI_AUTO
+};
+
+enum {
     HDMI_DVI,
     HDMI_AUTO,
     HDMI_RGB_LIMITED,

@@ -1167,11 +1167,7 @@ int file_save_config(char *resolution_name, int refresh, int scaling, int filter
    sprintf((char*)(buffer + bytes_read), "\r\n");
    bytes_read += 2;
 
-   if (current_hdmi_auto == 0) {
-       sprintf((char*)(buffer + bytes_read), "\r\n#hdmi_auto=0\r\n");
-   } else {
-       sprintf((char*)(buffer + bytes_read), "\r\n#hdmi_auto=1\r\n");
-   }
+   sprintf((char*)(buffer + bytes_read), "\r\n#hdmi_auto=%d\r\n", current_hdmi_auto);
    bytes_read += strlen((char*) (buffer + bytes_read));
 
    if (current_hdmi_mode == 0) {

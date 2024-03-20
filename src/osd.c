@@ -315,7 +315,8 @@ static const char *even_scaling_names[] = {
 
 static const char *hdmi_auto_names[] = {
    "Manual",
-   "Auto"
+   "Auto",
+   "Full Auto"
 };
 
 static const char *screencap_names[] = {
@@ -405,7 +406,7 @@ static param_t features[] = {
    {        F_AUTO_SWITCH,       "Auto Switch",       "auto_switch", 0, NUM_AUTOSWITCHES - 1, 1 },
    {         F_RESOLUTION,        "Resolution",        "resolution", 0,                    0, 1 },
    {            F_REFRESH,           "Refresh",           "refresh", 0,      NUM_REFRESH - 1, 1 },
-   {          F_HDMI_AUTO,  "HDMI Mode Detect",         "hdmi_auto", 0,                    1, 1 },
+   {          F_HDMI_AUTO,  "HDMI Mode Detect",         "hdmi_auto", 0,    NUM_HDMI_AUTO - 1, 1 },
    {          F_HDMI_MODE,  "HDMI Manual Mode",         "hdmi_mode", 0,        NUM_HDMIS - 1, 1 },
    {  F_HDMI_MODE_STANDBY, "HDMI Grey Standby",      "hdmi_standby", 0,                    1, 1 },
    {            F_SCALING,           "Scaling",           "scaling", 0,      NUM_SCALING - 1, 1 },
@@ -7084,7 +7085,7 @@ void osd_init() {
                    }
                    EDID_name[ni - 4] = 0;
                }
-               log_info("EDID Display name is: %s", EDID_name);
+               //log_info("EDID Display name is: %s", EDID_name);
            }
        }
 
@@ -7138,8 +7139,6 @@ void osd_init() {
        }
    }
 
-   log_info("Manufacturer = %4X, year = %d", manufacturer, year);
-
    if (EIA_CEA_861_extension && supports1080i && !supports1080p) {      //could add year limit here as well
        log_info("Monitor has EIA/CEA-861 extension, supports 1080i@50 but doesn't support 1080p@50, limiting 50Hz support");
        Vrefresh_lo = 60;
@@ -7159,6 +7158,8 @@ void osd_init() {
        delay_in_arm_cycles_cpu_adjust(200000000);
        reboot();
     }
+
+   log_info("Monitor Name = %s, manufacturer ID = %4X, year = %d", EDID_name, manufacturer, year);
 
    int valid_edid = 1;
    if (strcmp(EDID_name, "MZ0404") == 0) {
@@ -7410,7 +7411,18 @@ void osd_init() {
    set_frontend(all_frontends[(cpld->get_version() >> VERSION_DESIGN_BIT) & 0x0F], 0);
 
    log_info("HDMI_auto = %d, HDMI_Mode = %d, EIA_CEA_861_extension = %d", hdmi_auto, hdmi_mode, EIA_CEA_861_extension);
-   if (hdmi_auto == 1) {                   // auto dvi / hdmi
+
+   if (hdmi_auto == HDMI_AUTO_FORCE_DVI) {
+       char dvipath[MAX_STRING_SIZE];
+       sprintf(dvipath, "/Resolutions/Force_DVI/%dx%d_%s.txt", detectedwidth, detectedheight, EDID_name);
+       log_info("Testing DVI force path: %s", dvipath);
+       if (test_file(dvipath)) {
+          log_info("Forcing DVI");
+          EIA_CEA_861_extension = 0;
+       }
+   }
+
+   if (hdmi_auto != HDMI_AUTO_OFF) {                   // auto dvi / hdmi
       if (EIA_CEA_861_extension == 0 && hdmi_mode != 0) {
           log_info("Setting HDMI mode to 0");
           set_hdmi(0, 1);
