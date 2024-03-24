@@ -623,7 +623,7 @@ void scan_profiles(char *prefix, char manufacturer_names[MAX_PROFILES][MAX_PROFI
             if (res != FR_OK || fno.fname[0] == 0 || *mcount == MAX_PROFILES) break;
             if (fno.fattrib & AM_DIR && strcmp(fno.fname, PAXHEADER) != 0) {
                 fno.fname[MAX_PROFILE_WIDTH - 1] = 0;
-                if (mono_board_detected() == 0 || (mono_board_detected() == 1 && fno.fname[strlen(fno.fname) - 1] == '_')) {
+                if (mono_board_detected() == 0 || (mono_board_detected() == 1 && fno.fname[strlen(fno.fname) - 1] != '_')) {
                     int duplicate = 0;
                     if (*mcount != 0) {
                         for (int k = 0; k < *mcount; k++) {
@@ -654,7 +654,7 @@ void scan_profiles(char *prefix, char manufacturer_names[MAX_PROFILES][MAX_PROFI
                     if (res != FR_OK || fno.fname[0] == 0 || *count == MAX_PROFILES) break;
                     if (fno.fattrib & AM_DIR && strcmp(fno.fname, PAXHEADER) != 0) {
                         fno.fname[MAX_PROFILE_WIDTH - 1] = 0;
-                        if (mono_board_detected() == 0 || (mono_board_detected() == 1 && fno.fname[strlen(fno.fname) - 1] == '_')) {
+                        if (mono_board_detected() == 0 || (mono_board_detected() == 1 && fno.fname[strlen(fno.fname) - 1] != '_')) {
                             sprintf(profile_names[*count], "%s%s/%s", prefix, manufacturer_names[i], fno.fname);
                             log_info("Found profile: %s",  profile_names[*count]);
                             (*count)++;
@@ -665,7 +665,7 @@ void scan_profiles(char *prefix, char manufacturer_names[MAX_PROFILES][MAX_PROFI
                             if (strcmp(filetype, ".txt") == 0) {
                                 fno.fname[MAX_PROFILE_WIDTH - 1] = 0;
                                 fno.fname[strlen(fno.fname) - 4] = 0;
-                                if (mono_board_detected() == 0 || (mono_board_detected() == 1 && fno.fname[strlen(fno.fname) - 1] == '_')) {
+                                if (mono_board_detected() == 0 || (mono_board_detected() == 1 && fno.fname[strlen(fno.fname) - 1] != '_')) {
                                     sprintf(profile_names[*count], "%s%s/%s", prefix, manufacturer_names[i], fno.fname);
                                     log_info("Found profile: %s",  profile_names[*count]);
                                     (*count)++;
@@ -1278,7 +1278,7 @@ int file_save_config(char *resolution_name, int refresh, int scaling, int filter
    }
 
    close_filesystem();
-  
+
    log_info("Config.txt update is complete");
    return 1;
 }
