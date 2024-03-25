@@ -487,7 +487,7 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         }
     }
 
-    if (h_aspect <= 4 && v_aspect <= 4) { //normalise 2:2, 3:3, 4:4 to 1:1
+    if (h_aspect <= 4 && v_aspect <= 4 && h_aspect != 0 && v_aspect != 0) { //normalise 2:2, 3:3, 4:4 to 1:1
         if (h_aspect == v_aspect) {
             h_aspect = 1;
             v_aspect = 1;

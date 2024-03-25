@@ -1922,7 +1922,11 @@ static void cpld_init() {
       cpld = &cpld_atom;
    } else if (cpld_design == DESIGN_YUV_ANALOG) {
       DAC_detected = 1;
-      cpld = &cpld_yuv_analog;
+      if (mono_board_detected()) {
+         cpld = &cpld_yuv_analog_mono;
+      } else {
+         cpld = &cpld_yuv_analog;
+      }
    } else if (cpld_design == DESIGN_YUV_TTL) {
       cpld = &cpld_yuv_ttl;
    } else if (cpld_design == DESIGN_RGB_TTL) {
@@ -1943,6 +1947,8 @@ static void cpld_init() {
       DAC_detected = 1;
       if (cpld_version >= 0x70 && cpld_version < 0x80) {
              cpld = &cpld_rgb_analog_24mhz;
+      } else if (mono_board_detected()) {
+             cpld = &cpld_rgb_analog_mono;
       } else {
              cpld = &cpld_rgb_analog;
       }

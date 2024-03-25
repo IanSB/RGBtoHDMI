@@ -335,7 +335,7 @@ typedef struct {
 #define MAX_NAMES_WIDTH 32
 #define MAX_JITTER_LINES 8
 
-#define CUSTOM_PROFILE_FOLDER "_Custom_"
+#define CUSTOM_PROFILE_FOLDER "_Custom"
 #define CUSTOM_PROFILE_NAME "Custom_Profile_"
 
 #define CAPTURE_FILE_BASE "capture"

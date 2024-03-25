@@ -3,5 +3,6 @@
 #include "cpld.h"
 
 extern cpld_t cpld_yuv_analog;
+extern cpld_t cpld_yuv_analog_mono;
 extern cpld_t cpld_yuv_ttl;
 #endif

@@ -42,8 +42,6 @@
 #define DEFAULT_CPLD_UPDATE_DIR "/cpld_firmware/6-12_bit"
 #define DEFAULT_CPLD_UPDATE_DIR_3BIT "/cpld_firmware/3_bit"
 #define DEFAULT_CPLD_UPDATE_DIR_ATOM "/cpld_firmware/atom"
-#define MONO_BOARD_DEFAULT "Commodore_/Commodore_64_Lumacode_"
-
 #define PI 3.14159265f
 // =============================================================
 // Definitions for the key press interface
@@ -5298,7 +5296,7 @@ int save_profile(char *path, char *name, char *buffer, char *default_buffer, cha
 
    if(custom_profile >= 0 ) {
        char custom_name[MAX_STRING_SIZE];
-       sprintf(custom_name, "%s/%s%d_", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, custom_profile);
+       sprintf(custom_name, "%s/%s%d", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, custom_profile);
        return file_save_custom_profile(custom_name, buffer, pointer - buffer);
    } else {
        if (path != NULL) {
@@ -6492,7 +6490,7 @@ int osd_key(int key) {
          case I_SAVE_CUSTOM:
             {
                 char path[MAX_STRING_SIZE];
-                sprintf(path, "%s/%s/%s/%s%d_.txt", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                sprintf(path, "%s/%s/%s/%s%d.txt", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
                 if (first_time_press == 0 && test_file(path)) {
                     set_status_message("Press again to confirm file overwrite");
                     first_time_press = 1;
@@ -6517,7 +6515,11 @@ int osd_key(int key) {
                         osd_set(line++, 0, "be selected automatically. Following that");
                         osd_set(line++, 0, "the profile can also be accessed from the");
                         osd_set(line++, 0, "Custom entry in the Select Profile menu.");
-                        sprintf(path, "%s/%s%d_", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                        line++;
+                        osd_set(line++, 0, "Please post any new profiles to the issues");
+                        osd_set(line++, 0, "tab on the github for inclusion in future");
+                        osd_set(line++, 0, "releases.");
+                        sprintf(path, "%s/%s%d", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
                         write_profile_choice(path, get_parameter(F_SAVED_CONFIG), (char*) cpld->name);
                         set_general_reboot();
                     } else {
@@ -6534,7 +6536,7 @@ int osd_key(int key) {
          case I_DELETE_CUSTOM:
              {
                 char path[MAX_STRING_SIZE];
-                sprintf(path, "%s/%s/%s/%s%d_.txt", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                sprintf(path, "%s/%s/%s/%s%d.txt", PROFILE_BASE, cpld->name, CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
                 if (test_file(path) || first_time_press > 0) {
                     if (first_time_press == 0) {
                         set_status_message("Press again to confirm file delete");
@@ -6555,7 +6557,7 @@ int osd_key(int key) {
                             line++;
                             osd_set(line++, 0, "After rebooting, the profile will");
                             osd_set(line++, 0, "be removed from the profile list");
-                            sprintf(path, "%s/%s%d_", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
+                            sprintf(path, "%s/%s%d", CUSTOM_PROFILE_FOLDER, CUSTOM_PROFILE_NAME, get_feature(F_PROFILE_NUM));
                             set_general_reboot();
                         } else {
                             set_status_message("Error Deleting Custom Profile");
@@ -7508,9 +7510,6 @@ void osd_init() {
           features[F_PROFILE].max--;      //max is actually count-1
          // The default profile is provided by the CPLD
          prop = cpld->default_profile;
-         if (mono_board_detected() && (cpld->get_version() >> VERSION_DESIGN_BIT) == DESIGN_YUV_ANALOG) {
-             prop = MONO_BOARD_DEFAULT;
-         }
          val = 0;
          // It can be over-ridden by a local profile.txt file
          sprintf(name, "/profile_%s.txt", cpld->name);
@@ -7540,9 +7539,6 @@ void osd_init() {
             if (!found_profile) {
                 set_parameter(F_SAVED_CONFIG, 0);
                 prop = cpld->default_profile;
-                if (mono_board_detected() && (cpld->get_version() >> VERSION_DESIGN_BIT) == DESIGN_YUV_ANALOG) {
-                    prop = MONO_BOARD_DEFAULT;
-                }
                 for (int i=0; i<= features[F_PROFILE].max; i++) {
                    if (strcmp(profile_names[i] + cpld_prefix_length, prop) == 0) {
                       set_parameter(F_PROFILE, i);
