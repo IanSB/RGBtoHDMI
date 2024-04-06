@@ -7048,7 +7048,8 @@ void osd_init() {
    RPI_PropertyProcess();
    buf = RPI_PropertyGet(TAG_GET_EDID_BLOCK);
    int year = 1990;
-   int manufacturer = 0;
+   int product_code = 0;
+   char manufacturer_id[4] = "";
    int supports1080i = 0;
    int supports1080p = 0;
    int detectedwidth = 0;
@@ -7091,7 +7092,14 @@ void osd_init() {
            }
        }
 
-       manufacturer = buf->data.buffer_8[table_offset + 9] | (buf->data.buffer_8[table_offset + 8] << 8);  //big endian
+       int mf = buf->data.buffer_8[table_offset + 9] | (buf->data.buffer_8[table_offset + 8] << 8);  //big endian
+       manufacturer_id[0] = ((mf >> 10) & 0x1f) + 'A' - 1;
+       manufacturer_id[1] = ((mf >> 5) & 0x1f) + 'A' - 1;
+       manufacturer_id[2] = (mf & 0x1f) + 'A' - 1;
+       manufacturer_id[3] = 0x00;
+
+       product_code = buf->data.buffer_8[table_offset + 10] | (buf->data.buffer_8[table_offset + 11] << 8);
+
        year = year + buf->data.buffer_8[table_offset + 17];
 
        int extensionblocks = buf->data.buffer_8[table_offset + 126];
@@ -7161,7 +7169,7 @@ void osd_init() {
        reboot();
     }
 
-   log_info("Monitor Name = %s, manufacturer ID = %4X, year = %d", EDID_name, manufacturer, year);
+   log_info("Monitor Name = %s, manufacturer ID = %s, product code = 0x%04X, year = %d", EDID_name, manufacturer_id, product_code, year);
 
    int valid_edid = 1;
    if (strcmp(EDID_name, "MZ0404") == 0) {
@@ -7416,10 +7424,10 @@ void osd_init() {
 
    if (hdmi_auto == HDMI_AUTO_FORCE_DVI) {
        char dvipath[MAX_STRING_SIZE];
-       sprintf(dvipath, "/Resolutions/Force_DVI/%dx%d_%s.txt", detectedwidth, detectedheight, EDID_name);
+       sprintf(dvipath, "/Resolutions/Force_DVI/%dx%d_%s_%s.txt", detectedwidth, detectedheight, EDID_name, manufacturer_id);
        log_info("Testing DVI force path: %s", dvipath);
        if (test_file(dvipath)) {
-          log_info("Forcing DVI");
+          log_info("Match: Forcing DVI");
           EIA_CEA_861_extension = 0;
        }
    }
