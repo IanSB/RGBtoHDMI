@@ -2304,7 +2304,6 @@ int *diff_N_frames_by_sample(capture_info_t *capinfo, int n, int elk) {
               diff[5] += 1000;
        }
 
-
       if (bpp == 4) {
           // A F C B E D => A B C D E F
           int f = diff[1];

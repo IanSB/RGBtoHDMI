@@ -40,8 +40,6 @@
 #define DEFAULT_CPLD_FIRMWARE_DIR "/cpld_firmware/recovery"
 #define DEFAULT_CPLD_FIRMWARE_DIR12 "/cpld_firmware/recovery12"
 #define DEFAULT_CPLD_UPDATE_DIR "/cpld_firmware/6-12_bit"
-#define DEFAULT_CPLD_UPDATE_DIR_3BIT "/cpld_firmware/3_bit"
-#define DEFAULT_CPLD_UPDATE_DIR_ATOM "/cpld_firmware/atom"
 #define PI 3.14159265f
 // =============================================================
 // Definitions for the key press interface
@@ -457,7 +455,7 @@ static param_t features[] = {
    {     F_OVERCLOCK_SDRAM,   "Overclock SDRAM",   "overclock_sdram", 0,                  200, 1 },
    {     F_POWERUP_MESSAGE,   "Powerup Message",   "powerup_message", 0,                    1, 1 },
 
-   {    F_YUV_PIXEL_DOUBLE,  "YUV Pixel Double",  "yuv_pixel_double", 0,                    2, 1 },
+   {    F_YUV_PIXEL_DOUBLE,  "YUV Pixel Double",  "yuv_pixel_double", 0,                    1, 1 },
    {      F_INTEGER_ASPECT,"Integer Aspect Ratio",    "integer_aspect", 0, NUM_INTEGER_ASPECT-1, 1 },
    {     F_INTEGER_SCALING,"16:9 Integer Scaling", "integer_scaling", 0, NUM_INTEGER_SCALING-1, 1 },
 
@@ -5441,28 +5439,28 @@ void process_single_profile(char *buffer) {
 
    int cpld_version =  ((cpld->get_version() >> VERSION_DESIGN_BIT) & 0x0F);
 
-   prop = get_prop(buffer, "single_button_mode");
+   if (cpld_version == DESIGN_SIMPLE) {
+      prop = get_prop(buffer, "simple_single_button_mode");
+   } else {
+      prop = get_prop(buffer, "cpld_single_button_mode");
+   }
    if (prop) {
        single_button_mode = *prop - '0';
-       if (cpld_version == DESIGN_SIMPLE) {
-           single_button_mode ^= 1;
-       }
        set_menu_table();
        if (single_button_mode) {
            log_info("Single button mode enabled");
        }
    }
 
-   prop = get_prop(buffer, "cpld_firmware_dir");
+   if ( cpld_version == DESIGN_BBC ) {
+        prop = get_prop(buffer, "bbc_cpld_firmware_dir");
+   } else if ( cpld_version == DESIGN_ATOM ) {
+        prop = get_prop(buffer, "atom_cpld_firmware_dir");
+   } else {
+        prop = get_prop(buffer, "cpld_firmware_dir");
+   }
    if (prop) {
-
-      if ( cpld_version == DESIGN_BBC ) {
-           strcpy(cpld_firmware_dir, DEFAULT_CPLD_UPDATE_DIR_3BIT);
-      } else if ( cpld_version == DESIGN_ATOM ) {
-           strcpy(cpld_firmware_dir, DEFAULT_CPLD_UPDATE_DIR_ATOM);
-      } else {
-           strcpy(cpld_firmware_dir, prop);
-      }
+        strcpy(cpld_firmware_dir, prop);
    }
    // Disable CPLDv2 specific features for CPLDv1
    if (cpld->old_firmware_support() & BIT_NORMAL_FIRMWARE_V1) {
