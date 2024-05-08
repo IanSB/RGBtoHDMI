@@ -1,0 +1,4 @@
+line1=by Chris Zabriskie. (Looped clip)
+line2=Creative Commons License: CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+  

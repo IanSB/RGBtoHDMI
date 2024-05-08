@@ -1098,6 +1098,9 @@ int calibrate_sampling_clock(int profile_changed) {
 
    return a;
 }
+double get_original_pllh_clock() {
+    return pllh_clock;
+}
 
 static void recalculate_hdmi_clock(int genlock_mode, int genlock_adjust) {
    static double last_f2 = 0.0f;

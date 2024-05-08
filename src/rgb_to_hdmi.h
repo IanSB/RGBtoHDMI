@@ -26,6 +26,7 @@ int  get_vsync_width_lines();
 int  get_sync_detected();
 int  get_50hz_state();
 int  get_core_1_available();
+double get_original_pllh_clock();
 
 void set_parameter(int parameter, int value);
 int get_parameter(int parameter);

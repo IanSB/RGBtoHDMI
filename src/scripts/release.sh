@@ -52,6 +52,7 @@ cp -a cpld_firmware ${DIR}
 cp -a Profiles ${DIR}
 cp -a Resolutions ${DIR}
 cp -a Amiga_CPLD_Readme  ${DIR}
+cp -a WAVs ${DIR}
 
 # Convert to windows line endings
 find ${DIR} -name '*.txt' -print0 | xargs -0 unix2dos

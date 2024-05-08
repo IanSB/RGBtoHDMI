@@ -24,6 +24,7 @@
 #include "startup.h"
 #include "vid_cga_comp.h"
 #include <math.h>
+#include "audio/start.h"
 
 // =============================================================
 // Definitions for the size of the OSD
@@ -356,7 +357,7 @@ static const char *refresh_names[] = {
    "EDID 50Hz-60Hz",
    "Force 50Hz-60Hz",
    "Force 50Hz-Any",
-   "50Hz"
+   "50Hz (Not Auto Res.)"
 };
 
 static const char *saved_config_names[] = {
@@ -467,6 +468,8 @@ static param_t features[] = {
    {            F_H_OFFSET,          "H Offset",    "pixel_h_offset", -256,               256, 4 },
    {            F_V_OFFSET,          "V Offset",    "pixel_v_offset", -256,               256, 1 },
 
+   {            F_WAVS,              "WAV File",         "wav_file", 0,                    0, 1 },
+
    {            F_FRONTEND,         "Interface",         "interface", 0,    NUM_FRONTENDS - 1, 1 },
    {                -1,                NULL,                NULL, 0,                    0, 0 }
 };
@@ -552,6 +555,11 @@ static void info_save_log(int line);
 static void info_credits(int line);
 static void info_reboot(int line);
 
+static void stop_playing_audio(int line);
+static void audio_tone(int line);
+static void audio_wav(int line);
+static void audio_all_wavs(int line);
+
 static void info_test_50hz(int line);
 static void rebuild_geometry_menu(menu_t *menu);
 static void rebuild_sampling_menu(menu_t *menu);
@@ -580,7 +588,6 @@ static info_menu_item_t save_log_ref            = { I_INFO, "Save Log & EDID",  
 static info_menu_item_t credits_ref             = { I_INFO, "Credits",              info_credits};
 static info_menu_item_t reboot_ref              = { I_INFO, "Reboot",               info_reboot};
 
-
 static info_menu_item_t analyse_timing_ref      = { I_INFO, "Analyse Timing",    analyse_timing};
 
 static back_menu_item_t back_ref                     = { I_BACK, "Return"};
@@ -591,6 +598,11 @@ static action_menu_item_t cal_sampling_no_save_ref   = { I_CALIBRATE_NO_SAVE, "A
 static action_menu_item_t save_custom_profile_ref    = { I_SAVE_CUSTOM, "Save Custom Profile"};
 static action_menu_item_t delete_custom_profile_ref  = { I_DELETE_CUSTOM, "Delete Custom Profile"};
 static info_menu_item_t test_50hz_ref                = { I_TEST, "Test Monitor for 50Hz Support",  info_test_50hz};
+
+static info_menu_item_t stop_playing_audio_ref       = { I_INFO, "Stop Playing Audio", stop_playing_audio};
+static info_menu_item_t audio_tone_ref               = { I_INFO, "Play Test Tone", audio_tone};
+static info_menu_item_t audio_wav_ref                = { I_INFO, "Play Selected WAV", audio_wav};
+static info_menu_item_t audio_all_wavs_ref           = { I_INFO, "Play All WAVs", audio_all_wavs};
 
 static menu_t update_cpld_menu = {
    "Update CPLD Menu",
@@ -777,12 +789,14 @@ static param_menu_item_t line_len_ref        = { I_FEATURE, &features[F_LINE_LEN
 static param_menu_item_t h_offset_ref        = { I_FEATURE, &features[F_H_OFFSET]      };
 static param_menu_item_t v_offset_ref        = { I_FEATURE, &features[F_V_OFFSET]      };
 
+static param_menu_item_t wavs_ref            = { I_FEATURE, &features[F_WAVS]          };
+
 #ifndef HIDE_INTERFACE_SETTING
 static param_menu_item_t frontend_ref        = { I_FEATURE, &features[F_FRONTEND]       };
 #endif
 
 static menu_t custom_profile_menu = {
-   "Create Custom Profile",
+   "Create Custom Profile Menu",
    NULL,
    {
       (base_menu_item_t *) &back_ref,
@@ -804,8 +818,23 @@ static menu_t custom_profile_menu = {
    }
 };
 
+static menu_t audio_test_menu = {
+   "HDMI Audio Test Menu",
+   NULL,
+   {
+      (base_menu_item_t *) &back_ref,
+      (base_menu_item_t *) &wavs_ref,
+      (base_menu_item_t *) &audio_wav_ref,
+      (base_menu_item_t *) &audio_all_wavs_ref,
+      (base_menu_item_t *) &audio_tone_ref,
+      (base_menu_item_t *) &stop_playing_audio_ref,
+      NULL
+   }
+};
+
 static child_menu_item_t update_cpld_menu_ref  = { I_MENU, &update_cpld_menu };
 static child_menu_item_t custom_profile_ref = { I_CREATE, &custom_profile_menu };
+static child_menu_item_t audio_test_ref = { I_MENU, &audio_test_menu };
 
 static menu_t info_menu = {
    "Info & Help Menu",
@@ -1122,7 +1151,7 @@ static uint32_t normal_size_map8_16bpp[0x1000 * 4];
 static char message[MAX_STRING_SIZE];
 
 // Temporary filename for assembling OSD lines
-static char filename[MAX_STRING_SIZE * 5];
+static char filename[MAX_STRING_SIZE * 10];
 
 static char selected_manufacturer[MAX_STRING_SIZE];
 
@@ -1178,6 +1207,7 @@ static char manufacturer_names[MAX_PROFILES][MAX_PROFILE_WIDTH];
 static char profile_names[MAX_PROFILES][MAX_PROFILE_WIDTH];
 static char sub_profile_names[MAX_SUB_PROFILES][MAX_PROFILE_WIDTH];
 static char resolution_names[MAX_NAMES][MAX_NAMES_WIDTH];
+static char wav_names[MAX_NAMES][MAX_NAMES_WIDTH];
 static char favourite_names[MAX_FAVOURITES + 1][MAX_PROFILE_WIDTH];
 static char current_cpld_prefix[MAX_PROFILE_WIDTH];
 static char BBC_cpld_prefix[MAX_PROFILE_WIDTH];
@@ -1236,6 +1266,7 @@ void set_menu_table() {
       main_menu.items[index++] = (base_menu_item_t *) &settings_menu_ref;
       main_menu.items[index++] = (base_menu_item_t *) &geometry_menu_ref;
       main_menu.items[index++] = (base_menu_item_t *) &sampling_menu_ref;
+      main_menu.items[index++] = (base_menu_item_t *) &audio_test_ref;
       main_menu.items[index++] = (base_menu_item_t *) &custom_profile_ref,
       main_menu.items[index++] = (base_menu_item_t *) &save_ref;
       main_menu.items[index++] = (base_menu_item_t *) &restore_ref;
@@ -1700,6 +1731,8 @@ static const char *get_param_string(param_menu_item_t *param_item) {
          return sub_profile_names[value];
       case F_RESOLUTION:
          return resolution_names[value];
+      case F_WAVS:
+         return wav_names[value];
       case F_REFRESH:
          return refresh_names[value];
       case F_HDMI_AUTO:
@@ -2281,6 +2314,86 @@ static void info_cal_raw(int line) {
       sprintf(message, "show_cal_raw() not implemented");
       osd_set(line, 0, message);
    }
+}
+
+char * clean_underscore(char *string) {
+   for(int i = 0; i < strlen(string); i++) {
+       if (string[i] == '_') {
+           string[i] = ' ';
+       }
+   }
+   return string;
+}
+
+static int audio_msg1(int line){
+   osd_set(line++, 0, "This is a test of bare metal HDMI audio.");
+   osd_set(line++, 0, "Audio capture is still under development.");
+   return line;
+}
+
+static int audio_msg2(int line){
+   line++;
+   osd_set(line++, 0, "You can add your own .wav files to /WAVs:");
+   osd_set(line++, 0, "48000Hz sample rate stereo only. Max 160MB");
+   line++;
+   osd_set(line++, 0, "If you get no audio, check if your monitor");
+   osd_set(line++, 0, "is incorrectly configured for line input.");
+   osd_set(line++, 0, "Some older TVs might not output audio if");
+   osd_set(line++, 0, "the HDMI input is labelled as PC or DVI");
+   osd_set(line++, 0, "which also forces line input so change the");
+   osd_set(line++, 0, "label in the TV's menu. (e.g. some LG TVs)");
+   osd_set(line++, 0, "Please report any problem monitors or TVs");
+   line++;
+   osd_set(line++, 0, "HDMI Audio based on work from:");
+   osd_set(line++, 0, "https://github.com/kumaashi/RaspberryPI/");
+   osd_set(line++, 0, "https://github.com/rsta2/circle");
+   return line;
+}
+
+static void stop_playing_audio(int line) {
+   stop_audio();
+   line = audio_msg1(line);
+   osd_set(line++, 0, "Stopping Audio...");
+   line = audio_msg2(line);
+}
+
+static void audio_tone(int line) {
+   start_tone();
+   line = audio_msg1(line);
+   osd_set(line++, 0, "Playing test tone...");
+   line = audio_msg2(line);
+}
+
+static void audio_wav(int line) {
+   char path[MAX_STRING_SIZE];
+   char temp_buffer[MAX_STRING_SIZE * 4];
+   char *prop;
+   osd_set(line - 1, 0, "Please wait, loading WAV file...");
+   start_audio(wav_names[get_parameter(F_WAVS)]);
+   sprintf(path, "Playing: %s", wav_names[get_parameter(F_WAVS)]);
+   line = audio_msg1(line);
+   osd_set(line++, 0, clean_underscore(path));
+   sprintf(path, "/WAVs/%s.txt", wav_names[get_parameter(F_WAVS)]);
+   int file_size = file_load(path, temp_buffer, MAX_STRING_SIZE * 4 - 1);
+   temp_buffer[file_size] = 0;
+   if (file_size) {
+       prop = get_prop_no_space(temp_buffer, "line1");
+       osd_set(line++, 0, prop);
+       prop = get_prop_no_space(temp_buffer, "line2");
+       osd_set(line++, 0, prop);
+   }
+   line = audio_msg2(line);
+}
+
+static void audio_all_wavs(int line) {
+   char msg[MAX_STRING_SIZE];
+   sprintf(msg, "Please wait, loading %d WAV files...", features[F_WAVS].max + 1);
+   osd_set(line - 1, 0, msg);
+   start_all_audio(wav_names, features[F_WAVS].max + 1);
+   sprintf(msg, "Playing %d WAVs", features[F_WAVS].max + 1);
+   line = audio_msg1(line);
+   osd_set(line++, 0, msg);
+   line = audio_msg2(line);
 }
 
 static void rebuild_menu(menu_t *menu, item_type_t type, param_t *param_ptr) {
@@ -5265,7 +5378,7 @@ int save_profile(char *path, char *name, char *buffer, char *default_buffer, cha
 
    i = 0;
    while (features[i].key >= 0) {
-      if ((default_buffer != NULL && i != F_TIMING_SET && i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN && (i != F_AUTO_SWITCH || sub_default_buffer == NULL))
+      if ((default_buffer != NULL && i != F_TIMING_SET && i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_WAVS && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN && (i != F_AUTO_SWITCH || sub_default_buffer == NULL))
           || (default_buffer == NULL && i == F_TIMING_SET && get_feature(F_AUTO_SWITCH) > AUTOSWITCH_MODE7)
           || (default_buffer == NULL && i == F_AUTO_SWITCH) ) {
          strcpy(param_string, features[i].property_name);
@@ -5373,7 +5486,7 @@ void process_single_profile(char *buffer) {
 
    i = 0;
    while(features[i].key >= 0) {
-      if (i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN) {
+      if (i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_WAVS && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN) {
          strcpy(param_string, features[i].property_name);
          prop = get_prop(buffer, param_string);
          if (prop) {
@@ -7019,13 +7132,24 @@ void osd_init() {
         }
    }
 
+   size_t wcount = 0;
+   features[F_WAVS].max = 0;
+   strcpy(wav_names[0], NOT_FOUND_STRING);
+   scan_rnames(wav_names, "/WAVs", ".wav", 4, &wcount, 0);
+   if (wcount !=0) {
+      features[F_WAVS].max = wcount - 1;
+      for (int i = 0; i < wcount; i++) {
+         log_info("FOUND WAV: %i, %s", i, wav_names[i]);
+      }
+   }
+
    // default resolution entry of not found
    features[F_RESOLUTION].max = 0;
    strcpy(resolution_names[0], NOT_FOUND_STRING);
    size_t rcount = 0;
-   scan_rnames(resolution_names, "/Resolutions/60Hz", ".txt", 9, &rcount);
+   scan_rnames(resolution_names, "/Resolutions/60Hz", ".txt", 9, &rcount, 1);
    size_t old_rcount = rcount;
-   scan_rnames(resolution_names, "/Resolutions", ".txt", 4, &rcount);
+   scan_rnames(resolution_names, "/Resolutions", ".txt", 4, &rcount, 1);
    if (rcount != old_rcount) {
        log_info("Found non standard resolution: %d)", rcount - old_rcount);
    }

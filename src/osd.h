@@ -327,6 +327,8 @@ enum {
    F_H_OFFSET,
    F_V_OFFSET,
 
+   F_WAVS,
+
    F_FRONTEND,       //must be last
 
    MAX_PARAMETERS

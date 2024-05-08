@@ -141,7 +141,7 @@
 
 #ifdef __ASSEMBLER__
 #define GPU_COMMAND_BASE_OFFSET 0x000000a0
-
+//#define GPU_COMMAND_BASE_OFFSET 0x00a04080
 //#define GPU_DATA_0  (PERIPHERAL_BASE + 0x000000a4)
 //#define GPU_DATA_1  (PERIPHERAL_BASE + 0x000000a8)
 //#define GPU_DATA_2  (PERIPHERAL_BASE + 0x000000ac)
@@ -316,7 +316,7 @@ typedef struct {
 #define MIN_STRING_LIMIT 125
 
 #define MAX_CPLD_FILENAMES 24
-#define MAX_FILENAME_WIDTH 40
+#define MAX_FILENAME_WIDTH 64
 #define MAX_PROFILES 512
 #define MAX_SUB_PROFILES 64
 #define MAX_FAVOURITES 10
@@ -332,7 +332,7 @@ typedef struct {
 #define NOT_FOUND_STRING "Not Found"
 #define NONE_STRING "None"
 #define MAX_NAMES 64
-#define MAX_NAMES_WIDTH 32
+#define MAX_NAMES_WIDTH 256
 #define MAX_JITTER_LINES 8
 
 #define CUSTOM_PROFILE_FOLDER "_Custom"
@@ -441,6 +441,8 @@ typedef struct {
 
 // PLL registers, from:
 // https://github.com/F5OEO/librpitx/blob/master/src/gpio.h
+#define CM_HSMDIV (0x08c/4)
+
 #define PLLA_ANA1 (0x1014/4)
 #define PLLA_CTRL (0x1100/4)
 #define PLLA_FRAC (0x1200/4)

@@ -11,6 +11,10 @@
 #include "rgb_to_hdmi.h"
 #include "startup.h"
 #include "defs.h"
+#include "cache.h"
+#include "audio/hdmiaudio.h"
+
+#define WAV_DATA_END (UNCACHED_MEM_BASE + 0x100000 + 0x14000000)  //128MB + 1MB + 320MB
 
 #define USE_LODEPNG
 
@@ -727,7 +731,7 @@ void scan_sub_profiles(char sub_profile_names[MAX_SUB_PROFILES][MAX_PROFILE_WIDT
     close_filesystem();
 }
 
-void scan_rnames(char names[MAX_NAMES][MAX_NAMES_WIDTH], char *path, char *type, int truncate, size_t *count) {
+void scan_rnames(char names[MAX_NAMES][MAX_NAMES_WIDTH], char *path, char *type, int truncate, size_t *count, int mask_enable) {
     FRESULT res;
     DIR dir;
     static FILINFO fno;
@@ -748,18 +752,22 @@ void scan_rnames(char names[MAX_NAMES][MAX_NAMES_WIDTH], char *path, char *type,
             }
         }
         f_closedir(&dir);
-        //mask out bit so numbers starting >5 sort before other numbers so 640, 720 & 800 appear before 1024 1280 etc
-        for (int i = 0; i < *count; i++) {
-            if (names[i][0] > '5' && names[i][0] <= '9') {
-                names[i][0] &= 0xef;
+        if (mask_enable) {
+            //mask out bit so numbers starting >5 sort before other numbers so 640, 720 & 800 appear before 1024 1280 etc
+            for (int i = 0; i < *count; i++) {
+                if (names[i][0] > '5' && names[i][0] <= '9') {
+                    names[i][0] &= 0xef;
+                }
             }
         }
         qsort(names, *count, sizeof *names, string_compare);
-        //restore masked bit
-        for (int i = 0; i < *count; i++) {
-           if (names[i][0] > ('5' & 0xef) && names[i][0] <= ('9' & 0xef)) {
-               names[i][0] |= 0x10;
-           }
+        if (mask_enable) {
+            //restore masked bit
+            for (int i = 0; i < *count; i++) {
+               if (names[i][0] > ('5' & 0xef) && names[i][0] <= ('9' & 0xef)) {
+                   names[i][0] |= 0x10;
+               }
+            }
         }
     }
     close_filesystem();
@@ -825,6 +833,102 @@ int file_load_raw(char *path, char *buffer, unsigned int buffer_size) {
 int file_load(char *path, char *buffer, unsigned int buffer_size) {
     init_filesystem();
     int result = file_load_raw(path, buffer, buffer_size);
+    close_filesystem();
+    return result;
+}
+
+int file_load_chunk_raw(char *path, char *buffer, unsigned int file_offset, unsigned int buffer_size) {
+   FRESULT result;
+   FIL file;
+   unsigned int bytes_read = 0;
+   log_info("Loading file %s : Chunk 0x%X", path, file_offset);
+   result = f_open(&file, path, FA_READ);
+   if (result != FR_OK) {
+      log_warn("Failed to open %s (result = %d)", path, result);
+      return 0;
+   }
+
+   result = f_lseek(&file, file_offset);
+   if (result != FR_OK) {
+      log_warn("Failed to seek %s (result = %d)", path, result);
+      return 0;
+   }
+
+   result = f_read (&file, buffer, buffer_size, &bytes_read);
+   if (result != FR_OK) {
+      log_warn("Failed to read %s (result = %d)", path, result);
+      return 0;
+   }
+   result = f_close(&file);
+   if (result != FR_OK) {
+      log_warn("Failed to close %s (result = %d)", path, result);
+      return 0;
+   }
+   buffer[bytes_read] = 0;
+   //log_info("%s reading complete", path);
+   return bytes_read;
+}
+
+unsigned int file_load_WAV(char *path, uint32_t * wav_buffer) {
+#define WAV_HEADER 0x2c     //chops off RIFF header
+#define MAX_BUFFER 0x100000
+    char buffer[MAX_BUFFER + 0x100]; //seems to be an overrun in f_read
+    unsigned int file_offset = 0;
+    unsigned int wav_buffer_size = 0;
+    unsigned int bytes_read = 0;
+    FRESULT result;
+    FIL file;
+
+    init_filesystem();
+
+    result = f_open(&file, path, FA_READ);
+        if (result != FR_OK) {
+        log_warn("Failed to open %s (result = %d)", path, result);
+        return 0;
+    }
+
+    uint16_t *wavdata = (uint16_t *) buffer;
+
+        do {
+            if (((uint32_t) &wav_buffer[wav_buffer_size] + (MAX_BUFFER << 1))< WAV_DATA_END) {
+                result = f_lseek(&file, file_offset + WAV_HEADER);
+                if (result != FR_OK) {
+                log_warn("Failed to seek %s (result = %d)", path, result);
+                return 0;
+                }
+                result = f_read (&file, buffer, MAX_BUFFER, &bytes_read);
+                if (result != FR_OK) {
+                log_warn("Failed to read %s (result = %d)", path, result);
+                return 0;
+                }
+                log_info("Loading %s : chunk=0x%X, size=0x%X", path, file_offset, bytes_read);
+                for(int i = 0 ; i < bytes_read / 2; i++) {
+                    uint32_t data = wavdata[i];
+                    wav_buffer[wav_buffer_size++] = ConvertIEC958Sample16(data);
+                }
+                file_offset += bytes_read;
+            } else {
+                log_info("Failed %s : chunk=0x%X, size=0x%X", path, file_offset, bytes_read);
+                log_info("Wav data exceeds maximum: 0x%08X", &wav_buffer[wav_buffer_size]);
+                bytes_read = 0;
+            }
+        } while (bytes_read == MAX_BUFFER);
+
+    log_info("Wav file data size = %d bytes", file_offset);
+
+    result = f_close(&file);
+    if (result != FR_OK) {
+        log_warn("Failed to close %s (result = %d)", path, result);
+        return 0;
+    }
+    close_filesystem();
+
+    return wav_buffer_size;
+}
+
+int file_load_chunk(char *path, char *buffer, unsigned int file_offset, unsigned int buffer_size) {
+    init_filesystem();
+    int result = file_load_chunk_raw(path, buffer, file_offset, buffer_size);
     close_filesystem();
     return result;
 }

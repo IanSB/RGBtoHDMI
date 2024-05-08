@@ -149,6 +149,14 @@ file( GLOB core_files
     jtag/ports.h
     jtag/update_cpld.c
     jtag/update_cpld.h
+    # hdmi audio driver
+    audio/hw.h
+    audio/dma.c
+    audio/dma.h
+    audio/hdmiaudio.h
+    audio/hdmiaudio.c
+    audio/start.h
+    audio/start.c
 )
 
 
