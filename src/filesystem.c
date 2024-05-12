@@ -901,14 +901,14 @@ unsigned int file_load_WAV(char *path, uint32_t * wav_buffer) {
                 log_warn("Failed to read %s (result = %d)", path, result);
                 return 0;
                 }
-                log_info("Loading %s : chunk=0x%X, size=0x%X", path, file_offset, bytes_read);
+                log_info("Loading %s : chunk=0x%X, size=0x%X", path, file_offset / MAX_BUFFER, bytes_read);
                 for(int i = 0 ; i < bytes_read / 2; i++) {
                     uint32_t data = wavdata[i];
                     wav_buffer[wav_buffer_size++] = ConvertIEC958Sample16(data);
                 }
                 file_offset += bytes_read;
             } else {
-                log_info("Failed %s : chunk=0x%X, size=0x%X", path, file_offset, bytes_read);
+                log_info("Failed %s : chunk=0x%X, size=0x%X", path, file_offset / MAX_BUFFER, bytes_read);
                 log_info("Wav data exceeds maximum: 0x%08X", &wav_buffer[wav_buffer_size]);
                 bytes_read = 0;
             }
