@@ -2368,7 +2368,7 @@ static void audio_wav(int line) {
    char path[MAX_STRING_SIZE];
    char temp_buffer[MAX_STRING_SIZE * 4];
    char *prop;
-   osd_set(line - 1, 0, "Please wait, loading WAV file...");
+   osd_set_clear(line - 1, 0, "Please wait, loading WAV file...");
    start_audio(wav_names[get_parameter(F_WAVS)]);
    sprintf(path, "Playing: %s", wav_names[get_parameter(F_WAVS)]);
    line = audio_msg1(line);
@@ -2388,7 +2388,7 @@ static void audio_wav(int line) {
 static void audio_all_wavs(int line) {
    char msg[MAX_STRING_SIZE];
    sprintf(msg, "Please wait, loading %d WAV files...", features[F_WAVS].max + 1);
-   osd_set(line - 1, 0, msg);
+   osd_set_clear(line - 1, 0, msg);
    start_all_audio(wav_names, features[F_WAVS].max + 1);
    sprintf(msg, "Playing %d WAVs", features[F_WAVS].max + 1);
    line = audio_msg1(line);
