@@ -376,7 +376,7 @@ wait\@:
         ldr    r8, [r4, r9]
         eor    r8, r3
         tst    r8, #PSYNC_MASK
-        tsteq  r8, #0x80000000
+        tsteq  r8, #FINAL_BIT
         beq    wait\@
         eor    r8, r3
 
@@ -389,9 +389,9 @@ wait\@:
 
 got_sample\@:
         stmia  r10, {r8,r9}
-        bic    r8, r8, #0x01000000
-        tst    r8, #0x4000
-        orrne  r8, r8, #0x01000000
+        bic    r8, r8, #MUX_MASK
+        tst    r8, #ALT_MUX_MASK
+        orrne  r8, r8, #MUX_MASK
 
         pop    {r9-r10}
 .endm
@@ -477,7 +477,7 @@ clear_regs\@:
 do_skip_psync_no_old1\@:
         bl     _get_gpu_data_base_r4
         mov    r8, #SYNC_ABORT_FLAG
-        str    r8, [r4, #(GPU_COMMAND_offset - GPU_DATA_0_offset)]  //command register
+        str    r8, [r4, #GPU_DATA_0_offset]  
 .endm
 
 .macro  SKIP_PSYNC_NO_OLD_CPLD_HIGH_LATENCY
@@ -564,7 +564,7 @@ doneoldfirmwarescroll\@:
 do_skip_psync3\@:
         bl     _get_gpu_data_base_r4
         mov    r8, #SYNC_ABORT_FLAG
-        str    r8, [r4, #(GPU_COMMAND_offset - GPU_DATA_0_offset)]  //command register
+        str    r8, [r4, #GPU_DATA_0_offset] 
 skip_psync_loop\@:
         WAIT_FOR_PSYNC_EDGE               // wait for next edge of psync
         subs   r7, r7, #1
@@ -1559,21 +1559,6 @@ skip_armv6_instruction\@:
         mrcne  p15, 0, \reg, c9, c13, 0    //this arm v7 / v8 instruction gets skipped on arm v6 without faulting (saves a branch)
 .endm
 
-#ifdef MULTI_BUFFER
-.macro FLIP_BUFFER
-        // Skip the multi buffering in mode 7 and probe mode
-        tst    r3, #(BIT_INTERLACED_VIDEO | BIT_PROBE)
-        bne    noflip\@
-        // Flip to the last completed draw buffer
-        // It seems the GPU delays this until the next vsync
-        push   {r0-r3}
-        mov    r14, r3, lsr #OFFSET_LAST_BUFFER
-        and    r0, r14, #3
-        bl     swapBuffer
-        pop    {r0-r3}
-noflip\@:
-.endm
-#endif
 
 .macro KEY_PRESS_DETECT mask, ret, counter
         //enters with sw1_power_up in r9

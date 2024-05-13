@@ -57,5 +57,7 @@ void start_vc_bench(int type);
 void refresh_cpld();
 // Reboot the system immediately
 void reboot();
-
+void write_palette(uint32_t * current_palette);
+void terminate_vc_0();
+void start_vc_0();
 #endif

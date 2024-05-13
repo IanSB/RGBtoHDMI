@@ -99,11 +99,12 @@ int recalculate_hdmi_clock_line_locked_update();
 
 void set_vsync_psync(int state);
 
-void osd_update_palette();
+void osd_update_palette(int hardware_direct);
 
 void delay_in_arm_cycles(int delay);
 void poll_soft_reset();
 void wait_for_pi_fieldsync();
+void wait_for_fake_pi_fieldsync();
 void wait_for_source_fieldsync();
 int scan_for_single_pixels_4bpp(uint32_t * start, int length);
 int scan_for_single_pixels_12bpp(uint32_t * start, int length);

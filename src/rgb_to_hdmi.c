@@ -250,7 +250,7 @@ static int ppm_range = 1;
 static int ppm_range_count = 0;
 static int powerup = 1;
 static int hsync_threshold_switch = 0;
-static int display_list_offset = 5;
+static int display_list_offset = -1;
 static int restricted_slew_rate = 0;
 static unsigned int framebuffer = 0;
 static unsigned int framebuffer_topbits = 0;
@@ -262,19 +262,35 @@ volatile uint32_t* pi4_hdmi0_regs;
 
 static int parameters[MAX_PARAMETERS] = {0};
 
-#ifndef USE_ARM_CAPTURE
-void start_vc()
-{
+
+void start_vc_1() {
    int func;
    func = (int) &___videocore_asm[0];
    RPI_PropertyInit();
    RPI_PropertyAddTag(TAG_LAUNCH_VPU1,func,0,0,0,0,0,0);
    RPI_PropertyProcessNoCheck();
 }
-#endif
 
-void start_vc_bench(int type)
-{
+void start_vc_0() {
+#ifndef USE_ARM_CAPTURE
+   int func;
+   func = (int) &___videocore_asm[0];
+   RPI_PropertyInit();
+   RPI_PropertyAddTag(TAG_EXECUTE_CODE,func,0,0,0,0,0,0);
+   RPI_PropertyProcessNoCheck();
+#endif
+}
+
+void terminate_vc_0() {
+#ifndef USE_ARM_CAPTURE
+    do {
+
+    } while (*GPU_COMMAND_REGISTER != 0);
+    *GPU_COMMAND_REGISTER = TERMINATE_FLAG;
+#endif
+}
+
+void start_vc_bench(int type) {
    int func;
    func = (int) &___videocore_asm[0];
    RPI_PropertyInit();
@@ -382,6 +398,20 @@ static void init_gpclk(int source, int divisor) {
    log_debug("G GP_CLK1_CTL = %08"PRIx32, *GP_CLK1_CTL);
 
    log_debug("H GP_CLK1_DIV = %08"PRIx32, *GP_CLK1_DIV);
+}
+
+void write_palette(uint32_t * current_palette) {
+uint32_t palette_address_offset;
+    if (display_list_offset >= 0){
+        display_list_index = (uint32_t) *SCALER_DISPLIST1;
+        palette_address_offset = (display_list[display_list_index + display_list_offset + 3] & 0xffff) >> 2;
+        log_info("Palette Address = %08X", palette_address_offset << 2);
+        for (int i = 0; i < 256; i++) {
+            uint32_t p = current_palette[i];
+            // r & b are swapped in hardware palette data
+            display_list[palette_address_offset + i] = (p & 0xff000000) | ((p & 0x000000ff) << 16) | (p & 0x0000ff00) | ((p & 0x00ff0000) >> 16);
+        }
+    }
 }
 
 #ifdef USE_PROPERTY_INTERFACE_FOR_FB
@@ -526,62 +556,65 @@ int height = 0;
       capinfo->fb = (unsigned char *)(framebuffer & 0x3fffffff);
     }
 
-    //Initialize the palette
-    osd_update_palette();
+
 
 /*
-        volatile uint32_t  d;
-        volatile uint32_t dlist_start;
-        dlist_start = *SCALER_DISPLIST1;
-        log_info("SCALER_DISPLIST1 = %08X", dlist_start);
-        int i = dlist_start;
-        do {
-        d = display_list[i++];
-        log_info("%08X", d);
-        } while (d != 0x80000000);
+
+    volatile uint32_t  d;
+    volatile uint32_t dlist_start;
+    dlist_start = *SCALER_DISPLIST1;
+    log_info("SCALER_DISPLIST1 = %08X", dlist_start);
+    int i = dlist_start;
+    do {
+    d = display_list[i++];
+    log_info("%08X", d);
+    } while (d != 0x80000000);
+
 */
+
+    //have to wait for field sync for display list to be updated
+    wait_for_pi_fieldsync();
+    wait_for_pi_fieldsync();
+    unsigned int dli;
+    //read the index pointer into the display list RAM
+    display_list_index = (uint32_t) *SCALER_DISPLIST1;
+    display_list_offset = 0;
+    for(int i = 6; i > 3; i--) {
+        do {
+            dli = display_list[display_list_index + i];
+        } while (dli == 0xff000000);
+        if ((dli & 0x3fffffff) == (framebuffer & 0x3fffffff)) {         //start of frame buffer moves in position depending on scaling and resolution so search for it
+            display_list_offset = i;
+        }
+    }
+    if (display_list_offset == 0) {
+#ifdef RPI4
+        display_list_offset = 6;   //default
+#else
+        display_list_offset = 5;   //default
+#endif
+    }
+
+    do {
+        framebuffer_topbits = display_list[display_list_index + display_list_offset];
+    } while (framebuffer_topbits == 0xff000000);
+    framebuffer_topbits &= 0xc0000000;
 
     // modify display list if 16bpp to switch from RGB 565 to ARGB 4444
     if (capinfo->bpp == 16) {
-        //have to wait for field sync for display list to be updated
-        wait_for_pi_fieldsync();
-        wait_for_pi_fieldsync();
-        unsigned int dli;
-        //read the index pointer into the display list RAM
-        display_list_index = (uint32_t) *SCALER_DISPLIST1;
-        display_list_offset = 0;
-        for(int i = 6; i > 3; i--) {
-            do {
-                dli = display_list[display_list_index + i];
-            } while (dli == 0xff000000);
-            if ((dli & 0x3fffffff) == (framebuffer & 0x3fffffff)) {         //start of frame buffer moves in position depending on scaling and resolution so search for it
-                display_list_offset = i;
-            }
-        }
-        if (display_list_offset == 0) {
-#ifdef RPI4
-            display_list_offset = 6;   //default
-#else
-            display_list_offset = 5;   //default
-#endif
-        }
-        do {
-            framebuffer_topbits = display_list[display_list_index + display_list_offset];
-        } while (framebuffer_topbits == 0xff000000);
-        framebuffer_topbits &= 0xc0000000;
-
         do {
             dli = display_list[display_list_index];
         } while (dli == 0xFF000000);
         display_list[display_list_index] = (dli & ~0x600f) | (PIXEL_ORDER << 13) | PIXEL_FORMAT;
         //log_info("Modified display list word at %08X = %08X", display_list_index, display_list[display_list_index]);
-        log_info("Size: %dx%d (req %dx%d). Addr: %8.8X (%8.8X) Offset = %d, %1X", width, height, capinfo->width, capinfo->height, (unsigned int)capinfo->fb, framebuffer, display_list_offset, framebuffer_topbits >> 28);
-    } else {
-        framebuffer_topbits = 0;
-        display_list_offset = 0;
-        log_info("Size: %dx%d (req %dx%d). Addr: %8.8X (%8.8X)", width, height, capinfo->width, capinfo->height, (unsigned int)capinfo->fb, framebuffer);
+
     }
 
+    //Initialize the palette
+    osd_update_palette(0);
+
+    //log_info("Size: %dx%d (req %dx%d). Addr: %8.8X (%8.8X)", width, height, capinfo->width, capinfo->height, (unsigned int)capinfo->fb, framebuffer);
+    log_info("Size: %dx%d (req %dx%d). Addr: %8.8X (%8.8X) Offset = %d, %1X", width, height, capinfo->width, capinfo->height, (unsigned int)capinfo->fb, framebuffer, display_list_offset, framebuffer_topbits >> 28);
 }
 #else
 
@@ -686,7 +719,7 @@ static void init_framebuffer(capture_info_t *capinfo) {
    capinfo->fb = (unsigned char *)(((unsigned int) capinfo->fb) & 0x3fffffff);
 
    // Initialize the palette
-   osd_update_palette();
+   osd_update_palette(0);
 }
 
 #endif
@@ -1033,7 +1066,7 @@ int calibrate_sampling_clock(int profile_changed) {
    }
 
    // TODO: this should be superfluous (as the GPU is not changing the core clock)
-   // However, if we remove it, the next osd_update_palette() call hangs
+   // However, if we remove it, the next osd_update_palette(0) call hangs
    get_clock_rate(CORE_CLK_ID);
 
    // Finally, set the new divisor
@@ -2614,44 +2647,67 @@ int total_N_frames(capture_info_t *capinfo, int n, int elk) {
 
 void DPMS(int dpms_state) {
     if (parameters[F_HDMI_MODE_STANDBY] == 1) {
+        terminate_vc_0();       //stop capture to allow mailbox to work
         log_info("********************DPMS state: %d", dpms_state);
        // rpi_mailbox_property_t *mp;
         RPI_PropertyInit();
         RPI_PropertyAddTag(TAG_BLANK_SCREEN, dpms_state);
         RPI_PropertyProcess();
+        //todo fix wrong buffer after call?
+        //have to wait for field sync for display list to be updated
+        wait_for_fake_pi_fieldsync();
+        wait_for_fake_pi_fieldsync();
+        start_vc_0();           //start capture code again on first VPU (stops mailbox and fake vsync)
         if (capinfo->bpp == 16) {
-            //have to wait for field sync for display list to be updated
-            wait_for_pi_fieldsync();
-            wait_for_pi_fieldsync();
-            //delay_in_arm_cycles_cpu_adjust(30000000); // little extra delay
             //read the index pointer into the display list RAM
             display_list_index = (uint32_t) *SCALER_DISPLIST1;
-        int dli;
-        do {
-            dli = display_list[display_list_index];
-        } while (dli == 0xFF000000);
-        display_list[display_list_index] = (dli & ~0x600f) | (PIXEL_ORDER << 13) | PIXEL_FORMAT;
+            int dli;
+            do {
+                dli = display_list[display_list_index];
+            } while (dli == 0xFF000000);
+            display_list[display_list_index] = (dli & ~0x600f) | (PIXEL_ORDER << 13) | PIXEL_FORMAT;
         }
     }
 }
 
 #ifdef MULTI_BUFFER
 void swapBuffer(int buffer) {
-  current_display_buffer = buffer;
-  if (capinfo->bpp == 16) {
-     // directly manipulate the display list in 16BPP mode otherwise display list gets reconstructed
-     int dli = ((int)capinfo->fb | framebuffer_topbits) + (buffer * capinfo->height * capinfo->pitch);
+    current_display_buffer = buffer;
+    // directly manipulate the display list as mailbox calls non functional when running code on first VPU
+    int buffer_address = ((int)capinfo->fb | framebuffer_topbits) + (buffer * capinfo->height * capinfo->pitch);
+/*
+    if (display_list_index != *SCALER_DISPLIST1) {
+        volatile uint32_t  d;
+        volatile uint32_t dlist_start;
+        dlist_start = *SCALER_DISPLIST1;
+        log_info("SCALER_DISPLIST1 = %08X", dlist_start);
+        int i = dlist_start;
         do {
-           display_list[display_list_index + display_list_offset] = dli;
-        } while (dli != display_list[display_list_index + display_list_offset]);
-  } else
-  {
-     RPI_PropertyInit();
-     RPI_PropertyAddTag(TAG_SET_VIRTUAL_OFFSET, 0, capinfo->height * buffer);
-     // Use version that doesn't wait for the response
-     RPI_PropertyProcessNoCheck();
-  }
-
+        d = display_list[i++];
+        log_info("%08X", d);
+        } while (d != 0x80000000);
+        volatile uint32_t * base = SCALER_DISPLAY_LIST;
+        uint32_t offset = (display_list[dlist_start + display_list_offset + 3 ] & 0xFFFF);
+        log_info("RAMadd = %08X", offset);
+        log_info("RAMadd2 = %08X",  base);
+        for (uint32_t i=(offset/16); i<((offset/16) + 64); i++){
+            log_info("RAM %04X = %08X %08X %08X %08X", i*16, base[i*4], base[i*4 +1], base[i*4+2], base[i*4 +3]);
+        }
+    }
+*/
+    if (display_list_offset >= 0) {
+        display_list_index = *SCALER_DISPLIST1;
+        do {
+           display_list[display_list_index + display_list_offset] = buffer_address;
+        } while (buffer_address != display_list[display_list_index + display_list_offset]);
+        //log_info("%08X", buffer_address);
+    }
+/*
+    RPI_PropertyInit();
+    RPI_PropertyAddTag(TAG_SET_VIRTUAL_OFFSET, 0, capinfo->height * buffer);
+    // Use version that doesn't wait for the response
+    RPI_PropertyProcessNoCheck();
+*/
 }
 #endif
 
@@ -2977,7 +3033,7 @@ void set_parameter(int parameter, int value) {
         case F_PALETTE:
         {
             parameters[parameter] = value;
-            osd_update_palette();
+            osd_update_palette(0);
         }
         break;
         case F_TINT:
@@ -2987,7 +3043,7 @@ void set_parameter(int parameter, int value) {
         case F_GAMMA:
         {
             parameters[parameter] = value;
-            osd_update_palette();
+            osd_update_palette(0);
             update_cga16_color();
         }
         break;
@@ -3013,7 +3069,7 @@ void set_parameter(int parameter, int value) {
         {
             if (parameters[parameter] != value) {
                 parameters[parameter] = value;
-                osd_update_palette();
+                osd_update_palette(0);
             }
         }
         break;
@@ -3021,7 +3077,7 @@ void set_parameter(int parameter, int value) {
         {
             if (parameters[parameter] != value) {
               parameters[parameter] = value;
-              osd_update_palette();
+              osd_update_palette(0);
               update_cga16_color();
             }
         }
@@ -3266,8 +3322,9 @@ void rgb_to_hdmi_main() {
    current_display_buffer = 0;
 
 #ifndef USE_ARM_CAPTURE
+//   RPI_PropertySetWord(0x00038030,12,1); // Set domain 12 ISP
    log_info("Starting GPU code");
-   start_vc();
+//   start_vc_1();
 #endif
 
    // Determine initial sync polarity (and correct whether inversion required or not)
@@ -3450,11 +3507,15 @@ void rgb_to_hdmi_main() {
                         break;
                     }
                 }
+
+
                 int flags = 0;
                 capinfo->ncapture = ncapture;
                 log_info("Entering poll_keys_only, flags=%08x", flags);
                 result = poll_keys_only(capinfo, flags);
                 log_info("Leaving poll_keys_only, result=%04x", result);
+
+
                 osd_set_clear(1, 0, " ");
                 if (result & RET_EXPIRED) {
                    ncapture = osd_key(OSD_EXPIRED);
@@ -3600,8 +3661,10 @@ void rgb_to_hdmi_main() {
              wait_for_pi_fieldsync();       //ensure that the source and Pi frames are in a repeatable phase relationship
              wait_for_source_fieldsync();
          }
+
          log_debug("Entering rgb_to_fb, flags=%08x", flags);
          result = rgb_to_fb(capinfo, flags);
+
          log_debug("Leaving rgb_to_fb, result=%04x", result);
          capinfo->palette_control = old_palette_control;
          flags = old_flags;
@@ -3841,6 +3904,8 @@ void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
     display_list = SCALER_DISPLAY_LIST;
     pi4_hdmi0_regs = PI4_HDMI0_PLL;
     gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
+    //enable HDMI vsync interrupt for polling as fake vsync on smi won't work when running capture on VPU0
+    *PIXELVALVE2_INTEN = *PIXELVALVE2_INTEN | PIXELVALVE2_VSYNC_MASK;
     init_hardware();
 
     if (_get_hardware_id() >= _RPI2) {

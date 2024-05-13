@@ -65,6 +65,7 @@
 .global line_timeout
 .global vsync_retry_count
 .global wait_for_pi_fieldsync
+.global wait_for_fake_pi_fieldsync
 .global scan_for_single_pixels_4bpp
 .global scan_for_single_pixels_12bpp
 .global scan_for_diffs_12bpp
@@ -100,7 +101,17 @@
 
         .align 6               // so cache loads align
 rgb_to_fb:
+        push   {lr}
+        push   {r0-r12}
+        bl     start_vc_0           //start capture code on VPU 0 (stops mailbox and fake vsync)
+        pop    {r0-r12}
+        bl     rgb_to_fb_sub
+        push   {r0-r12}
+        bl     terminate_vc_0       //stop capture code on VPU 0 (allows mailbox and fake vsync to work again)
+        pop    {r0-r12}
+        pop    {pc}
 
+rgb_to_fb_sub:
         push   {r4-r12, lr}
 
         // Save the capture_info_t parameters to absolute addresses
@@ -1271,6 +1282,7 @@ noInBandData:
         str    r8, [r10]
         cmp    r9, #0
         cmpeq  r7, r8
+        mov    r0, #1  //force direct hardware write
         blne   osd_update_palette
 
         pop    {r1-r5,r11}
@@ -1314,8 +1326,20 @@ skip_osd_update:
         bic    r3, r3, #MASK_LAST_BUFFER
         orr    r3, r3, r0, lsl #OFFSET_LAST_BUFFER
         // Flip to it on next V SYNC
-        FLIP_BUFFER
+
+        // Skip the multi buffering in mode 7 and probe mode
+        tst    r3, #(BIT_INTERLACED_VIDEO | BIT_PROBE)
+        bne    noflip
+        // Flip to the last completed draw buffer
+        // It seems the GPU delays this until the next vsync
+        push   {r0-r3}
+        mov    r14, r3, lsr #OFFSET_LAST_BUFFER
+        and    r0, r14, #3
+        bl     swapBuffer
+        pop    {r0-r3}
+noflip:
 #endif
+
         push   {r1-r5, r11}
         push   {r3, r4}
         mov    r0, #0 //do not force genlock
@@ -1365,23 +1389,7 @@ skip_osd_update:
         orr    r0, #RET_EXPIRED
 
        // Return
-exit:
-#ifdef MULTI_BUFFER
-        // Save the old buffer state before exiting
-        and    r3, r3, #MASK_LAST_BUFFER
-        str    r3, buffer_state
-        // Return the current buffer state
-        orr    r0, r0, r3
-#endif
-        push   {r0}
-        ldr    r9, ntsc_status
-        tst    r9, #NTSC_ARTIFACT
-        moveq  r0,#0
-        movne  r0,#1
-        bl     set_ntsccolour
-        pop    {r0}
-        pop    {r4 - r12, pc}
-
+        b      exit
 
 // ======================================================================
 // Local Variables
@@ -1523,6 +1531,27 @@ osd_timer:
         .word 0
 hsync_measured:
         .word 0
+
+
+
+exit:
+#ifdef MULTI_BUFFER
+        // Save the old buffer state before exiting
+        and    r3, r3, #MASK_LAST_BUFFER
+        str    r3, buffer_state
+        // Return the current buffer state
+        orr    r0, r0, r3
+#endif
+        push   {r0}
+        ldr    r9, ntsc_status
+        tst    r9, #NTSC_ARTIFACT
+        moveq  r0,#0
+        movne  r0,#1
+        bl     set_ntsccolour
+        pop    {r0}
+        pop    {r4 - r12, pc}
+
+
 
         .ltorg
 
@@ -2198,12 +2227,13 @@ clear_vsync:
         push   {lr}
         // Clear the VSYNC interrupt
         bl     _get_peripheral_base
-        add    r0, r0, #SMICTRL_OFFSET
+        ldr    r14, =PV2_INTSTAT
+        add    r0, r0, r14
         bic    r3, r3, #BIT_VSYNC_MARKER
-        mov    r10, #0
+        mov    r10, #PIXELVALVE2_VSYNC_MASK
         str    r10, [r0]
         // Don't proceed until this write is complete
-        _DSB
+  //      _DSB
         pop    {pc}
 
 
@@ -2212,13 +2242,25 @@ show_vsync:
         bic    r3, r3, #BIT_VSYNC_MARKER
         // Poll for the VSYNC interrupt
         bl     _get_peripheral_base
-        ldr    r14, =INTPEND2_OFFSET
+        ldr    r14, =PV2_INTSTAT
         add    r0, r0, r14
-        ldr    r0, [r0]
-        tst    r0, #(1<<VSYNCINT)
+        ldr    r10, [r0]
+        tst    r10, #PIXELVALVE2_VSYNC_MASK
         beq    novsync
         // Clear the VSYNC interrupt
-        bl     clear_vsync
+
+
+        // Clear the VSYNC interrupt
+     //   bl     _get_peripheral_base
+     //   ldr    r14, =PV2_INTSTAT
+     //   add    r0, r0, r14
+        bic    r3, r3, #BIT_VSYNC_MARKER
+        mov    r10, #PIXELVALVE2_VSYNC_MASK
+        str    r10, [r0]
+        // Don't proceed until this write is complete
+  //      _DSB
+
+
         // If the vsync indicator is enabled, mark the next line in red
         tst    r3, #(BIT_VSYNC)
         orrne  r3, r3, #BIT_VSYNC_MARKER
@@ -3629,20 +3671,49 @@ diff_loop:
         blt  diff_loop
         pop    {r4-r12, pc}
 
+clear_fake_vsync:
+        push   {lr}
+        // Clear the VSYNC interrupt
+        bl     _get_peripheral_base
+        add    r0, r0, #SMICTRL_OFFSET
+        bic    r3, r3, #BIT_VSYNC_MARKER
+        mov    r10, #0
+        str    r10, [r0]
+        // Don't proceed until this write is complete
+        _DSB
+        pop    {pc}
+
+wait_for_fake_pi_fieldsync:
+        push   {r4-r12, lr}
+        bl     clear_fake_vsync
+        // Poll for the VSYNC interrupt
+        bl     _get_peripheral_base
+        ldr    r14, =INTPEND2_OFFSET
+        add    r0, r0, r14
+wait_for_fake_pi_loop:
+        ldr    r1, [r0]
+        tst    r1, #(1<<VSYNCINT)
+        beq    wait_for_fake_pi_loop
+        // Clear the VSYNC interrupt
+        bl     clear_fake_vsync
+        pop    {r4-r12, pc}
+
+
 wait_for_pi_fieldsync:
         push   {r4-r12, lr}
         bl     clear_vsync
         // Poll for the VSYNC interrupt
         bl     _get_peripheral_base
-        ldr    r14, =INTPEND2_OFFSET
+        ldr    r14, =PV2_INTSTAT
         add    r0, r0, r14
 wait_for_pi_loop:
         ldr    r1, [r0]
-        tst    r1, #(1<<VSYNCINT)
+        tst    r1, #PIXELVALVE2_VSYNC_MASK
         beq    wait_for_pi_loop
         // Clear the VSYNC interrupt
         bl     clear_vsync
         pop    {r4-r12, pc}
+
 
 // ======================================================================
 // Poll only keys (for when CPLD is unprogrammed)

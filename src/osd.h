@@ -351,7 +351,7 @@ int lumacode_multiplier();
 int  osd_active();
 int menu_active();
 int  osd_key(int key);
-void osd_update_palette();
+void osd_update_palette(int hardware_direct);
 void process_profile(int profile_number);
 void process_sub_profile(int profile_number, int sub_profile_number);
 void load_profiles(int profile_number, int save_selected);

@@ -1217,6 +1217,7 @@ static int cpld_prefix_length = 0;
 
 static uint32_t palette_data[256];
 static uint32_t osd_palette_data[256];
+static uint32_t lastpalette[256];
 //static unsigned char equivalence[256];
 
 static char palette_names[MAX_NAMES][MAX_NAMES_WIDTH];
@@ -1596,7 +1597,7 @@ static void set_feature(int num, int value) {
       int hidden = (value < PALETTECONTROL_NTSCARTIFACT_CGA);
       features[F_NTSC_COLOUR].hidden = hidden;
       features[F_NTSC_PHASE].hidden = hidden;
-      osd_update_palette();
+      osd_update_palette(0);
       break;
    case F_NTSC_COLOUR:
    case F_OUTPUT_COLOUR:
@@ -1604,7 +1605,7 @@ static void set_feature(int num, int value) {
    case F_PAL_ODD_LEVEL:
    case F_PAL_ODD_LINE:
       set_parameter(num, value);
-      osd_update_palette();
+      osd_update_palette(0);
       break;
    case F_VSYNC_INDICATOR:
       set_parameter(num, value);
@@ -1612,7 +1613,7 @@ static void set_feature(int num, int value) {
       break;
    case F_DEBUG:
       set_parameter(num, value);
-      osd_update_palette();
+      osd_update_palette(0);
       break;
    case F_AUTO_SWITCH:
       set_parameter(num, value);
@@ -5051,20 +5052,37 @@ void osd_write_palette(int new_active) {
     if (capinfo->bpp < 16) {
         if (new_active != old_active) {
             old_active = new_active;
-            int num_colours = (capinfo->bpp == 8) ? 256 : 16;
-            RPI_PropertyInit();
+            //int num_colours = (capinfo->bpp == 8) ? 256 : 16;
+            int palette_changed;
+            uint32_t * current_palette_data;
             if (new_active != 0) {
-                RPI_PropertyAddTag(TAG_SET_PALETTE, num_colours, osd_palette_data);
+                current_palette_data = osd_palette_data;
             } else {
-                RPI_PropertyAddTag(TAG_SET_PALETTE, num_colours, palette_data);
+                current_palette_data = palette_data;
             }
-            RPI_PropertyProcess();
-            //log_info("***Palette change %d", new_active);
+            for (int i=0; i< 256; i++) {
+                if (lastpalette[i] != current_palette_data[i]) {
+                    palette_changed = 1;
+                }
+                lastpalette[i] = current_palette_data[i];
+            }
+            if (palette_changed) {
+                write_palette(current_palette_data);
+/*
+                terminate_vc_0();       //stop capture to allow mailbox to work
+                RPI_PropertyInit();
+                RPI_PropertyAddTag(TAG_SET_PALETTE, num_colours, current_palette_data);
+                RPI_PropertyProcess();
+                wait_for_fake_pi_fieldsync(); //wait for palette update
+                start_vc_0();           //start capture code again on first VPU (stops mailbox and fake vsync)
+*/
+            }
+
         }
     }
 }
 
-void osd_update_palette() {
+void osd_update_palette(int hardware_direct) {
     int r = 0;
     int g = 0;
     int b = 0;
@@ -5072,7 +5090,8 @@ void osd_update_palette() {
     int num_colours = (capinfo->bpp >= 8) ? 256 : 16;
     int design_type = (cpld->get_version() >> VERSION_DESIGN_BIT) & 0x0F;
     int max_palette_count = palette_array[get_parameter(F_PALETTE)][MAX_PALETTE_ENTRIES - 1];
-
+    uint32_t * current_palette_data;
+    int palette_changed = 0;
     //copy selected palette to current palette, translating for Atom cpld and inverted Y setting (required for 6847 direct Y connection)
 
     for (int i = 0; i < num_colours; i++) {
@@ -5281,15 +5300,30 @@ void osd_update_palette() {
         }
     }
 
-
     if (capinfo->bpp < 16) {
-        RPI_PropertyInit();
         if (active) {
-            RPI_PropertyAddTag(TAG_SET_PALETTE, num_colours, osd_palette_data);
+            current_palette_data = osd_palette_data;
         } else {
-            RPI_PropertyAddTag(TAG_SET_PALETTE, num_colours, palette_data);
+            current_palette_data = palette_data;
         }
-        RPI_PropertyProcess();
+
+        for (int i=0; i< 256; i++) {
+            if (lastpalette[i] != current_palette_data[i]) {
+                palette_changed = 1;
+            }
+            lastpalette[i] = current_palette_data[i];
+        }
+
+        if (palette_changed) {
+            if (hardware_direct) {
+                write_palette(current_palette_data);
+            } else {
+                RPI_PropertyInit();
+                RPI_PropertyAddTag(TAG_SET_PALETTE, num_colours, current_palette_data);
+                RPI_PropertyProcess();
+                wait_for_fake_pi_fieldsync();  // wait until palette change completed as capture code running on VPU0 will stop the update
+            }
+        }
         old_active = active;
     }
 }
@@ -5300,7 +5334,7 @@ void osd_clear() {
       osd_update((uint32_t *) (capinfo->fb + capinfo->pitch * capinfo->height * get_current_display_buffer() + capinfo->pitch * capinfo->v_adjust + capinfo->h_adjust), capinfo->pitch, 1);
       memset(buffer, 0, sizeof(buffer));
       active = 0;
-      osd_update_palette();
+      osd_update_palette(0);
    }
    osd_hwm = 0;
 }
@@ -5724,7 +5758,7 @@ void osd_set_noupdate(int line, int attr, char *text) {
    }
    if (!active) {
       active = 1;
-      osd_update_palette();
+      osd_update_palette(0);
    }
    attributes[line] = attr;
    memset(buffer + line * LINELEN, 0, LINELEN);
@@ -6435,7 +6469,7 @@ int osd_key(int key) {
                 if (!inhibit_palette_dimming && current_menu[depth] == &palette_menu
                  && (param_item->param->key == F_TINT || param_item->param->key == F_SAT || param_item->param->key == F_CONT || param_item->param->key == F_BRIGHT || param_item->param->key == F_GAMMA) ){
                     inhibit_palette_dimming = 1;
-                    osd_update_palette();
+                    osd_update_palette(0);
                 }
             }
             redraw_menu();
@@ -6764,7 +6798,7 @@ int osd_key(int key) {
          osd_state = MENU;
          if  (inhibit_palette_dimming) {
             inhibit_palette_dimming = 0;
-            osd_update_palette();
+            osd_update_palette(0);
          }
       } else {
          val = get_param(param_item);

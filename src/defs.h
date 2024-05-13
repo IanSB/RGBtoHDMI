@@ -139,8 +139,12 @@
 
 #define BIT_BOTH_BUFFERS (BIT_DRAW_BUFFER | BIT_DISP_BUFFER)
 
-#ifdef __ASSEMBLER__
 #define GPU_COMMAND_BASE_OFFSET 0x000000a0
+#define GPU_COMMAND_REGISTER (volatile uint32_t *)(_get_peripheral_base() + GPU_COMMAND_BASE_OFFSET)
+#define TERMINATE_FLAG    0x80000000
+
+#ifdef __ASSEMBLER__
+
 //#define GPU_COMMAND_BASE_OFFSET 0x00a04080
 //#define GPU_DATA_0  (PERIPHERAL_BASE + 0x000000a4)
 //#define GPU_DATA_1  (PERIPHERAL_BASE + 0x000000a8)
@@ -159,6 +163,18 @@
 #define GPU_DATA_4_offset  0x18
 #define GPU_DATA_5_offset  0x1c
 
+//used in command reg
+#define  LEADING_SYNC_FLAG 0x00010000
+#define  SIMPLE_SYNC_FLAG  0x00020000
+#define  HIGH_LATENCY_FLAG 0x00004000
+#define  OLD_FIRMWARE_FLAG 0x00002000
+
+//used in data reg
+#define  SYNC_ABORT_FLAG   0x80000000
+#define  FINAL_BIT         0x00000002;
+#define  ALT_MUX_MASK      0x00004000;
+
+
 #define GPIO_BASE_OFFSET  0x200000
 #define GPSET0_OFFSET     0x00001C
 #define GPCLR0_OFFSET     0x000028
@@ -166,8 +182,10 @@
 
 #if defined(RPI4)
 #define INTPEND2_OFFSET   0x00B204    //SMI interrupt (GPU # 48 used for vsync) is actually in IRQ0_PENDING1 on pi 4 (0xfe00b204)
+#define PV2_INTSTAT       0x20a028
 #else
 #define INTPEND2_OFFSET   0x00B208
+#define PV2_INTSTAT       0x807028
 #endif
 
 #define SMICTRL_OFFSET    0x600000
@@ -495,12 +513,18 @@ typedef struct {
 #define PIXELVALVE2_HORZB (volatile uint32_t *)(_get_peripheral_base() + 0x20a010)
 #define PIXELVALVE2_VERTA (volatile uint32_t *)(_get_peripheral_base() + 0x20a014)
 #define PIXELVALVE2_VERTB (volatile uint32_t *)(_get_peripheral_base() + 0x20a018)
+#define PIXELVALVE2_INTEN (volatile uint32_t *)(_get_peripheral_base() + 0x20a024)
+#define PIXELVALVE2_INTSTAT (volatile uint32_t *)(_get_peripheral_base() + 0x20a028)
+#define PIXELVALVE2_VSYNC_MASK (1<<7)
 #define EMMC_LEGACY       (volatile uint32_t *)(_get_peripheral_base() + 0x2000d0)
 #else
 #define PIXELVALVE2_HORZA (volatile uint32_t *)(_get_peripheral_base() + 0x80700c)
 #define PIXELVALVE2_HORZB (volatile uint32_t *)(_get_peripheral_base() + 0x807010)
 #define PIXELVALVE2_VERTA (volatile uint32_t *)(_get_peripheral_base() + 0x807014)
 #define PIXELVALVE2_VERTB (volatile uint32_t *)(_get_peripheral_base() + 0x807018)
+#define PIXELVALVE2_INTEN (volatile uint32_t *)(_get_peripheral_base() + 0x807024)
+#define PIXELVALVE2_INTSTAT (volatile uint32_t *)(_get_peripheral_base() + 0x807028)
+#define PIXELVALVE2_VSYNC_MASK (1<<7)
 #endif
 
 #define PM_RSTC  (volatile uint32_t *)(_get_peripheral_base() + 0x10001c)
@@ -599,12 +623,6 @@ typedef struct {
 #define  MODE_SET1       0
 #define  MODE_SET2       1
 
-#define  SYNC_ABORT_FLAG   0x80000000
-#define  LEADING_SYNC_FLAG 0x00010000
-#define  SIMPLE_SYNC_FLAG  0x00008000
-#define  HIGH_LATENCY_FLAG 0x00004000
-#define  OLD_FIRMWARE_FLAG 0x00002000
-
 #define  CPLD_NORMAL      0
 #define  CPLD_BLANK       1
 #define  CPLD_UNKNOWN     2
@@ -618,3 +636,33 @@ typedef struct {
 #define Bit32u uint32_t
 #define Bit8u uint8_t
 #define Bitu uint32_t
+
+
+
+/*
+Working registers for comms
+
+SMI_DSR0	0x7e600010	RW	32	0xffffffff	0x0101000c
+SMI_DSW0	0x7e600014	RW	32	0xffffffff	0x0101000c
+SMI_DSR1	0x7e600018	RW	32	0xffffffff	0x0101000c
+SMI_DSW1	0x7e60001c	RW	32	0xffffffff	0x0101000c
+SMI_DSR2	0x7e600020	RW	32	0xffffffff	0x0101000c
+SMI_DSW2	0x7e600024	RW	32	0xffffffff	0x0101000c
+SMI_DSR3	0x7e600028	RW	32	0xffffffff	0x0101000c
+SMI_DSW3	0x7e60002c	RW	32	0xffffffff	0x0101000c
+
+
+PWM_RNG1	0x7e20c010	RW	32	0xffffffff	0x00000020
+PWM_DAT1	0x7e20c014	RW	32	0xffffffff	0000000000
+
+
+PWM_RNG2	0x7e20c020	RW	32	0xffffffff	0x00000020
+PWM_DAT2	0x7e20c024	RW	32	0xffffffff	0000000000
+
+slower:
+ST_C0	0x7e00300c	RW	32	0xffffffff	0000000000
+ST_C1	0x7e003010	RW	32	0xffffffff	0000000000
+ST_C2	0x7e003014	RW	32	0xffffffff	0000000000
+ST_C3	0x7e003018	RW	32	0xffffffff	0000000000
+
+*/
