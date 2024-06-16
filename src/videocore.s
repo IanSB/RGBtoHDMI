@@ -44,6 +44,7 @@
 #command bits
 .equ TERMINATE_FLAG,       31
 .equ SYNC_ABORT_FLAG,      30
+#bits 20-22 are simple sync type
 .equ LEADING_SYNC_FLAG,    16
 .equ SIMPLE_SYNC_FLAG,     15
 .equ HIGH_LATENCY_FLAG,    14
@@ -181,6 +182,7 @@ not_mbox_write_benchmark:
    mov    r7, COMMAND_MASK
    mov    r8, DEFAULT_BIT_STATE
    mov    r12, 0                       # remains at zero for rest of the code
+   mov    r13, 1                       # remains at 1 for rest of the code
    st     r12, DATA_BUFFER_0_offset(r5)
    st     r12, DATA_BUFFER_1_offset(r5)
    st     r12, DATA_BUFFER_2_offset(r5)
@@ -196,7 +198,6 @@ wait_for_command:
    ld     r9, DATA_BUFFER_4_offset(r5)
    ld     r10, DATA_BUFFER_5_offset(r5)
    st     r12, GPU_COMMAND_offset(r5)    #set command register to 0
-   st     r12, GPU_SYNC_offset(r5)       #set sync register to 0
    bset   r0, FINAL_BIT
    bset   r1, FINAL_BIT
    bset   r2, FINAL_BIT
@@ -224,10 +225,11 @@ wait_for_command_loop:
    bne    exit
    btst   r3, SYNC_ABORT_FLAG
    bne    wait_for_command
-   btst   r3, SIMPLE_SYNC_FLAG                   #bit signals upper 16 bits is a sync command
+   btst   r3, SIMPLE_SYNC_FLAG                   #bit signals bits 20-22 are a sync command
    beq    do_capture
    mov    r1, r3
-   lsr    r1, 16
+   lsr    r1, 20
+   and    r1, 0x07
 
    #simple mode sync detection, enters with PSYNC_BIT set in r2
    cmp    r1, 0
@@ -249,14 +251,14 @@ edge_lead_both:
    EDGE_DETECT
    btst   r0, SYNC_BIT
    bne    edge_lead_both
-   st     r8, GPU_SYNC_offset(r5)   #lsbit flags sync detected
+   st     r13, DATA_BUFFER_0_offset(r5)   #lsbit flags sync detected
    b      done_simple_sync
 
 edge_trail_both:
    EDGE_DETECT
    btst   r0, SYNC_BIT
    bne    edge_trail_both
-   st     r8, GPU_SYNC_offset(r5)   #lsbit flags sync detected
+   st     r13, DATA_BUFFER_0_offset(r5)   #lsbit flags sync detected
 edge_trail_both_hi:
    EDGE_DETECT
    btst   r0, SYNC_BIT
@@ -271,7 +273,7 @@ wait_csync_lo2:
    EDGE_DETECT
    btst   r0, SYNC_BIT
    bne    wait_csync_lo2
-   st     r8, GPU_SYNC_offset(r5)   #lsbit flags sync detected
+   st     r13, DATA_BUFFER_0_offset(r5)   #lsbit flags sync detected
    b      done_simple_sync
 
 edge_trail_neg:
@@ -282,7 +284,7 @@ wait_csync_lo:
    EDGE_DETECT
    btst   r0, SYNC_BIT
    bne    wait_csync_lo
-   st     r8, GPU_SYNC_offset(r5)   #lsbit flags sync detected
+   st     r13, DATA_BUFFER_0_offset(r5)   #lsbit flags sync detected
 wait_csync_hi:
    EDGE_DETECT
    EDGE_DETECT

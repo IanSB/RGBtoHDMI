@@ -586,11 +586,11 @@ skip_psync_loop\@:
         ldr    r9, [r9]
         tst    r3, #BIT_NO_SKIP_HSYNC
         orrne  r8, r8, #SIMPLE_SYNC_FLAG        //flag sync command
-        orrne  r8, r9, lsl #16                  //or in sync command
+        orrne  r8, r9, lsl #20                  //or in sync command
         str    r8, [r4, #(GPU_COMMAND_offset - GPU_DATA_0_offset)]  //command register
         beq    skip_psync_simple_fast\@
 wait_for_simple_sync\@:
-        ldr    r8, [r4, #(GPU_SYNC_offset - GPU_DATA_0_offset)]     //sync register
+        ldr    r8, [r4, #GPU_DATA_0_offset]     //sync flag
         tst    r8, #1
         beq    wait_for_simple_sync\@
 skip_psync_simple_fast\@:
