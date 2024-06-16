@@ -312,7 +312,7 @@ static const char *even_scaling_names[] = {
 
 static const char *hdmi_auto_names[] = {
    "Manual",
-   "Auto",
+   "Auto With DVI Exceptions",
    "Full Auto"
 };
 
@@ -392,6 +392,11 @@ static const char *pal_odd_names[] = {
    "All Colours"
 };
 
+static const char *mono_palette_names[] = {
+   "Green Channel",
+   "Blue_Channel",
+   "Red_Channel"
+};
 
 // =============================================================
 // Feature definitions
@@ -433,14 +438,15 @@ static param_t features[] = {
    {         F_SWAP_ASPECT,"Swap Aspect 625<>525",     "swap_aspect", 0,                    1, 1 },
    {       F_OUTPUT_COLOUR,     "Output Colour",     "output_colour", 0,      NUM_COLOURS - 1, 1 },
    {       F_OUTPUT_INVERT,     "Output Invert",     "output_invert", 0,       NUM_INVERT - 1, 1 },
+   {        F_MONO_PALETTE,      "Mono Palette",      "mono_palette", 0,     NUM_MONO_PAL - 1, 1 },
    {           F_SCANLINES,         "Scanlines",         "scanlines", 0,                    1, 1 },
    {      F_SCANLINE_LEVEL,    "Scanline Level",    "scanline_level", 0,                   14, 1 },
    {         F_CROP_BORDER,"Crop Border (Zoom)",       "crop_border", 0,     NUM_OVERSCAN - 1, 1 },
    {      F_SCREENCAP_SIZE,    "ScreenCap Size",    "screencap_size", 0,    NUM_SCREENCAP - 1, 1 },
    {           F_FONT_SIZE,         "Font Size",         "font_size", 0,     NUM_FONTSIZE - 1, 1 },
    {       F_BORDER_COLOUR,     "Border Colour",     "border_colour", 0,                  255, 1 },
-   {     F_VSYNC_INDICATOR,  "V Sync Indicator",   "vsync_indicator", 0,                    1, 1 },
-   {        F_GENLOCK_MODE,       "Genlock Mode",     "genlock_mode", 0,         NUM_HDMI - 1, 1 },
+   {     F_VSYNC_INDICATOR, "Vsync Marker Line",   "vsync_indicator", 0,                    1, 1 },
+   {        F_GENLOCK_MODE,      "Genlock Mode",      "genlock_mode", 0,         NUM_HDMI - 1, 1 },
    {        F_GENLOCK_LINE,      "Genlock Line",      "genlock_line",35,                  312, 1 },
    {       F_GENLOCK_SPEED,     "Genlock Speed",     "genlock_speed", 0,NUM_GENLOCK_SPEED - 1, 1 },
    {      F_GENLOCK_ADJUST,    "Genlock Adjust",    "genlock_adjust", 0,NUM_GENLOCK_ADJUST - 1, 1 },
@@ -760,6 +766,7 @@ static param_menu_item_t scanlines_ref       = { I_FEATURE, &features[F_SCANLINE
 static param_menu_item_t scanlinesint_ref    = { I_FEATURE, &features[F_SCANLINE_LEVEL]   };
 static param_menu_item_t colour_ref          = { I_FEATURE, &features[F_OUTPUT_COLOUR]         };
 static param_menu_item_t invert_ref          = { I_FEATURE, &features[F_OUTPUT_INVERT]         };
+static param_menu_item_t mono_palette_ref    = { I_FEATURE, &features[F_MONO_PALETTE]         };
 static param_menu_item_t fontsize_ref        = { I_FEATURE, &features[F_FONT_SIZE]       };
 static param_menu_item_t vsync_ref           = { I_FEATURE, &features[F_VSYNC_INDICATOR]          };
 static param_menu_item_t genlock_mode_ref    = { I_FEATURE, &features[F_GENLOCK_MODE]      };
@@ -875,6 +882,7 @@ static menu_t palette_menu = {
       (base_menu_item_t *) &colour_ref,
       (base_menu_item_t *) &invert_ref,
       (base_menu_item_t *) &border_ref,
+      (base_menu_item_t *) &mono_palette_ref,
       (base_menu_item_t *) &bright_ref,
       (base_menu_item_t *) &cont_ref,
       (base_menu_item_t *) &gamma_ref,
@@ -1602,6 +1610,7 @@ static void set_feature(int num, int value) {
    case F_NTSC_COLOUR:
    case F_OUTPUT_COLOUR:
    case F_OUTPUT_INVERT:
+   case F_MONO_PALETTE:
    case F_PAL_ODD_LEVEL:
    case F_PAL_ODD_LINE:
       set_parameter(num, value);
@@ -1750,6 +1759,8 @@ static const char *get_param_string(param_menu_item_t *param_item) {
          return colour_names[value];
       case F_OUTPUT_INVERT:
          return invert_names[value];
+      case F_MONO_PALETTE:
+         return mono_palette_names[value];
       case F_FONT_SIZE:
          return fontsize_names[value];
       case F_PALETTE:
@@ -2336,18 +2347,6 @@ static int audio_msg2(int line){
    line++;
    osd_set(line++, 0, "You can add your own .wav files to /WAVs:");
    osd_set(line++, 0, "48000Hz sample rate stereo only. Max 160MB");
-   line++;
-   osd_set(line++, 0, "If you get no audio, check if your monitor");
-   osd_set(line++, 0, "is incorrectly configured for line input.");
-   osd_set(line++, 0, "Some older TVs might not output audio if");
-   osd_set(line++, 0, "the HDMI input is labelled as PC or DVI");
-   osd_set(line++, 0, "which also forces line input so change the");
-   osd_set(line++, 0, "label in the TV's menu. (e.g. some LG TVs)");
-   osd_set(line++, 0, "Please report any problem monitors or TVs");
-   line++;
-   osd_set(line++, 0, "HDMI Audio based on work from:");
-   osd_set(line++, 0, "https://github.com/kumaashi/RaspberryPI/");
-   osd_set(line++, 0, "https://github.com/rsta2/circle");
    return line;
 }
 
@@ -5082,6 +5081,27 @@ void osd_write_palette(int new_active) {
     }
 }
 
+
+int translate_palette_colour(int colour) {
+    if (mono_board_detected() == 0) {
+        switch (get_feature(F_MONO_PALETTE)) {
+            default:
+            case MONO_PALETTE_GREEN:
+                return colour;
+            case MONO_PALETTE_BLUE:
+                return (colour & 0xc0) | ((colour & 0x24) >> 1) | ((colour & 0x12) << 1) | ((colour & 0x09));
+            case MONO_PALETTE_RED:
+                return (colour & 0xc0) | ((colour & 0x24)) | ((colour & 0x12) >> 1) | ((colour & 0x09) << 1);
+        }
+    } else {
+        return colour;
+    }
+}
+
+int get_border_colour() {
+    return translate_palette_colour(get_feature(F_BORDER_COLOUR));
+}
+
 void osd_update_palette(int hardware_direct) {
     int r = 0;
     int g = 0;
@@ -5107,6 +5127,9 @@ void osd_update_palette(int hardware_direct) {
                   | ((i & 0x10) >> 4)
                   | ((i & 0x20) >> 1)
                   | ((i & 0x40) >> 5);
+        }
+        if (get_feature(F_MONO_PALETTE) != MONO_PALETTE_GREEN) {
+            i_adj = translate_palette_colour(i_adj);
         }
 
         if(design_type == DESIGN_ATOM) {
@@ -5177,6 +5200,8 @@ void osd_update_palette(int hardware_direct) {
         }
     }
 */
+
+
     // modify translated palette for remaining settings
     for (int i = 0; i < num_colours; i++) {
         if (paletteFlags & BIT_MODE2_PALETTE) {
@@ -5218,6 +5243,7 @@ void osd_update_palette(int hardware_direct) {
                 break;
              }
         }
+
 
         palette_data_16[i] = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
         if (i >= (num_colours >> 1)) {
@@ -5322,6 +5348,7 @@ void osd_update_palette(int hardware_direct) {
                 RPI_PropertyAddTag(TAG_SET_PALETTE, num_colours, current_palette_data);
                 RPI_PropertyProcess();
                 wait_for_fake_pi_fieldsync();  // wait until palette change completed as capture code running on VPU0 will stop the update
+                write_palette(current_palette_data);  //do direct hardware anyway as mailbox call sometimes fails but is preferable as it is done during VBI
             }
         }
         old_active = active;

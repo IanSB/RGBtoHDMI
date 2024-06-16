@@ -376,9 +376,10 @@ wait\@:
         ldr    r8, [r4, r9]
         eor    r8, r3
         tst    r8, #PSYNC_MASK
+        eor    r8, r3
         tsteq  r8, #FINAL_BIT
         beq    wait\@
-        eor    r8, r3
+
 
         add    r9, r9, #4
         cmp    r9, #(GPU_SYNC_offset - GPU_DATA_0_offset)
@@ -477,7 +478,7 @@ clear_regs\@:
 do_skip_psync_no_old1\@:
         bl     _get_gpu_data_base_r4
         mov    r8, #SYNC_ABORT_FLAG
-        str    r8, [r4, #GPU_DATA_0_offset]  
+        str    r8, [r4, #(GPU_COMMAND_offset - GPU_DATA_0_offset)]  //command register
 .endm
 
 .macro  SKIP_PSYNC_NO_OLD_CPLD_HIGH_LATENCY
@@ -564,7 +565,7 @@ doneoldfirmwarescroll\@:
 do_skip_psync3\@:
         bl     _get_gpu_data_base_r4
         mov    r8, #SYNC_ABORT_FLAG
-        str    r8, [r4, #GPU_DATA_0_offset] 
+        str    r8, [r4, #(GPU_COMMAND_offset - GPU_DATA_0_offset)]  //command register
 skip_psync_loop\@:
         WAIT_FOR_PSYNC_EDGE               // wait for next edge of psync
         subs   r7, r7, #1
@@ -1558,7 +1559,6 @@ donerpi0_1_b\@:
 skip_armv6_instruction\@:
         mrcne  p15, 0, \reg, c9, c13, 0    //this arm v7 / v8 instruction gets skipped on arm v6 without faulting (saves a branch)
 .endm
-
 
 .macro KEY_PRESS_DETECT mask, ret, counter
         //enters with sw1_power_up in r9

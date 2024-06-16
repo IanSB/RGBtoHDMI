@@ -247,6 +247,14 @@ enum {
 };
 
 enum {
+    MONO_PALETTE_GREEN,
+    MONO_PALETTE_BLUE,
+    MONO_PALETTE_RED,
+    NUM_MONO_PAL
+};
+
+
+enum {
     INTEGER_SCALING_NORMAL_4_3,
     INTEGER_SCALING_ENHANCED_4_3,
     INTEGER_SCALING_FULL_WIDTH,
@@ -294,6 +302,7 @@ enum {
    F_SWAP_ASPECT,
    F_OUTPUT_COLOUR,
    F_OUTPUT_INVERT,
+   F_MONO_PALETTE,
    F_SCANLINES,
    F_SCANLINE_LEVEL,
    F_CROP_BORDER,
@@ -351,6 +360,7 @@ int lumacode_multiplier();
 int  osd_active();
 int menu_active();
 int  osd_key(int key);
+int get_border_colour(); 
 void osd_update_palette(int hardware_direct);
 void process_profile(int profile_number);
 void process_sub_profile(int profile_number, int sub_profile_number);

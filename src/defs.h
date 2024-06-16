@@ -139,12 +139,9 @@
 
 #define BIT_BOTH_BUFFERS (BIT_DRAW_BUFFER | BIT_DISP_BUFFER)
 
-#define GPU_COMMAND_BASE_OFFSET 0x000000a0
-#define GPU_COMMAND_REGISTER (volatile uint32_t *)(_get_peripheral_base() + GPU_COMMAND_BASE_OFFSET)
-#define TERMINATE_FLAG    0x80000000
 
 #ifdef __ASSEMBLER__
-
+#define GPU_COMMAND_BASE_OFFSET 0x000000a0
 //#define GPU_COMMAND_BASE_OFFSET 0x00a04080
 //#define GPU_DATA_0  (PERIPHERAL_BASE + 0x000000a4)
 //#define GPU_DATA_1  (PERIPHERAL_BASE + 0x000000a8)
@@ -154,6 +151,18 @@
 //#define GPU_DATA_4  (PERIPHERAL_BASE + 0x000000b8)  //can't use more than a single unaligned two register ldmia on the peripherals
 //#define GPU_DATA_5  (PERIPHERAL_BASE + 0x000000bc)
 
+//used in command reg
+#define  TERMINATE_FLAG    (1<<31)
+#define  SYNC_ABORT_FLAG   (1<<30)
+#define  LEADING_SYNC_FLAG (1<<16)
+#define  SIMPLE_SYNC_FLAG  (1<<15)
+#define  HIGH_LATENCY_FLAG (1<<14)
+#define  OLD_FIRMWARE_FLAG (1<<13)
+
+//used in data reg
+#define  FINAL_BIT         (1<<31)
+#define  ALT_MUX_MASK      0x00004000;
+
 #define GPU_COMMAND_offset 0x00
 #define GPU_DATA_0_offset  0x04
 #define GPU_DATA_1_offset  0x08
@@ -162,18 +171,6 @@
 #define GPU_DATA_3_offset  0x14
 #define GPU_DATA_4_offset  0x18
 #define GPU_DATA_5_offset  0x1c
-
-//used in command reg
-#define  LEADING_SYNC_FLAG 0x00010000
-#define  SIMPLE_SYNC_FLAG  0x00020000
-#define  HIGH_LATENCY_FLAG 0x00004000
-#define  OLD_FIRMWARE_FLAG 0x00002000
-
-//used in data reg
-#define  SYNC_ABORT_FLAG   0x80000000
-#define  FINAL_BIT         0x00000002;
-#define  ALT_MUX_MASK      0x00004000;
-
 
 #define GPIO_BASE_OFFSET  0x200000
 #define GPSET0_OFFSET     0x00001C
@@ -388,7 +385,7 @@ typedef struct {
 
 
 #define BBC_VERSION 0x79
-#define RGB_VERSION 0x94
+#define RGB_VERSION 0x95
 #define YUV_VERSION 0x91
 
 //these defines are adjusted for different clock speeds
@@ -416,7 +413,7 @@ typedef struct {
 #define AUTO_REFRESH 2
 #define DEFAULT_SCALING 0
 #define DEFAULT_FILTERING 8
-#define DEFAULT_HDMI_AUTO 1
+#define DEFAULT_HDMI_AUTO 2
 
 #define DISABLE_PI1_PI2_OVERCLOCK 1
 #define DISABLE_SETTINGS_OVERCLOCK 2

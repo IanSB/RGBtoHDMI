@@ -69,6 +69,7 @@
 .global scan_for_single_pixels_4bpp
 .global scan_for_single_pixels_12bpp
 .global scan_for_diffs_12bpp
+.global terminate_vc_0_asm
 
 #ifdef USE_MULTICORE
 .global run_core
@@ -2233,7 +2234,7 @@ clear_vsync:
         mov    r10, #PIXELVALVE2_VSYNC_MASK
         str    r10, [r0]
         // Don't proceed until this write is complete
-  //      _DSB
+        _DSB
         pop    {pc}
 
 
@@ -2248,18 +2249,11 @@ show_vsync:
         tst    r10, #PIXELVALVE2_VSYNC_MASK
         beq    novsync
         // Clear the VSYNC interrupt
-
-
-        // Clear the VSYNC interrupt
-     //   bl     _get_peripheral_base
-     //   ldr    r14, =PV2_INTSTAT
-     //   add    r0, r0, r14
         bic    r3, r3, #BIT_VSYNC_MARKER
         mov    r10, #PIXELVALVE2_VSYNC_MASK
         str    r10, [r0]
         // Don't proceed until this write is complete
-  //      _DSB
-
+        _DSB
 
         // If the vsync indicator is enabled, mark the next line in red
         tst    r3, #(BIT_VSYNC)
@@ -2355,6 +2349,8 @@ get_cycle_counter:
         bl     set_hardware_id_r3
         READ_CYCLE_COUNTER r0
         pop    {r3, pc}
+
+
 
 
 benchmarkRAM:
@@ -2465,6 +2461,19 @@ key_press_reset:
         orreq  r0, r0, #4
         pop    {r4-r12, lr}
         mov     pc, lr
+
+
+terminate_vc_0_asm:
+        push   {r4-r12, lr}
+        _DMB
+        bl     _get_gpu_command_base_r10
+wait_ready:
+        ldr    r0, [r10]
+        cmp    r0, #0
+        bne    wait_ready
+        mov    r0, #TERMINATE_FLAG
+        str    r0, [r10]
+        pop    {r4-r12, pc}
 
         .ltorg
 

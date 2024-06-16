@@ -283,10 +283,7 @@ void start_vc_0() {
 
 void terminate_vc_0() {
 #ifndef USE_ARM_CAPTURE
-    do {
-
-    } while (*GPU_COMMAND_REGISTER != 0);
-    *GPU_COMMAND_REGISTER = TERMINATE_FLAG;
+    terminate_vc_0_asm();
 #endif
 }
 
@@ -405,7 +402,7 @@ uint32_t palette_address_offset;
     if (display_list_offset >= 0){
         display_list_index = (uint32_t) *SCALER_DISPLIST1;
         palette_address_offset = (display_list[display_list_index + display_list_offset + 3] & 0xffff) >> 2;
-        log_info("Palette Address = %08X", palette_address_offset << 2);
+//        log_info("Palette Address = %08X", palette_address_offset << 2);
         for (int i = 0; i < 256; i++) {
             uint32_t p = current_palette[i];
             // r & b are swapped in hardware palette data
@@ -1714,6 +1711,22 @@ static int old_cpuspeed = 0;
    line_timeout = LINE_TIMEOUT * cpuspeed / 1000;  //not currently used
 }
 
+int read_cpld_version(){
+int cpld_version_id = 0;
+   if (!simple_detected) {
+       for (int i = PIXEL_BASE + 11; i >= PIXEL_BASE; i--) {
+          cpld_version_id <<= 1;
+          cpld_version_id |= RPI_GetGpioValue(i) & 1;
+       }
+       if ((cpld_version_id >> VERSION_DESIGN_BIT) == DESIGN_SIMPLE) {       // if cpld reads back SIMPLE id then probably a pre-programmed CPLD that has to be erased so set to unknown instead to stop simple mode settings like single button mode
+           cpld_version_id = (DESIGN_UNKNOWN << 8) | (cpld_version_id & 0xff );
+       }
+   } else {
+       cpld_version_id = (DESIGN_SIMPLE << 8); // reads as V0.0
+   }
+   return cpld_version_id;
+}
+
 static void init_hardware() {
    int i;
 
@@ -1888,21 +1901,7 @@ static void init_hardware() {
 #endif
 }
 
-int read_cpld_version(){
-int cpld_version_id = 0;
-   if (!simple_detected) {
-       for (int i = PIXEL_BASE + 11; i >= PIXEL_BASE; i--) {
-          cpld_version_id <<= 1;
-          cpld_version_id |= RPI_GetGpioValue(i) & 1;
-       }
-       if ((cpld_version_id >> VERSION_DESIGN_BIT) == DESIGN_SIMPLE) {       // if cpld reads back SIMPLE id then probably a pre-programmed CPLD that has to be erased so set to unknown instead to stop simple mode settings like single button mode
-           cpld_version_id = (DESIGN_UNKNOWN << 8) | (cpld_version_id & 0xff );
-       }
-   } else {
-       cpld_version_id = (DESIGN_SIMPLE << 8); // reads as V0.0
-   }
-   return cpld_version_id;
-}
+
 
 static void cpld_init() {
 // have to set mux to 0 to allow analog detection to work
@@ -1999,29 +1998,6 @@ static void cpld_init() {
       }
       cpld = &cpld_null;
       RPI_SetGpioPinFunction(STROBE_PIN, FS_INPUT);
-   }
-
-   if (!test_file(FORCE_UPDATE_FILE) && cpld_fail_state == CPLD_NORMAL) {
-       log_info("CPLD update file not detected");
-       if (cpld_design == DESIGN_RGB_TTL || cpld_design == DESIGN_RGB_ANALOG) {
-           if (cpld_version == BBC_VERSION || cpld_version == RGB_VERSION) {
-              log_info("CPLD_UPDATE state not set");
-           } else {
-               cpld_fail_state = CPLD_UPDATE;
-              log_info("CPLD_UPDATE state set");
-
-           }
-       }
-       if (cpld_design == DESIGN_YUV_TTL || cpld_design == DESIGN_YUV_ANALOG) {
-           if ( cpld_version == YUV_VERSION ) {
-
-              log_info("CPLD_UPDATE state not set.");
-           } else {
-              cpld_fail_state = CPLD_UPDATE;
-              log_info("CPLD_UPDATE state set.");
-           }
-       }
-       check_file(FORCE_UPDATE_FILE, FORCE_UPDATE_FILE_MESSAGE);
    }
 
    if (cpld_version >= 0xa0 && cpld_design != DESIGN_NULL) {    //cpld version >=0xa0 is currently invalid so probably a CPLD with other code but this may change if hex version numbers are ever used
@@ -3469,6 +3445,31 @@ void rgb_to_hdmi_main() {
            log_info("Test_Composite_Process 720 pixel artifact decode: = %dns", duration);
 //***********end of test CGA artifact decode***************
 
+           if (reboot_required == 0) {
+               int cpld_design = cpld_version_id >> VERSION_DESIGN_BIT;
+               int cpld_version = cpld_version_id & 0xff;
+               if (!test_file(FORCE_UPDATE_FILE) && cpld_fail_state == CPLD_NORMAL) {
+                   log_info("CPLD update file not detected, %X, %02X", cpld_design, cpld_version);
+                   if (cpld_design == DESIGN_RGB_TTL || cpld_design == DESIGN_RGB_ANALOG) {
+                       if (cpld_version == BBC_VERSION || cpld_version == RGB_VERSION) {
+                          log_info("CPLD_UPDATE state not set");
+                       } else {
+                           cpld_fail_state = CPLD_UPDATE;
+                          log_info("CPLD_UPDATE state set");
+                       }
+                   }
+                   if (cpld_design == DESIGN_YUV_TTL || cpld_design == DESIGN_YUV_ANALOG) {
+                       if ( cpld_version == YUV_VERSION ) {
+
+                          log_info("CPLD_UPDATE state not set.");
+                       } else {
+                          cpld_fail_state = CPLD_UPDATE;
+                          log_info("CPLD_UPDATE state set.");
+                       }
+                   }
+                   check_file(FORCE_UPDATE_FILE, FORCE_UPDATE_FILE_MESSAGE);
+               }
+           }
 
            if (cpld_fail_state == CPLD_MANUAL) {
                 rgb_to_fb(capinfo, extra_flags() | BIT_PROBE); // dummy mode7 probe to setup parms from capinfo
@@ -3664,7 +3665,6 @@ void rgb_to_hdmi_main() {
 
          log_debug("Entering rgb_to_fb, flags=%08x", flags);
          result = rgb_to_fb(capinfo, flags);
-
          log_debug("Leaving rgb_to_fb, result=%04x", result);
          capinfo->palette_control = old_palette_control;
          flags = old_flags;

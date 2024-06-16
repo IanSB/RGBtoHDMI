@@ -26,15 +26,14 @@
 .equ GPLEV0,          0x7e200034
 
 #flag bits  31,30, 17,16 15,14 1,0
-
-.equ SYNC_ABORT_FLAG,      31
+.equ FINAL_BIT,            31             #signal if this sample word is the last
 #bit 30 is second copy of ALT_MUX_BIT
 .equ PSYNC_BIT,            17             #alternates on each full 6 word buffer
 .equ ODD_EVEN_BIT_HI,      16             #signal if low or high 16 bit sample is to be used
 #bit 15 unused
 .equ ALT_MUX_BIT,          14             #moved version of MUX bit also at bit position 30
-.equ FINAL_BIT,            1              #signal if this sample word is the last (was 31)
 .equ ODD_EVEN_BIT_LO,      0              #signal if low or high 16 bit sample is to be used
+
 .equ DEFAULT_BIT_STATE,    0x00020001     #FINAL_BIT=0, PSYNC_BIT=1, ODD_EVEN_BIT_HI=0, ODD_EVEN_BIT_LO=1
 
 #GPIO bits
@@ -42,16 +41,15 @@
 .equ SYNC_BIT,             23             #sync input
 .equ VIDEO_MASK,           0x3ffc         #12bit GPIO mask
 
-.equ COMMAND_MASK,         0x00000fff     #masks out command bits that trigger sync detection
 #command bits
-.equ OLD_FIRMWARE_FLAG,    13
-.equ HIGH_LATENCY_FLAG,    14
-.equ SIMPLE_SYNC_FLAG,     17  # was 15
-.equ LEADING_SYNC_FLAG,    16
 .equ TERMINATE_FLAG,       31
+.equ SYNC_ABORT_FLAG,      30
+.equ LEADING_SYNC_FLAG,    16
+.equ SIMPLE_SYNC_FLAG,     15
+.equ HIGH_LATENCY_FLAG,    14
+.equ OLD_FIRMWARE_FLAG,    13
 
-
-
+.equ COMMAND_MASK,         0x00000fff     #masks out command bits that trigger sync detection
 #macros
 
 .macro LO_PSYNC_CAPTURE
@@ -171,7 +169,6 @@ write_bench_loop:
    ei
    rts
 
-
 exit:
    ei
    pop   r0-r15,pc
@@ -225,7 +222,8 @@ wait_for_command_loop:
    beq    wait_for_command_loop
    btst   r3, TERMINATE_FLAG
    bne    exit
-
+   btst   r3, SYNC_ABORT_FLAG
+   bne    wait_for_command
    btst   r3, SIMPLE_SYNC_FLAG                   #bit signals upper 16 bits is a sync command
    beq    do_capture
    mov    r1, r3
@@ -304,7 +302,7 @@ do_capture:
    bne    ofw_capture
 
 wait_csync_lo_cpld:
-   ld     r0, DATA_BUFFER_0_offset(r5)
+   ld     r0, GPU_COMMAND_offset(r5)
    btst   r0, SYNC_ABORT_FLAG
    bne    capture_rest
    ld     r0, (r4)
@@ -315,7 +313,7 @@ wait_csync_lo_cpld:
    bne    capture_rest
 
 wait_csync_hi_cpld:
-   ld     r0, DATA_BUFFER_0_offset(r5)
+   ld     r0, GPU_COMMAND_offset(r5)
    btst   r0, SYNC_ABORT_FLAG
    bne    capture_rest
    ld     r0, (r4)
@@ -372,7 +370,7 @@ capture_loop:
 
 ofw_capture:
 ofw_wait_csync_lo_cpld:
-   ld     r0, DATA_BUFFER_0_offset(r5)
+   ld     r0, GPU_COMMAND_offset(r5)
    btst   r0, SYNC_ABORT_FLAG
    bne    ofw_capture_rest
    ld     r0, (r4)
@@ -395,7 +393,7 @@ ofw_wait_csync_lo_cpld:
    bne    ofw_capture_rest
 
 ofw_wait_csync_hi_cpld:
-   ld     r0, DATA_BUFFER_0_offset(r5)
+   ld     r0, GPU_COMMAND_offset(r5)
    btst   r0, SYNC_ABORT_FLAG
    bne    ofw_capture_rest
    ld     r0, (r4)

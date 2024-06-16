@@ -109,7 +109,7 @@ void wait_for_source_fieldsync();
 int scan_for_single_pixels_4bpp(uint32_t * start, int length);
 int scan_for_single_pixels_12bpp(uint32_t * start, int length);
 void scan_for_diffs_12bpp(uint32_t *fbp, uint32_t *lastp, int length, int diff[NUM_OFFSETS]);
-
+void terminate_vc_0_asm();
 int benchmarkRAM(int address);
 
 #endif
