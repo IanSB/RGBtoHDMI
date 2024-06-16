@@ -23,6 +23,7 @@ typedef struct {
    int min;
    int max;
    int step;
+   int save;
    int hidden;
 } param_t;
 

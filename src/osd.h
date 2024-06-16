@@ -335,6 +335,8 @@ enum {
    F_LINE_LEN,
    F_H_OFFSET,
    F_V_OFFSET,
+   F_BORDER_WIDTH,
+   F_BORDER_HEIGHT,
 
    F_WAVS,
 
@@ -360,7 +362,7 @@ int lumacode_multiplier();
 int  osd_active();
 int menu_active();
 int  osd_key(int key);
-int get_border_colour(); 
+int get_border_colour();
 void osd_update_palette(int hardware_direct);
 void process_profile(int profile_number);
 void process_sub_profile(int profile_number, int sub_profile_number);

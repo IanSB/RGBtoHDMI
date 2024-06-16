@@ -66,26 +66,26 @@ static const char *bpp_names[] = {
 };
 
 static param_t params[] = {
-   {  SETUP_MODE,         "Setup Mode",         "setup_mode",         0,NUM_SETUP-1, 1 },
-   {    H_OFFSET,           "H Offset",           "h_offset",         1,        384, 4 },
-   {    V_OFFSET,           "V Offset",           "v_offset",         0,        256, 1 },
-   { MIN_H_WIDTH,        "Min H Width",        "min_h_width",       100,       1920, 8 },
-   {MIN_V_HEIGHT,       "Min V Height",       "min_v_height",       100,       1200, 2 },
-   { MAX_H_WIDTH,        "Max H Width",        "max_h_width",       120,       1920, 8 },
-   {MAX_V_HEIGHT,       "Max V Height",       "max_v_height",       120,       1200, 2 },
-   {    H_ASPECT,     "H Pixel Aspect",           "h_aspect",         0,         12, 1 },
-   {    V_ASPECT,     "V Pixel Aspect",           "v_aspect",         0,         12, 1 },
-   {   FB_SIZEX2,            "FB Size",            "fb_size",         0,          3, 1 },
-   {      FB_BPP,      "FB Bits/Pixel",      "fb_bits_pixel",         0,  NUM_BPP-1, 1 },
-   {       CLOCK,    "Clock Frequency",    "clock_frequency",   1000000,64000000, 1000 },
-   {    LINE_LEN,        "Line Length",        "line_length",       100,    5000,    1 },
-   {   CLOCK_PPM,    "Clock Tolerance",    "clock_tolerance",         0,  100000,  100 },
-   { LINES_FRAME,    "Lines per Frame",    "lines_per_frame",       250,    1200,    1 },
-   {   SYNC_TYPE,          "Sync Type",          "sync_type",         0, NUM_SYNC-1, 1 },
-   {  VSYNC_TYPE,        "V Sync Type",         "vsync_type",         0,NUM_VSYNC-1, 1 },
-   {  VIDEO_TYPE,         "Video Type",         "video_type",         0,NUM_VIDEO-1, 1 },
-   { PX_SAMPLING,     "Pixel Sampling",     "pixel_sampling",         0,   NUM_PS-1, 1 },
-   {          -1,                 NULL,                 NULL,         0,          0, 0 }
+   {  SETUP_MODE,         "Setup Mode",         "setup_mode",         0,NUM_SETUP-1, 1, 0 },
+   {    H_OFFSET,           "H Offset",           "h_offset",         1,        384, 4, 0 },
+   {    V_OFFSET,           "V Offset",           "v_offset",         0,        256, 1, 0 },
+   { MIN_H_WIDTH,        "Min H Width",        "min_h_width",       100,       1920, 8, 0 },
+   {MIN_V_HEIGHT,       "Min V Height",       "min_v_height",       100,       1200, 2, 0 },
+   { MAX_H_WIDTH,        "Max H Width",        "max_h_width",       120,       1920, 8, 0 },
+   {MAX_V_HEIGHT,       "Max V Height",       "max_v_height",       120,       1200, 2, 0 },
+   {    H_ASPECT,     "H Pixel Aspect",           "h_aspect",         0,         12, 1, 0 },
+   {    V_ASPECT,     "V Pixel Aspect",           "v_aspect",         0,         12, 1, 0 },
+   {   FB_SIZEX2,            "FB Size",            "fb_size",         0,          3, 1, 0 },
+   {      FB_BPP,      "FB Bits/Pixel",      "fb_bits_pixel",         0,  NUM_BPP-1, 1, 0 },
+   {       CLOCK,    "Clock Frequency",    "clock_frequency",   1000000,64000000, 1000, 0 },
+   {    LINE_LEN,        "Line Length",        "line_length",       100,    5000,    1, 0 },
+   {   CLOCK_PPM,    "Clock Tolerance",    "clock_tolerance",         0,  100000,  100, 0 },
+   { LINES_FRAME,    "Lines per Frame",    "lines_per_frame",       250,    1200,    1, 0 },
+   {   SYNC_TYPE,          "Sync Type",          "sync_type",         0, NUM_SYNC-1, 1, 0 },
+   {  VSYNC_TYPE,        "V Sync Type",         "vsync_type",         0,NUM_VSYNC-1, 1, 0 },
+   {  VIDEO_TYPE,         "Video Type",         "video_type",         0,NUM_VIDEO-1, 1, 0 },
+   { PX_SAMPLING,     "Pixel Sampling",     "pixel_sampling",         0,   NUM_PS-1, 1, 0 },
+   {          -1,                 NULL,                 NULL,         0,          0, 0, 0 }
 };
 
 typedef struct {

@@ -405,79 +405,80 @@ static const char *mono_palette_names[] = {
 
 
 static param_t features[] = {
-   {        F_AUTO_SWITCH,       "Auto Switch",       "auto_switch", 0, NUM_AUTOSWITCHES - 1, 1 },
-   {         F_RESOLUTION,        "Resolution",        "resolution", 0,                    0, 1 },
-   {            F_REFRESH,           "Refresh",           "refresh", 0,      NUM_REFRESH - 1, 1 },
-   {          F_HDMI_AUTO,  "HDMI Mode Detect",         "hdmi_auto", 0,    NUM_HDMI_AUTO - 1, 1 },
-   {          F_HDMI_MODE,  "HDMI Manual Mode",         "hdmi_mode", 0,        NUM_HDMIS - 1, 1 },
-   {  F_HDMI_MODE_STANDBY, "HDMI Grey Standby",      "hdmi_standby", 0,                    1, 1 },
-   {            F_SCALING,           "Scaling",           "scaling", 0,      NUM_SCALING - 1, 1 },
-   {            F_PROFILE,           "Profile",           "profile", 0,                    0, 1 },
-   {       F_SAVED_CONFIG,      "Saved Config",      "saved_config", 0,                    4, 1 },
-   {        F_SUB_PROFILE,       "Sub-Profile",        "subprofile", 0,                    0, 1 },
-   {            F_PALETTE,           "Palette",           "palette", 0,                    0, 1 },
-   {    F_PALETTE_CONTROL,    "Palette Control",   "palette_control", 0,     NUM_CONTROLS - 1, 1 },
-   {        F_NTSC_COLOUR,    "Artifact Colour",       "ntsc_colour", 0,                    1, 1 },
-   {         F_NTSC_PHASE,         "NTSC Phase",        "ntsc_phase", 0,                    3, 1 },
-   {          F_NTSC_TYPE,          "NTSC Type",         "ntsc_type", 0,     NUM_NTSCTYPE - 1, 1 },
-   {       F_NTSC_QUALITY,       "NTSC Quality",      "ntsc_quality", 0,       NUM_FRINGE - 1, 1 },
-   {      F_PAL_ODD_LEVEL,       "PAL Odd Level",     "pal_oddlevel", -180,             180, 1 },
-   {       F_PAL_ODD_LINE,       "PAL Odd Line",       "pal_oddline", 0,      NUM_PAL_ODD - 1, 1 },
-   {               F_TINT,               "Tint",              "tint",-60,                  60, 1 },
-   {                F_SAT,         "Saturation",        "saturation", 0,                  200, 1 },
-   {                F_CONT,           "Contrast",          "contrast", 0,                  200, 1 },
-   {              F_BRIGHT,         "Brightness",        "brightness", 0,                  200, 1 },
-   {               F_GAMMA,              "Gamma",             "gamma", 10,                 300, 1 },
-   {          F_TIMING_SET,         "Timing Set",        "timing_set", 0,                    1, 1 },
-   {   F_MODE7_DEINTERLACE,"Teletext Deinterlace","teletext_deinterlace", 0, NUM_M7DEINTERLACES - 1, 1 },
-   {  F_NORMAL_DEINTERLACE, "Normal Deinterlace",   "normal_deinterlace", 0,   NUM_DEINTERLACES - 1, 1 },
-   {       F_MODE7_SCALING,  "Teletext Scaling",  "teletext_scaling", 0,    NUM_ESCALINGS - 1, 1 },
-   {      F_NORMAL_SCALING,    "Normal Scaling",    "normal_scaling", 0,    NUM_ESCALINGS - 1, 1 },
-   {          F_DROP_FRAME,"Drop Frame (25/30Hz)",      "drop_frame", 0,                    1, 1 },
-   {               F_FFOSD,     "FFOSD Overlay",     "ffosd_overlay", 0,                    1, 1 },
-   {         F_SWAP_ASPECT,"Swap Aspect 625<>525",     "swap_aspect", 0,                    1, 1 },
-   {       F_OUTPUT_COLOUR,     "Output Colour",     "output_colour", 0,      NUM_COLOURS - 1, 1 },
-   {       F_OUTPUT_INVERT,     "Output Invert",     "output_invert", 0,       NUM_INVERT - 1, 1 },
-   {        F_MONO_PALETTE,      "Mono Palette",      "mono_palette", 0,     NUM_MONO_PAL - 1, 1 },
-   {           F_SCANLINES,         "Scanlines",         "scanlines", 0,                    1, 1 },
-   {      F_SCANLINE_LEVEL,    "Scanline Level",    "scanline_level", 0,                   14, 1 },
-   {         F_CROP_BORDER,"Crop Border (Zoom)",       "crop_border", 0,     NUM_OVERSCAN - 1, 1 },
-   {      F_SCREENCAP_SIZE,    "ScreenCap Size",    "screencap_size", 0,    NUM_SCREENCAP - 1, 1 },
-   {           F_FONT_SIZE,         "Font Size",         "font_size", 0,     NUM_FONTSIZE - 1, 1 },
-   {       F_BORDER_COLOUR,     "Border Colour",     "border_colour", 0,                  255, 1 },
-   {     F_VSYNC_INDICATOR, "Vsync Marker Line",   "vsync_indicator", 0,                    1, 1 },
-   {        F_GENLOCK_MODE,      "Genlock Mode",      "genlock_mode", 0,         NUM_HDMI - 1, 1 },
-   {        F_GENLOCK_LINE,      "Genlock Line",      "genlock_line",35,                  312, 1 },
-   {       F_GENLOCK_SPEED,     "Genlock Speed",     "genlock_speed", 0,NUM_GENLOCK_SPEED - 1, 1 },
-   {      F_GENLOCK_ADJUST,    "Genlock Adjust",    "genlock_adjust", 0,NUM_GENLOCK_ADJUST - 1, 1 },
+   {        F_AUTO_SWITCH,       "Auto Switch",       "auto_switch", 0, NUM_AUTOSWITCHES - 1, 1, 1 },
+   {         F_RESOLUTION,        "Resolution",        "resolution", 0,                    0, 1, 0 },
+   {            F_REFRESH,           "Refresh",           "refresh", 0,      NUM_REFRESH - 1, 1, 0 },
+   {          F_HDMI_AUTO,  "HDMI Mode Detect",         "hdmi_auto", 0,    NUM_HDMI_AUTO - 1, 1, 0 },
+   {          F_HDMI_MODE,  "HDMI Manual Mode",         "hdmi_mode", 0,        NUM_HDMIS - 1, 1, 0 },
+   {  F_HDMI_MODE_STANDBY, "HDMI Grey Standby",      "hdmi_standby", 0,                    1, 1, 1 },
+   {            F_SCALING,           "Scaling",           "scaling", 0,      NUM_SCALING - 1, 1, 0 },
+   {            F_PROFILE,           "Profile",           "profile", 0,                    0, 1, 0 },
+   {       F_SAVED_CONFIG,      "Saved Config",      "saved_config", 0,                    4, 1, 0 },
+   {        F_SUB_PROFILE,       "Sub-Profile",        "subprofile", 0,                    0, 1, 0},
+   {            F_PALETTE,           "Palette",           "palette", 0,                    0, 1, 1 },
+   {    F_PALETTE_CONTROL,    "Palette Control",   "palette_control", 0,     NUM_CONTROLS - 1, 1, 1 },
+   {        F_NTSC_COLOUR,    "Artifact Colour",       "ntsc_colour", 0,                    1, 1, 1 },
+   {         F_NTSC_PHASE,         "NTSC Phase",        "ntsc_phase", 0,                    3, 1, 1 },
+   {          F_NTSC_TYPE,          "NTSC Type",         "ntsc_type", 0,     NUM_NTSCTYPE - 1, 1, 1 },
+   {       F_NTSC_QUALITY,       "NTSC Quality",      "ntsc_quality", 0,       NUM_FRINGE - 1, 1, 1 },
+   {      F_PAL_ODD_LEVEL,       "PAL Odd Level",     "pal_oddlevel", -180,             180, 1, 1 },
+   {       F_PAL_ODD_LINE,       "PAL Odd Line",       "pal_oddline", 0,      NUM_PAL_ODD - 1, 1, 1 },
+   {               F_TINT,               "Tint",              "tint",-60,                  60, 1, 1 },
+   {                F_SAT,         "Saturation",        "saturation", 0,                  200, 1, 1 },
+   {                F_CONT,           "Contrast",          "contrast", 0,                  200, 1, 1 },
+   {              F_BRIGHT,         "Brightness",        "brightness", 0,                  200, 1, 1 },
+   {               F_GAMMA,              "Gamma",             "gamma", 10,                 300, 1, 1 },
+   {          F_TIMING_SET,         "Timing Set",        "timing_set", 0,                    1, 1, 1 },
+   {   F_MODE7_DEINTERLACE,"Teletext Deinterlace","teletext_deinterlace", 0, NUM_M7DEINTERLACES - 1, 1, 1 },
+   {  F_NORMAL_DEINTERLACE, "Normal Deinterlace",   "normal_deinterlace", 0,   NUM_DEINTERLACES - 1, 1, 1 },
+   {       F_MODE7_SCALING,  "Teletext Scaling",  "teletext_scaling", 0,    NUM_ESCALINGS - 1, 1, 1 },
+   {      F_NORMAL_SCALING,    "Normal Scaling",    "normal_scaling", 0,    NUM_ESCALINGS - 1, 1, 1 },
+   {          F_DROP_FRAME,"Drop Frame (25/30Hz)",      "drop_frame", 0,                    1, 1, 1 },
+   {               F_FFOSD,     "FFOSD Overlay",     "ffosd_overlay", 0,                    1, 1, 1 },
+   {         F_SWAP_ASPECT,"Swap Aspect 625<>525",     "swap_aspect", 0,                    1, 1, 1 },
+   {       F_OUTPUT_COLOUR,     "Output Colour",     "output_colour", 0,      NUM_COLOURS - 1, 1, 1 },
+   {       F_OUTPUT_INVERT,     "Output Invert",     "output_invert", 0,       NUM_INVERT - 1, 1, 1 },
+   {        F_MONO_PALETTE,      "Mono Palette",      "mono_palette", 0,     NUM_MONO_PAL - 1, 1, 1 },
+   {           F_SCANLINES,         "Scanlines",         "scanlines", 0,                    1, 1, 1 },
+   {      F_SCANLINE_LEVEL,    "Scanline Level",    "scanline_level", 0,                   14, 1, 1 },
+   {         F_CROP_BORDER,"Crop Border (Zoom)",       "crop_border", 0,     NUM_OVERSCAN - 1, 1, 1 },
+   {      F_SCREENCAP_SIZE,    "ScreenCap Size",    "screencap_size", 0,    NUM_SCREENCAP - 1, 1, 1 },
+   {           F_FONT_SIZE,         "Font Size",         "font_size", 0,     NUM_FONTSIZE - 1, 1, 1 },
+   {       F_BORDER_COLOUR,     "Border Colour",     "border_colour", 0,                  255, 1, 1 },
+   {     F_VSYNC_INDICATOR, "Vsync Marker Line",   "vsync_indicator", 0,                    1, 1, 1 },
+   {        F_GENLOCK_MODE,      "Genlock Mode",      "genlock_mode", 0,         NUM_HDMI - 1, 1, 1 },
+   {        F_GENLOCK_LINE,      "Genlock Line",      "genlock_line",35,                  312, 1, 1 },
+   {       F_GENLOCK_SPEED,     "Genlock Speed",     "genlock_speed", 0,NUM_GENLOCK_SPEED - 1, 1, 1 },
+   {      F_GENLOCK_ADJUST,    "Genlock Adjust",    "genlock_adjust", 0,NUM_GENLOCK_ADJUST - 1, 1, 1 },
 #ifdef MULTI_BUFFER
-   {         F_NUM_BUFFERS,       "Num Buffers",       "num_buffers", 0,                    3, 1 },
+   {         F_NUM_BUFFERS,       "Num Buffers",       "num_buffers", 0,                    3, 1, 1 },
 #endif
-   {     F_RETURN_POSITION,   "Return Position",            "return", 0,                    1, 1 },
-   {               F_DEBUG,             "Debug",             "debug", 0,                    1, 1 },
-   {      F_BUTTON_REVERSE,    "Button Reverse",    "button_reverse", 0,                    1, 1 },
+   {     F_RETURN_POSITION,   "Return Position",            "return", 0,                    1, 1, 1 },
+   {               F_DEBUG,             "Debug",             "debug", 0,                    1, 1, 1 },
+   {      F_BUTTON_REVERSE,    "Button Reverse",    "button_reverse", 0,                    1, 1, 0 },
 
-   {       F_OVERCLOCK_CPU,     "Overclock CPU",     "overclock_cpu", 0,                  200, 1 },
-   {      F_OVERCLOCK_CORE,    "Overclock Core",    "overclock_core", 0,                  200, 1 },
-   {     F_OVERCLOCK_SDRAM,   "Overclock SDRAM",   "overclock_sdram", 0,                  200, 1 },
-   {     F_POWERUP_MESSAGE,   "Powerup Message",   "powerup_message", 0,                    1, 1 },
+   {       F_OVERCLOCK_CPU,     "Overclock CPU",     "overclock_cpu", 0,                  200, 1, 1 },
+   {      F_OVERCLOCK_CORE,    "Overclock Core",    "overclock_core", 0,                  200, 1, 1 },
+   {     F_OVERCLOCK_SDRAM,   "Overclock SDRAM",   "overclock_sdram", 0,                  200, 1, 1 },
+   {     F_POWERUP_MESSAGE,   "Powerup Message",   "powerup_message", 0,                    1, 1, 1 },
 
-   {    F_YUV_PIXEL_DOUBLE,  "YUV Pixel Double",  "yuv_pixel_double", 0,                    1, 1 },
-   {      F_INTEGER_ASPECT,"Integer Aspect Ratio",    "integer_aspect", 0, NUM_INTEGER_ASPECT-1, 1 },
-   {     F_INTEGER_SCALING,"16:9 Integer Scaling", "integer_scaling", 0, NUM_INTEGER_SCALING-1, 1 },
+   {    F_YUV_PIXEL_DOUBLE,  "YUV Pixel Double",  "yuv_pixel_double", 0,                    1, 1, 1 },
+   {      F_INTEGER_ASPECT,"Integer Aspect Ratio",    "integer_aspect", 0, NUM_INTEGER_ASPECT-1, 1, 1 },
+   {     F_INTEGER_SCALING,"16:9 Integer Scaling", "integer_scaling", 0, NUM_INTEGER_SCALING-1, 1, 1 },
 
-   {         F_PROFILE_NUM,"Custom Profile Num",    "profile_number", 0,                  9, 1 },
-   {             F_H_WIDTH,       "Pixel Width",       "pixel_width", 120,               1920, 8 },
-   {            F_V_HEIGHT,      "Pixel Height",      "pixel_height", 120,               1200, 2 },
-   {               F_CLOCK,   "Clock Frequency",   "pixel_frequency", 1000000,    64000000, 1000 },
-   {            F_LINE_LEN,       "Line Length", "pixel_line_length",       100,    5000,    1 },
-   {            F_H_OFFSET,          "H Offset",    "pixel_h_offset", -256,               256, 4 },
-   {            F_V_OFFSET,          "V Offset",    "pixel_v_offset", -256,               256, 1 },
+   {         F_PROFILE_NUM,"Custom Profile Num",    "profile_number", 0,                  9, 1, 0 },
+   {             F_H_WIDTH,       "Pixel Width",       "pixel_width", 120,               1920, 8, 0 },
+   {            F_V_HEIGHT,      "Pixel Height",      "pixel_height", 120,               1200, 2, 0 },
+   {               F_CLOCK,   "Clock Frequency",   "pixel_frequency", 1000000,    64000000, 1000, 0 },
+   {            F_LINE_LEN,       "Line Length", "pixel_line_length",       100,    5000,    1, 0 },
+   {            F_H_OFFSET,          "H Offset",    "pixel_h_offset", -256,               256, 4, 0 },
+   {            F_V_OFFSET,          "V Offset",    "pixel_v_offset", -256,               256, 1, 0 },
+   {        F_BORDER_WIDTH,      "Border Width",      "border_width", 0,               512, 8, 0 },
+   {       F_BORDER_HEIGHT,     "Border Height",     "border_height", 0,               256, 2, 0 },
+   {                F_WAVS,          "WAV File",          "wav_file", 0,                 0, 1, 0 },
 
-   {            F_WAVS,              "WAV File",         "wav_file", 0,                    0, 1 },
-
-   {            F_FRONTEND,         "Interface",         "interface", 0,    NUM_FRONTENDS - 1, 1 },
-   {                -1,                NULL,                NULL, 0,                    0, 0 }
+   {            F_FRONTEND,         "Interface",         "interface", 0,    NUM_FRONTENDS - 1, 1, 0 },
+   {                -1,                NULL,                NULL, 0,                    0, 0, 0 }
 };
 
 // =============================================================
@@ -795,6 +796,8 @@ static param_menu_item_t clock_ref           = { I_FEATURE, &features[F_CLOCK]  
 static param_menu_item_t line_len_ref        = { I_FEATURE, &features[F_LINE_LEN]      };
 static param_menu_item_t h_offset_ref        = { I_FEATURE, &features[F_H_OFFSET]      };
 static param_menu_item_t v_offset_ref        = { I_FEATURE, &features[F_V_OFFSET]      };
+static param_menu_item_t border_width_ref    = { I_FEATURE, &features[F_BORDER_WIDTH]       };
+static param_menu_item_t border_height_ref   = { I_FEATURE, &features[F_BORDER_HEIGHT]      };
 
 static param_menu_item_t wavs_ref            = { I_FEATURE, &features[F_WAVS]          };
 
@@ -814,6 +817,8 @@ static menu_t custom_profile_menu = {
       (base_menu_item_t *) &line_len_ref,
       (base_menu_item_t *) &h_offset_ref,
       (base_menu_item_t *) &v_offset_ref,
+      (base_menu_item_t *) &border_width_ref,
+      (base_menu_item_t *) &border_height_ref,
       (base_menu_item_t *) &cal_sampling_no_save_ref,
       //(base_menu_item_t *) &palette_ref,
       (base_menu_item_t *) &profile_num_ref,
@@ -1425,17 +1430,20 @@ static void autoset_geometry() {
     geometry_set_value(FB_SIZEX2, fbsize_x2);
     geometry_set_value(LINES_FRAME, get_lines_per_vsync(0));
 
+/*
     int max_h_width = (((geometry_get_value(LINE_LEN) * 75 / 100 / lumacode_multiplier()) + 4) >> 3) << 3;
     if (max_h_width < geometry_get_value(MIN_H_WIDTH)) {
         max_h_width = geometry_get_value(MIN_H_WIDTH);
     }
-    geometry_set_value(MAX_H_WIDTH, max_h_width);
-
+*/
+    geometry_set_value(MAX_H_WIDTH, geometry_get_value(MIN_H_WIDTH) + get_parameter(F_BORDER_WIDTH));
+/*
     int max_v_height = (((geometry_get_value(LINES_FRAME) * 90 / 100) + 1) >> 1) << 1;
     if (max_v_height < geometry_get_value(MIN_V_HEIGHT)) {
         max_v_height = geometry_get_value(MIN_V_HEIGHT);
     }
-    geometry_set_value(MAX_V_HEIGHT, max_v_height);
+*/
+    geometry_set_value(MAX_V_HEIGHT, geometry_get_value(MIN_V_HEIGHT) + get_parameter(F_BORDER_HEIGHT));
 
     int h_offset = ((((geometry_get_value(LINE_LEN) / lumacode_multiplier() - geometry_get_value(MIN_H_WIDTH)) / 2) + 2) >> 2) << 2;
     geometry_set_value(H_OFFSET, h_offset - get_parameter(F_H_OFFSET));
@@ -1463,11 +1471,9 @@ static void set_feature(int num, int value) {
       break;
 
    case F_H_OFFSET:
-      set_parameter(num, value);
-      autoset_geometry();
-      break;
-
    case F_V_OFFSET:
+   case F_BORDER_WIDTH:
+   case F_BORDER_HEIGHT:
       set_parameter(num, value);
       autoset_geometry() ;
       break;
@@ -1635,6 +1641,8 @@ static void set_feature(int num, int value) {
 static void analyse_timing(int line) {
     set_parameter(F_H_OFFSET, 0);
     set_parameter(F_V_OFFSET, 0);
+    set_parameter(F_BORDER_WIDTH, 0);
+    set_parameter(F_BORDER_HEIGHT, 0);
     geometry_set_value(VSYNC_TYPE, 0);
     geometry_set_value(VIDEO_TYPE, 0);
     set_feature(F_H_WIDTH, get_parameter(F_H_WIDTH));
@@ -1642,7 +1650,7 @@ static void analyse_timing(int line) {
     line++;
     osd_set(line++, 0, "Geometry parameters have been set based on");
     osd_set(line++, 0, "current video source and menu settings.");
-    osd_set(line++, 0, "H & V Offsets have been reset to 0.");
+    osd_set(line++, 0, "H/V Offsets & Borders have been reset to 0.");
 }
 
 // Wrapper to extract the name of a menu item
@@ -2159,9 +2167,9 @@ static void info_help_custom_profile(int line) {
    osd_set(line++, 0, "If not known, adjust the line length until");
    osd_set(line++, 0, "all columns of noise have disappeared");
    osd_set(line++, 0, "or noise appears across the width of the");
-   osd_set(line++, 0, "screen. (Confirm that such noise cleans");
-   osd_set(line++, 0, "up when selecting Auto Calibration)");
-   osd_set(line++, 0, "Use H and V Offset to centre the image.");
+   osd_set(line++, 0, "screen. (Confirm that such noise cleans up");
+   osd_set(line++, 0, "with Auto Calibration). Use H/V Offsets to");
+   osd_set(line++, 0, "centre the image and set the Border size.");
    osd_set(line++, 0, "Make changes in other menus if required.");
    osd_set(line++, 0, "Run a final Auto Calibration.");
    osd_set(line++, 0, "Set custom profile number (0-9).");
@@ -2338,8 +2346,11 @@ char * clean_underscore(char *string) {
 }
 
 static int audio_msg1(int line){
-   osd_set(line++, 0, "This is a test of bare metal HDMI audio.");
-   osd_set(line++, 0, "Audio capture is still under development.");
+   osd_set(line++, 0, "This is a test of HDMI audio output (it");
+   osd_set(line++, 0, "can currently only play wav files.)");
+   osd_set(line++, 0, "An addon audio capture interface is still");
+   osd_set(line++, 0, "under development.");
+   line++;
    return line;
 }
 
@@ -2347,6 +2358,8 @@ static int audio_msg2(int line){
    line++;
    osd_set(line++, 0, "You can add your own .wav files to /WAVs:");
    osd_set(line++, 0, "48000Hz sample rate stereo only. Max 160MB");
+   line++;
+   osd_set(line++, 0, "Please report any compatibility problems.");
    return line;
 }
 
@@ -5439,7 +5452,7 @@ int save_profile(char *path, char *name, char *buffer, char *default_buffer, cha
 
    i = 0;
    while (features[i].key >= 0) {
-      if ((default_buffer != NULL && i != F_TIMING_SET && i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_WAVS && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN && (i != F_AUTO_SWITCH || sub_default_buffer == NULL))
+      if ((default_buffer != NULL && features[i].save != 0 && i != F_TIMING_SET && (i != F_AUTO_SWITCH || sub_default_buffer == NULL))
           || (default_buffer == NULL && i == F_TIMING_SET && get_feature(F_AUTO_SWITCH) > AUTOSWITCH_MODE7)
           || (default_buffer == NULL && i == F_AUTO_SWITCH) ) {
          strcpy(param_string, features[i].property_name);
@@ -5547,7 +5560,7 @@ void process_single_profile(char *buffer) {
 
    i = 0;
    while(features[i].key >= 0) {
-      if (i != F_RESOLUTION && i != F_REFRESH && i != F_SCALING && i != F_FRONTEND && i != F_PROFILE && i != F_SAVED_CONFIG && i != F_SUB_PROFILE && i!= F_BUTTON_REVERSE && i != F_WAVS && i != F_HDMI_MODE && i != F_HDMI_AUTO && i != F_PROFILE_NUM && i != F_H_WIDTH && i != F_V_HEIGHT && i != F_H_OFFSET && i != F_V_OFFSET && i != F_CLOCK && i != F_LINE_LEN) {
+      if (features[i].save != 0) {
          strcpy(param_string, features[i].property_name);
          prop = get_prop(buffer, param_string);
          if (prop) {

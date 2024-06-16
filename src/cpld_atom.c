@@ -50,10 +50,10 @@ enum {
 };
 
 static param_t params[] = {
-   {      OFFSET,      "Offset",       "offset", 0, 15, 1 },
-   {    FILTER_L,    "Filter Y",     "l_filter", 0,  1, 1 },
-   {    FILTER_C,    "Filter UV",    "c_filter", 0,  1, 1 },
-   {          -1,           NULL,          NULL, 0,  0, 0 }
+   {      OFFSET,      "Offset",       "offset", 0, 15, 1, 0 },
+   {    FILTER_L,    "Filter Y",     "l_filter", 0,  1, 1, 0 },
+   {    FILTER_C,    "Filter UV",    "c_filter", 0,  1, 1, 0 },
+   {          -1,           NULL,          NULL, 0,  0, 0, 0 }
 };
 
 // =============================================================

@@ -11,7 +11,7 @@ static int cpld_version;
 
 
 static param_t params[] = {
-   {          -1,          NULL,          NULL, 0,   0, 1 }
+   {          -1,          NULL,          NULL, 0,   0, 1, 0 }
 };
 
 // =============================================================
