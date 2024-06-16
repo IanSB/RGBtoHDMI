@@ -60,8 +60,8 @@ architecture Behavorial of RGBtoHDMI is
     --         4 = RGB CPLD (TTL)
     --         C = RGB CPLD (Analog)
 
-    constant VERSION_NUM_RGB_TTL    : std_logic_vector(11 downto 0) := x"494";
-    constant VERSION_NUM_RGB_ANALOG : std_logic_vector(11 downto 0) := x"C94";
+    constant VERSION_NUM_RGB_TTL    : std_logic_vector(11 downto 0) := x"495";
+    constant VERSION_NUM_RGB_ANALOG : std_logic_vector(11 downto 0) := x"C95";
 
     -- The sampling counter serves several purposes:
     -- 1. Counts the delay the rising edge of nCSYNC and the first pixel
@@ -187,10 +187,16 @@ begin
                 -- output different to input
                 csync_counter <= csync_counter + 1;
                 -- if the difference lasts for N-1 cycles, update the output
-                if rate = "00" and edge = '1' and rateswitch = '1' then
-                    if csync_counter = 255 then
-                        csync2 <= csync1;
-                    end if;
+                if edge = '1' then
+					     if rate = "00" and rateswitch = '1' then
+							  if csync_counter = 255 then
+									csync2 <= csync1;
+							  end if;
+					  	  else
+							  if csync_counter(6 downto 0) = 99 then
+									csync2 <= csync1;
+							  end if;	
+                    end if;							  
                 else
                     if csync_counter(1 downto 0) = 3 then
                         csync2 <= csync1;
