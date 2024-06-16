@@ -25,6 +25,7 @@ normal_scaling=0
 swap_aspect=0
 output_colour=0
 output_invert=0
+mono_palette=0
 scanlines=0
 scanline_level=6
 yuv_pixel_double=0
