@@ -757,10 +757,17 @@ static void write_config(config_t *config, int dac_update) {
            dac_h = dac_c;
        }
 
-       sendDAC(0, dac_a);
-       sendDAC(1, dac_b);
-       sendDAC(2, dac_c);
-       sendDAC(3, dac_d);
+       if (mono_board_detected() && get_parameter(F_MONO_PALETTE) != MONO_PALETTE_GREEN) {
+           sendDAC(0, dac_c);
+           sendDAC(1, dac_d);
+           sendDAC(2, dac_a);
+           sendDAC(3, dac_b);
+       } else {
+           sendDAC(0, dac_a);
+           sendDAC(1, dac_b);
+           sendDAC(2, dac_c);
+           sendDAC(3, dac_d);
+       }
        sendDAC(5, dac_e);   // DACs E and F positions swapped in menu compared to hardware
        sendDAC(4, dac_f);
        sendDAC(6, dac_g);

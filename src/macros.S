@@ -380,11 +380,8 @@ wait\@:
         tsteq  r8, #FINAL_BIT
         beq    wait\@
 
-
         add    r9, r9, #4
-        cmp    r9, #(GPU_SYNC_offset - GPU_DATA_0_offset)
-        addeq  r9, r9, #4
-        cmp    r9, #GPU_DATA_5_offset
+        cmp    r9, #GPU_DATA_6_offset
         moveq  r9, #0
         eoreq  r3, r3, #PSYNC_MASK
 
@@ -408,7 +405,7 @@ capturebusy\@:
         cmp    r8, #0
         bne    capturebusy\@
         //zero out ram copy and GPU data registers (r8 is already zero)
-        mov    r14, #GPU_DATA_5_offset
+        mov    r14, #GPU_DATA_6_offset
 clear_regs\@:
         str    r8, [r10, r14]
         subs   r14, r14, #4

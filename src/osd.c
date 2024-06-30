@@ -393,9 +393,9 @@ static const char *pal_odd_names[] = {
 };
 
 static const char *mono_palette_names[] = {
-   "Green Channel",
-   "Blue_Channel",
-   "Red_Channel"
+   "Normal (Green Input)",
+   "Use Blue (Swap Grn/Blu)",
+   "Use Red (Swap Grn/Red)"
 };
 
 // =============================================================
@@ -2346,10 +2346,10 @@ char * clean_underscore(char *string) {
 }
 
 static int audio_msg1(int line){
-   osd_set(line++, 0, "This is a test of HDMI audio output (it");
-   osd_set(line++, 0, "can currently only play wav files.)");
-   osd_set(line++, 0, "An addon audio capture interface is still");
-   osd_set(line++, 0, "under development.");
+   osd_set(line++, 0, "This is a test of HDMI audio output:");
+   osd_set(line++, 0, "(Currently only WAV files can be played)");
+   osd_set(line++, 0, "An addon audio capture interface is under");
+   osd_set(line++, 0, "development.");
    line++;
    return line;
 }
@@ -2359,7 +2359,8 @@ static int audio_msg2(int line){
    osd_set(line++, 0, "You can add your own .wav files to /WAVs:");
    osd_set(line++, 0, "48000Hz sample rate stereo only. Max 160MB");
    line++;
-   osd_set(line++, 0, "Please report any compatibility problems.");
+   osd_set(line++, 0, "Please report any compatibility problems");
+   osd_set(line++, 0, "if this doesn't work with your monitor.");
    return line;
 }
 

@@ -142,14 +142,6 @@
 
 #ifdef __ASSEMBLER__
 #define GPU_COMMAND_BASE_OFFSET 0x000000a0
-//#define GPU_COMMAND_BASE_OFFSET 0x00a04080
-//#define GPU_DATA_0  (PERIPHERAL_BASE + 0x000000a4)
-//#define GPU_DATA_1  (PERIPHERAL_BASE + 0x000000a8)
-//#define GPU_DATA_2  (PERIPHERAL_BASE + 0x000000ac)
-//#define GPU_SYNC    (PERIPHERAL_BASE + 0x000000b0)  //gap in data block to allow fast 3 register read on ARM side
-//#define GPU_DATA_3  (PERIPHERAL_BASE + 0x000000b4)  //using a single ldr and a two register ldmia
-//#define GPU_DATA_4  (PERIPHERAL_BASE + 0x000000b8)  //can't use more than a single unaligned two register ldmia on the peripherals
-//#define GPU_DATA_5  (PERIPHERAL_BASE + 0x000000bc)
 
 //used in command reg
 #define  TERMINATE_FLAG    (1<<31)
@@ -167,10 +159,10 @@
 #define GPU_DATA_0_offset  0x04
 #define GPU_DATA_1_offset  0x08
 #define GPU_DATA_2_offset  0x0c
-#define GPU_SYNC_offset    0x10
-#define GPU_DATA_3_offset  0x14
-#define GPU_DATA_4_offset  0x18
-#define GPU_DATA_5_offset  0x1c
+#define GPU_DATA_3_offset  0x10
+#define GPU_DATA_4_offset  0x14
+#define GPU_DATA_5_offset  0x18
+#define GPU_DATA_6_offset  0x1c
 
 #define GPIO_BASE_OFFSET  0x200000
 #define GPSET0_OFFSET     0x00001C

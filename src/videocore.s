@@ -9,19 +9,19 @@
 .equ GPU_DATA_BUFFER_0,    0x7e0000a4
 .equ GPU_DATA_BUFFER_1,    0x7e0000a8
 .equ GPU_DATA_BUFFER_2,    0x7e0000ac
-.equ GPU_SYNC,             0x7e0000b0  #gap in data block to allow fast 3 register read on ARM side
-.equ GPU_DATA_BUFFER_3,    0x7e0000b4  #using a single ldr and a two register ldmia
-.equ GPU_DATA_BUFFER_4,    0x7e0000b8  #can't use more than a single unaligned two register ldmia
-.equ GPU_DATA_BUFFER_5,    0x7e0000bc  #on the peripherals and an aligned ldmia won't work
+.equ GPU_DATA_BUFFER_3,    0x7e0000b0
+.equ GPU_DATA_BUFFER_4,    0x7e0000b4
+.equ GPU_DATA_BUFFER_5,    0x7e0000b8
+.equ GPU_DATA_BUFFER_5,    0x7e0000bc
 
 .equ GPU_COMMAND_offset,   0
 .equ DATA_BUFFER_0_offset, 4
 .equ DATA_BUFFER_1_offset, 8
 .equ DATA_BUFFER_2_offset, 12
-.equ GPU_SYNC_offset,      16
-.equ DATA_BUFFER_3_offset, 20
-.equ DATA_BUFFER_4_offset, 24
-.equ DATA_BUFFER_5_offset, 28
+.equ DATA_BUFFER_3_offset, 16
+.equ DATA_BUFFER_4_offset, 20
+.equ DATA_BUFFER_5_offset, 24
+.equ DATA_BUFFER_6_offset, 28
 
 .equ GPLEV0,          0x7e200034
 
@@ -189,6 +189,7 @@ not_mbox_write_benchmark:
    st     r12, DATA_BUFFER_3_offset(r5)
    st     r12, DATA_BUFFER_4_offset(r5)
    st     r12, DATA_BUFFER_5_offset(r5)
+   st     r12, DATA_BUFFER_6_offset(r5)
 
 wait_for_command:
    ld     r0, DATA_BUFFER_0_offset(r5)
@@ -197,6 +198,7 @@ wait_for_command:
    ld     r3, DATA_BUFFER_3_offset(r5)
    ld     r9, DATA_BUFFER_4_offset(r5)
    ld     r10, DATA_BUFFER_5_offset(r5)
+   ld     r11, DATA_BUFFER_6_offset(r5)
    st     r12, GPU_COMMAND_offset(r5)    #set command register to 0
    bset   r0, FINAL_BIT
    bset   r1, FINAL_BIT
@@ -204,13 +206,14 @@ wait_for_command:
    bset   r3, FINAL_BIT
    bset   r9, FINAL_BIT
    bset   r10, FINAL_BIT
-
+   bset   r11, FINAL_BIT
    st     r0, DATA_BUFFER_0_offset(r5)
    st     r1, DATA_BUFFER_1_offset(r5)
    st     r2, DATA_BUFFER_2_offset(r5)
    st     r3, DATA_BUFFER_3_offset(r5)
    st     r9, DATA_BUFFER_4_offset(r5)
    st     r10, DATA_BUFFER_5_offset(r5)
+   st     r11, DATA_BUFFER_6_offset(r5)
 
    mov    r2, r8                        #set the default state of the control bits
 
@@ -362,10 +365,16 @@ capture_loop:
    beq    wait_for_command
 
    LO_PSYNC_CAPTURE
-   bchg   r2, PSYNC_BIT        #invert the software psync bit every 12 samples / 6 words
    HI_PSYNC_CAPTURE
 
    st     r0, DATA_BUFFER_5_offset(r5)
+   beq    wait_for_command
+
+   LO_PSYNC_CAPTURE
+   bchg   r2, PSYNC_BIT        #invert the software psync bit every 12 samples / 6 words
+   HI_PSYNC_CAPTURE
+
+   st     r0, DATA_BUFFER_6_offset(r5)
    beq    wait_for_command
 
    b      capture_loop
@@ -451,10 +460,16 @@ old_firmware_capture_loop:
    beq    wait_for_command
 
    OFW_LO_PSYNC_CAPTURE
-   bchg   r2, PSYNC_BIT        #invert the software psync bit every 12 samples / 6 words
    OFW_HI_PSYNC_CAPTURE
 
    st     r0, DATA_BUFFER_5_offset(r5)
+   beq    wait_for_command
+
+   OFW_LO_PSYNC_CAPTURE
+   bchg   r2, PSYNC_BIT        #invert the software psync bit every 12 samples / 6 words
+   OFW_HI_PSYNC_CAPTURE
+
+   st     r0, DATA_BUFFER_6_offset(r5)
    beq    wait_for_command
 
    b      old_firmware_capture_loop
@@ -462,9 +477,9 @@ old_firmware_capture_loop:
 hl_capture:
    and    r3, r7           #mask off any command bits (max capture is 4095 psync cycles)
    mov    r0, r3
-   add    r0, 11           #round up to multiple of 12
-   mov    r1, 12
-   divu   r3, r0, r1       #divide by 12 as capturing 12 samples per cycle
+   add    r0, 13           #round up to multiple of 14
+   mov    r1, 14
+   divu   r3, r0, r1       #divide by 14 as capturing 14 samples per cycle
    bchg   r2, PSYNC_BIT    #pre invert the software psync bit
 
 high_latency_capture_loop:
@@ -503,9 +518,15 @@ high_latency_capture_loop:
    HL_LO_PSYNC_CAPTURE
    or     r0, r2           #merge bit state
    HL_HI_PSYNC_CAPTURE
-   cmp    r3, 0
    or     r0, r1
    st     r0, DATA_BUFFER_5_offset(r5)
+
+   HL_LO_PSYNC_CAPTURE
+   or     r0, r2           #merge bit state
+   HL_HI_PSYNC_CAPTURE
+   cmp    r3, 0
+   or     r0, r1
+   st     r0, DATA_BUFFER_6_offset(r5)
 
    bne    high_latency_capture_loop
 
