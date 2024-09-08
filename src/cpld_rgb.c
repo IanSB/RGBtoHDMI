@@ -2053,19 +2053,19 @@ static void cpld_calibrate(capture_info_t *capinfo, int elk) {
                 switch (i){
                     case 0:
                     config->all_offsets = 0;
-                    config->half_px_delay = 1;
+                    config->half_px_delay = 0;
                     break;
                     case 1:
                     config->all_offsets = range;
-                    config->half_px_delay = 1;
+                    config->half_px_delay = 0;
                     break;
                     case 2:
                     config->all_offsets = 0;
-                    config->half_px_delay = 0;
+                    config->half_px_delay = 1;
                     break;
                     case 3:
                     config->all_offsets = range;
-                    config->half_px_delay = 0;
+                    config->half_px_delay = 1;
                     break;
                 }
                 cpld_calibrate_sub(capinfo, elk, raw_metrics, sum_metrics, errors, window_errors);
