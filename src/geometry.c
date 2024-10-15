@@ -79,7 +79,7 @@ static param_t params[] = {
    {      FB_BPP,      "FB Bits/Pixel",      "fb_bits_pixel",         0,  NUM_BPP-1, 1, 0 },
    {       CLOCK,    "Clock Frequency",    "clock_frequency",   1000000,64000000, 1000, 0 },
    {    LINE_LEN,        "Line Length",        "line_length",       100,    5000,    1, 0 },
-   {   CLOCK_PPM,    "Clock Tolerance",    "clock_tolerance",         0,  100000,  100, 0 },
+   {   CLOCK_PPM,    "Clock Tolerance",    "clock_tolerance",         0,  500000,  100, 0 },
    { LINES_FRAME,    "Lines per Frame",    "lines_per_frame",       250,    1200,    1, 0 },
    {   SYNC_TYPE,          "Sync Type",          "sync_type",         0, NUM_SYNC-1, 1, 0 },
    {  VSYNC_TYPE,        "V Sync Type",         "vsync_type",         0,NUM_VSYNC-1, 1, 0 },
