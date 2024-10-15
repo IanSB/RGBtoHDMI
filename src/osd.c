@@ -5877,8 +5877,8 @@ void osd_show_cpld_recovery_menu(int cpld_fail_state) {
                osd_set(line++, 0, "may have already been programmed and that");
                osd_set(line++, 0, "can prevent initial reprogramming.");
                osd_set(line++, 0, "To fix this cut the jumpers JP1,JP2 & JP4.");
-               osd_set(line++, 0, "After reprogramming, remake the jumpers");
-               osd_set(line++, 0, "with solder blobs for normal operation.");
+               osd_set(line++, 0, "After reprogramming, you MUST remake the");
+               osd_set(line++, 0, "jumpers with solder blobs.");
            } else {
                osd_set(line++, ATTR_DOUBLE_SIZE,  "IMPORTANT:");
                line++;
@@ -5897,8 +5897,8 @@ void osd_show_cpld_recovery_menu(int cpld_fail_state) {
                osd_set(line++, 0, "may have already been programmed and that");
                osd_set(line++, 0, "can prevent initial reprogramming.");
                osd_set(line++, 0, "To fix this cut the jumpers JP1,JP2 & JP4.");
-               osd_set(line++, 0, "After reprogramming, remake the jumpers");
-               osd_set(line++, 0, "with solder blobs for normal operation.");
+               osd_set(line++, 0, "After reprogramming, you MUST remake the");
+               osd_set(line++, 0, "jumpers with solder blobs.");
            }
        }
    }
