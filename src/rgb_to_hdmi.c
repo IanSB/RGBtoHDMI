@@ -1353,6 +1353,7 @@ static void recalculate_hdmi_clock(int genlock_mode, int genlock_adjust) {
         set_pll_frequency(f2 / PLLH_ANA1_PREDIV, PLLH_CTRL, PLLH_FRAC);
 #endif
       }
+      //log_info("VLL%d",vlock_limited);
    }
    // Dump the the actual PLL frequency
    //log_debug("        Final PLLH: %lf MHz", (double) CRYSTAL * ((double)(gpioreg[PLLH_CTRL] & 0x3ff) + ((double)gpioreg[PLLH_FRAC]) / ((double)(1 << 20))));
@@ -3448,26 +3449,30 @@ void rgb_to_hdmi_main() {
            if (reboot_required == 0) {
                int cpld_design = cpld_version_id >> VERSION_DESIGN_BIT;
                int cpld_version = cpld_version_id & 0xff;
-               if (!test_file(FORCE_UPDATE_FILE) && cpld_fail_state == CPLD_NORMAL) {
+               char force_update_filename[MAX_STRING_LIMIT];
+               sprintf(force_update_filename, FORCE_UPDATE_FILE, BBC_VERSION, RGB_VERSION, YUV_VERSION);
+               //log_info("UFILE='%s'", force_update_filename);
+               if (!test_file(force_update_filename) && cpld_fail_state == CPLD_NORMAL) {
                    log_info("CPLD update file not detected, %X, %02X", cpld_design, cpld_version);
                    if (cpld_design == DESIGN_RGB_TTL || cpld_design == DESIGN_RGB_ANALOG) {
                        if (cpld_version == BBC_VERSION || cpld_version == RGB_VERSION) {
                           log_info("CPLD_UPDATE state not set");
+                          check_file(force_update_filename, FORCE_UPDATE_FILE_MESSAGE);
                        } else {
-                           cpld_fail_state = CPLD_UPDATE;
+                          cpld_fail_state = CPLD_UPDATE;
                           log_info("CPLD_UPDATE state set");
                        }
                    }
                    if (cpld_design == DESIGN_YUV_TTL || cpld_design == DESIGN_YUV_ANALOG) {
                        if ( cpld_version == YUV_VERSION ) {
-
                           log_info("CPLD_UPDATE state not set.");
+                          check_file(force_update_filename, FORCE_UPDATE_FILE_MESSAGE);
                        } else {
                           cpld_fail_state = CPLD_UPDATE;
                           log_info("CPLD_UPDATE state set.");
                        }
                    }
-                   check_file(FORCE_UPDATE_FILE, FORCE_UPDATE_FILE_MESSAGE);
+
                }
            }
 

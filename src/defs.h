@@ -354,7 +354,7 @@ typedef struct {
 
 #define ONE_BUTTON_FILE "/Button_Mode.txt"
 #define FORCE_BLANK_FILE "/cpld_firmware/Delete_This_File_To_Erase_CPLD.txt"
-#define FORCE_UPDATE_FILE "/cpld_firmware/Delete_This_File_To_Check_CPLD.txt"
+#define FORCE_UPDATE_FILE "/cpld_firmware/Delete_This_File_To_Check_CPLD_(%02x_%02x_%02x).txt"
 #define FORCE_BLANK_FILE_MESSAGE "Deleting this file will force the CPLD to be erased on the next reset\r\n"
 #define FORCE_UPDATE_FILE_MESSAGE "Deleting this file will force a CPLD update check on the next reset\r\n"
 #define BLANK_FILE "/cpld_firmware/recovery/blank/BLANK.xsvf"
