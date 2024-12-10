@@ -1,0 +1,4 @@
+## 720x576 @ 120Hz
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt=720 576 120 1 0 0 0
