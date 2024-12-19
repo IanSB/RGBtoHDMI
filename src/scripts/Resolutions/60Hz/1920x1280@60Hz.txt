@@ -1,0 +1,5 @@
+## 1920x1280 @ 60Hz
+hdmi_pixel_freq_limit=340000000
+hdmi_group=2
+hdmi_mode=87
+hdmi_timings=1920 0 48 32 80 1280 0 4 5 36 0 0 0 60 0 165360000 1
