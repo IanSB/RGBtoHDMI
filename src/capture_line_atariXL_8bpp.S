@@ -1321,13 +1321,13 @@ preload_capture_line_atarilc2600_sixbits_double_8bpp:
         mov    r9, #0
         mov    r10, #0
         tst    r8, #(0x02 << PIXEL_BASE)          //Y HI
-        eorne  r9, r9, #0x000001                  //bit 0
+        eorne  r9, r9, #0x000020                  //bit 0
         tst    r8, #(0x10 << PIXEL_BASE)          //Y LO
-        eorne  r9, r9, #0x000002                  //bit 1
+        eorne  r9, r9, #0x000010                  //bit 1
         tst    r8, #(0x02 << (PIXEL_BASE + 6))    //Y HI second pixel
-        eorne  r9, r9, #0x000004                  //bit 2
+        eorne  r9, r9, #0x000008                  //bit 2
         tst    r8, #(0x10 << (PIXEL_BASE + 6))    //Y LO second pixel
-        eorne  r9, r9, #0x000008                  //bit 3
+        eorne  r9, r9, #0x000004                  //bit 3
 .endm
 
 .macro CAPTURE_B_R_BITS_DOUBLE_16BPP_WIDE_NES reg1 reg2
@@ -1336,13 +1336,22 @@ preload_capture_line_atarilc2600_sixbits_double_8bpp:
 
 
         tst    r8, #(0x02 << PIXEL_BASE)          //Y HI
-        eorne  r9, r9, #0x000010                  //bit 4
+        eorne  r9, r9, #0x000002                  //bit 4
         tst    r8, #(0x10 << PIXEL_BASE)          //Y LO
-        eorne  r9, r9, #0x000020                  //bit 5
+        eorne  r9, r9, #0x000001                  //bit 5
+        cmp    r9, #8
+        bge    not_emph_code1\@
+        mov    r12, #0
+        tst    r9, #0x1  //blue bit
+        orrne  r12, r12, #0x40
+        tst    r9, #0x4  //red bit
+        orrne  r12, r12, #0x80
+not_emph_code1\@:
+        orr    r9, r9, r12
         tst    r8, #(0x02 << (PIXEL_BASE + 6))    //Y HI second pixel
-        eorne  r10, r10, #0x000001                //bit 0
+        eorne  r10, r10, #0x000020                //bit 0
         tst    r8, #(0x10 << (PIXEL_BASE + 6))    //Y LO second pixel
-        eorne  r10, r10, #0x000002                //bit 1
+        eorne  r10, r10, #0x000010                //bit 1
 
         ldr    r9, [r14, r9, lsl #2]
         eor    r9, r9, \reg1
@@ -1355,20 +1364,71 @@ preload_capture_line_atarilc2600_sixbits_double_8bpp:
         // Pixel 1 in GPIO 13.. 8 -> 23..16
 
         tst    r8, #(0x02 << PIXEL_BASE)          //Y HI
-        eorne  r10, r10, #0x000004                //bit 2
+        eorne  r10, r10, #0x000008                //bit 2
         tst    r8, #(0x10 << PIXEL_BASE)          //Y LO
-        eorne  r10, r10, #0x000008                //bit 3
+        eorne  r10, r10, #0x000004                //bit 3
         tst    r8, #(0x02 << (PIXEL_BASE + 6))    //Y HI second pixel
-        eorne  r10, r10, #0x000010                //bit 4
+        eorne  r10, r10, #0x000002                //bit 4
         tst    r8, #(0x10 << (PIXEL_BASE + 6))    //Y LO second pixel
-        eorne  r10, r10, #0x000020                //bit 5
+        eorne  r10, r10, #0x000001                //bit 5
+        cmp    r10, #8
+        bge    not_emph_code2\@
 
+        mov    r12, #0
+        tst    r10, #0x1  //blue bit
+        orrne  r12, r12, #0x40
+        tst    r10, #0x4  //blue bit
+        orrne  r12, r12, #0x80
+
+not_emph_code2\@:
+        orr    r10, r10, r12
         ldr    r10, [r14, r10, lsl #2]
         eor    r10, r10, \reg1
         orr    \reg2, r10, r10, lsl #16
 .endm
 
 
+
+.macro  SKIP_PSYNC_NO_OLD_CPLD_PPU
+        push   {r7}
+        mov    r12, #0
+subsloop\@:
+        cmp    r7, #3
+        blt    nosubsloop\@
+        sub    r7, r7, #3
+        add    r12, r12, #1
+        b      subsloop\@
+nosubsloop\@:
+        orr    r12, r12, r7, lsl # 16
+        pop    {r7}
+        mov    r8, #0
+        SKIP_PSYNC_COMMON_NO_OLD_CPLD
+        mov    r7, r12, lsr #16
+        bic    r12, r12, #0xff0000
+skip_psync_no_old_loop1\@:
+        cmp    r7, #0
+        moveq  r7, r12
+        beq    no_r7_remainder\@
+        WAIT_FOR_PSYNC_EDGE_FAST           // wait for next edge of psync
+        sub    r7, r7, #1
+        b      skip_psync_no_old_loop1\@
+no_r7_remainder\@:
+        ldr    r14, =palette_data_16
+        ldr    r12, emphasis_bits
+        cmp    r7, #0
+        beq    noskip2\@
+skip_psync_no_old_loop2\@:
+        WAIT_FOR_PSYNC_EDGE_FAST                      // expects GPLEV0 in r4, result in r8
+        CAPTURE_R_G_BITS_DOUBLE_16BPP_WIDE_NES                // input in r8
+        WAIT_FOR_PSYNC_EDGE_FAST                      // expects GPLEV0 in r4, result in r8
+        CAPTURE_B_R_BITS_DOUBLE_16BPP_WIDE_NES r11 r5                // input in r8
+        WAIT_FOR_PSYNC_EDGE_FAST                      // expects GPLEV0 in r4, result in r8
+        CAPTURE_G_B_BITS_DOUBLE_16BPP_WIDE_NES r11 r6                // input in r8
+        subs   r7, r7, #1
+        bne    skip_psync_no_old_loop2\@
+noskip2\@:
+        str    r12, emphasis_bits
+.endm
 
         .ltorg
 
@@ -1382,11 +1442,12 @@ capture_line_nes_sixbits_double_16bpp:
         SETUP_VSYNC_DEBUG_16BPP_R11
         push {r1}
         add  r1, r1, r1, lsl #1  // *3
-        SKIP_PSYNC_NO_OLD_CPLD
+        SKIP_PSYNC_NO_OLD_CPLD_PPU
         pop {r14}
         pop  {r1}
         push {r14}
         ldr    r14, =palette_data_16
+        ldr    r12, emphasis_bits
 loop6d_16bpp_nes:
         WAIT_FOR_PSYNC_EDGE_FAST                      // expects GPLEV0 in r4, result in r8
         CAPTURE_R_G_BITS_DOUBLE_16BPP_WIDE_NES                // input in r8
@@ -1397,6 +1458,7 @@ loop6d_16bpp_nes:
 
         WRITE_R5_R6_IF_LAST_16BPP
         cmp     r1, #1
+        streq   r12, emphasis_bits
         popeq   {r0, pc}
 
         WAIT_FOR_PSYNC_EDGE_FAST                      // expects GPLEV0 in r4, result in r8
@@ -1410,17 +1472,20 @@ loop6d_16bpp_nes:
 
         subs    r1, r1, #2
         bne     loop6d_16bpp_nes
-
+        str    r12, emphasis_bits
         pop     {r0, pc}
+
+emphasis_bits:
+        .word 0
 
 
 preload_capture_line_nes_sixbits_double_16bpp:
         ldr    r0, =palette_data_16
-        mov    r1, #64
+        mov    r1, #256
 preload_loop_NES:
         ldr    r2, [r0], #4
         subs   r1, r1, #1
         bne    preload_loop_NES
-
+        str    r1, emphasis_bits
         SETUP_DUMMY_PARAMETERS
         b       capture_line_nes_sixbits_double_16bpp
