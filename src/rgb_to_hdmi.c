@@ -3591,6 +3591,8 @@ void rgb_to_hdmi_main() {
 #endif
 
          if (!osd_active() && reboot_required) {
+             set_osd_active(); //turn OSD back on
+             swapBuffer(get_current_display_buffer());  //make sure right buffer displayed
              if (resolution_warning != 0) {
                  osd_set_noupdate(0, 0, "If there is no display with new setting:");
                  osd_set_noupdate(1, 0, "Hold menu button during reset until you");

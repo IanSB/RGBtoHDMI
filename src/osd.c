@@ -4412,6 +4412,25 @@ int max_palette_count;
                             0xd7ffce,
                             0x9d9aff,
                             0xffffc9
+
+                            //possible alt - not in c64 order and rgb reversed
+                            0x00000000,
+                            0x258B3442,
+                            0x2D262D77,
+                            0x488B3442,
+                            0x9F87B2C9,
+                            0xCBFFFFC5,
+                            0x9FF59DE9,
+                            0xA8DCD485,
+                            0x564A73A8,
+                            0x7DCA707E,
+                            0xDEB0FFFF,
+                            0xBA71CCBD,
+                            0x864A9E55,
+                            0x8E6268B6,
+                            0xC387DF92,
+                            0xFFFFFFFF,
+
 */
 
 
@@ -6092,6 +6111,11 @@ void osd_set_clear(int line, int attr, char *text) {
 
 int osd_active() {
    return active;
+}
+
+void set_osd_active() {
+   active = 1;
+   osd_update_palette(1);
 }
 
 int menu_active() {
