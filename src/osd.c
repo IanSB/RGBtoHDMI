@@ -97,6 +97,7 @@ static char *default_palette_names[] = {
    "RGBI_(CGA)",
    "RGBI_(XRGB-NTSC)",
    "RGBI_(XRGB-Apple)",
+   "RGBI_(XRGB-Video7)",
    "RGBI_(Spectrum)",
    "RGBI_(Lumacode)",
    "RGBrgb_(Spectrum)",
@@ -832,7 +833,7 @@ static menu_t custom_profile_menu = {
 };
 
 static menu_t audio_test_menu = {
-   "HDMI Audio Test Menu",
+   "Audio Test Menu",
    NULL,
    {
       (base_menu_item_t *) &back_ref,
@@ -1281,7 +1282,7 @@ void set_menu_table() {
       main_menu.items[index++] = (base_menu_item_t *) &settings_menu_ref;
       main_menu.items[index++] = (base_menu_item_t *) &geometry_menu_ref;
       main_menu.items[index++] = (base_menu_item_t *) &sampling_menu_ref;
- //     main_menu.items[index++] = (base_menu_item_t *) &audio_test_ref;
+      main_menu.items[index++] = (base_menu_item_t *) &audio_test_ref;
       main_menu.items[index++] = (base_menu_item_t *) &custom_profile_ref,
       main_menu.items[index++] = (base_menu_item_t *) &save_ref;
       main_menu.items[index++] = (base_menu_item_t *) &restore_ref;
@@ -3233,7 +3234,58 @@ int max_palette_count;
                     max_palette_count = 16;
                     break;
 
-                 case PALETTE_LASER:
+
+                 case PALETTE_XRGB:  //ntsc
+                    phase_shift = 0.0f;
+                    switch (i & 0x17) {
+                       case 0x00:
+                          Y=0     ; U=0     ; V=0     ; break; //Black
+                       case 0x01:
+                          Y=0.25  ; U=0     ; V=0.5   ; phase_shift = 6.0f; break; //Magenta
+                       case 0x02:
+                          Y=0.25  ; U=0.5   ; V=0     ; phase_shift = 12.0f; break; //Dark Blue
+                       case 0x03:
+                          Y=0.5   ; U=1     ; V=1     ; phase_shift = -6.0f; break; //Purple
+                       case 0x04:
+                          Y=0.25  ; U=0     ; V=-0.5  ; phase_shift = 12.0f; break; //Dark Green
+                       case 0x05:
+                          Y=0.5   ; U=0     ; V=0     ; break; //lower Gray
+                       case 0x06:
+                          Y=0.5   ; U=1     ; V=-1    ; phase_shift = -6.0f; break; //Medium Blue
+                       case 0x07:
+                          Y=0.75  ; U=0.5   ; V=0     ; phase_shift = 6.0f; break; //Light Blue
+                       case 0x10:
+                          Y=0.25  ; U=-0.5  ; V=0     ; phase_shift = 12.0f; break; //Brown
+                       case 0x11:
+                          Y=0.5   ; U=-1    ; V=1     ; phase_shift = -6.0f; break; //Orange
+                       case 0x12:
+                          Y=0.5   ; U=0     ; V=0     ; break; //upper Gray
+                       case 0x13:
+                          Y=0.75  ; U=0     ; V=0.5   ; phase_shift = 6.0f; break; //Pink
+                       case 0x14:
+                          Y=0.5   ; U=-1    ; V=-1    ; phase_shift = -6.0f; break; //Light Green
+                       case 0x15:
+                          Y=0.75  ; U=-0.5  ; V=0     ; phase_shift = 6.0f; break; //Yellow
+                       case 0x16:
+                          Y=0.75  ; U=0     ; V=-0.5  ; phase_shift = 6.0f; break; //Aquamarine
+                       case 0x17:
+                          Y=1     ; U=0     ; V=0     ; break; //White
+                    }
+
+                    hue = phase_shift * PI / 180.0f;
+
+                    U2 = (U * cos(hue) + V * sin(hue));
+                    V2 = (V * cos(hue) - U * sin(hue));
+
+                    r = gamma_correct(Y + 1.140 * V2, 1);
+                    g = gamma_correct(Y - 0.395 * U2 - 0.581 * V2, 1);
+                    b = gamma_correct(Y + 2.032 * U2, 1);
+                    m = gamma_correct(Y, 1);
+
+                    break;
+
+
+                 case PALETTE_LASER: //apple
                     phase_shift = 0.0f;
                     switch (i & 0x17) {
                        case 0x00:
@@ -3282,36 +3334,37 @@ int max_palette_count;
                     max_palette_count = 32;
                     break;
 
-                 case PALETTE_XRGB:
+
+                 case PALETTE_VIDEO7:  //laser
                     phase_shift = 0.0f;
                     switch (i & 0x17) {
                        case 0x00:
                           Y=0     ; U=0     ; V=0     ; break; //Black
                        case 0x01:
                           Y=0.25  ; U=0     ; V=0.5   ; phase_shift = 6.0f; break; //Magenta
-                       case 0x02:
-                          Y=0.25  ; U=0.5   ; V=0     ; phase_shift = 12.0f; break; //Dark Blue
-                       case 0x03:
-                          Y=0.5   ; U=1     ; V=1     ; phase_shift = -6.0f; break; //Purple
                        case 0x04:
-                          Y=0.25  ; U=0     ; V=-0.5  ; phase_shift = 12.0f; break; //Dark Green
+                          Y=0.25  ; U=0.5   ; V=0     ; phase_shift = 12.0f; break; //Dark Blue
                        case 0x05:
-                          Y=0.5   ; U=0     ; V=0     ; break; //lower Gray
-                       case 0x06:
-                          Y=0.5   ; U=1     ; V=-1    ; phase_shift = -6.0f; break; //Medium Blue
+                          Y=0.5   ; U=1     ; V=1     ; phase_shift = -6.0f; break; //Purple
+                       case 0x02:
+                          Y=0.25  ; U=0     ; V=-0.5  ; phase_shift = 12.0f; break; //Dark Green
                        case 0x07:
+                          Y=0.5   ; U=0     ; V=0     ; break; //lower Gray
+                       case 0x14:
+                          Y=0.5   ; U=1     ; V=-1    ; phase_shift = -6.0f; break; //Medium Blue
+                       case 0x06:
                           Y=0.75  ; U=0.5   ; V=0     ; phase_shift = 6.0f; break; //Light Blue
-                       case 0x10:
+                       case 0x03:
                           Y=0.25  ; U=-0.5  ; V=0     ; phase_shift = 12.0f; break; //Brown
                        case 0x11:
                           Y=0.5   ; U=-1    ; V=1     ; phase_shift = -6.0f; break; //Orange
-                       case 0x12:
+                       case 0x10:
                           Y=0.5   ; U=0     ; V=0     ; break; //upper Gray
-                       case 0x13:
-                          Y=0.75  ; U=0     ; V=0.5   ; phase_shift = 6.0f; break; //Pink
-                       case 0x14:
-                          Y=0.5   ; U=-1    ; V=-1    ; phase_shift = -6.0f; break; //Light Green
                        case 0x15:
+                          Y=0.75  ; U=0     ; V=0.5   ; phase_shift = 6.0f; break; //Pink
+                       case 0x12:
+                          Y=0.5   ; U=-1    ; V=-1    ; phase_shift = -6.0f; break; //Light Green
+                       case 0x13:
                           Y=0.75  ; U=-0.5  ; V=0     ; phase_shift = 6.0f; break; //Yellow
                        case 0x16:
                           Y=0.75  ; U=0     ; V=-0.5  ; phase_shift = 6.0f; break; //Aquamarine
@@ -3328,8 +3381,11 @@ int max_palette_count;
                     g = gamma_correct(Y - 0.395 * U2 - 0.581 * V2, 1);
                     b = gamma_correct(Y + 2.032 * U2, 1);
                     m = gamma_correct(Y, 1);
-
+                    max_palette_count = 32;
                     break;
+
+
+
 
                  case PALETTE_SPECTRUM:
                     switch (i & 0x09) {
@@ -4378,6 +4434,100 @@ int max_palette_count;
                 case PALETTE_VIC20: {
                        static int c64_translate[] = {0, 6, 2, 4, 9, 11, 12, 3, 8, 14, 15, 7, 5, 10, 13, 1};
                        static int palette[] = {
+
+                            // vice
+                            0x00000000,
+                            0x00FFFFFF,
+                            0x00F00000,
+                            0x0000F0F0,
+                            0x00600060,
+                            0x0000A000,
+                            0x000000F0,
+                            0x00D0D000,
+                            0x00C0A000,
+                            0x00FFA000,
+                            0x00F08080,
+                            0x0000FFFF,
+                            0x00FF00FF,
+                            0x0000FF00,
+                            0x0000A0FF,
+                            0x00FFFF00
+
+
+/*
+                            // colodore_vic
+                            0x00000000,
+                            0x00FFFFFF,
+                            0x006D2327,
+                            0x00A0FEF8,
+                            0x008E3C97,
+                            0x007EDA75,
+                            0x00252390,
+                            0x00FFFF86,
+                            0x00A4643B,
+                            0x00FFC8A1,
+                            0x00F2A7AB,
+                            0x00DBFFFF,
+                            0x00FFB4FF,
+                            0x00D7FFCE,
+                            0x009D9AFF,
+                            0x00FFFFC9
+
+                            // mike-ntsc
+                            0x00000000,
+                            0x00FFFFFF,
+                            0x00F91137,
+                            0x0035F9F6,
+                            0x00FF3CC6,
+                            0x003CEDA9,
+                            0x000F57F7,
+                            0x00FEE963,
+                            0x00FB6244,
+                            0x00FBBFDE,
+                            0x00F3ACE5,
+                            0x00A8EADD,
+                            0x00E6B8F7,
+                            0x00ABDDA4,
+                            0x006AB3E7,
+                            0x00F7DAA5
+
+                            // mike-pal
+                            0x00000000,
+                            0x00FFFFFF,
+                            0x00B61F21,
+                            0x004DF0FF,
+                            0x00B43FFF,
+                            0x0044E237,
+                            0x001A34FF,
+                            0x00DCD71B,
+                            0x00CA5400,
+                            0x00E9B072,
+                            0x00E79293,
+                            0x009AF7FD,
+                            0x00E09FFF,
+                            0x008FE493,
+                            0x008290FF,
+                            0x00E5DE85
+
+                            // PALette
+                            0x00000000,
+                            0x00FFFFFF,
+                            0x00972A2E,
+                            0x0064E3DE,
+                            0x00AD3CBF,
+                            0x005CDC54,
+                            0x004032B9,
+                            0x00D7E745,
+                            0x00BA6A24,
+                            0x00E1B996,
+                            0x00DAA3A5,
+                            0x00B6F6F3,
+                            0x00DEA6E8,
+                            0x00B2F3AF,
+                            0x00A69EE2,
+                            0x00F4FCAB
+
+                            // OLD
                             0x000000,
                             0xf0f0f0,
                             0x671317,
@@ -4394,46 +4544,7 @@ int max_palette_count;
                             0x8FE986,
                             0x716EE7,
                             0xEAED74
-
-/*
-                            0x000000,
-                            0xffffff,
-                            0x6d2327,
-                            0xa0fef8,
-                            0x8e3c97,
-                            0x7eda75,
-                            0x252390,
-                            0xffff86,
-                            0xa4643b,
-                            0xffc8a1,
-                            0xf2a7ab,
-                            0xdbffff,
-                            0xffb4ff,
-                            0xd7ffce,
-                            0x9d9aff,
-                            0xffffc9
-
-                            //possible alt - not in c64 order and rgb reversed
-                            0x00000000,
-                            0x258B3442,
-                            0x2D262D77,
-                            0x488B3442,
-                            0x9F87B2C9,
-                            0xCBFFFFC5,
-                            0x9FF59DE9,
-                            0xA8DCD485,
-                            0x564A73A8,
-                            0x7DCA707E,
-                            0xDEB0FFFF,
-                            0xBA71CCBD,
-                            0x864A9E55,
-                            0x8E6268B6,
-                            0xC387DF92,
-                            0xFFFFFFFF,
-
 */
-
-
 
                         };
                         b = palette[c64_translate[i]] & 0xff;
@@ -7641,9 +7752,21 @@ void osd_init() {
        }
    }
 
-   if (EIA_CEA_861_extension && supports1080i && !supports1080p) {      //could add year limit here as well
-       log_info("Monitor has EIA/CEA-861 extension, supports 1080i@50 but doesn't support 1080p@50, limiting 50Hz support");
-       Vrefresh_lo = 60;
+   char auto_workaround_path[MAX_STRING_SIZE];
+   int force_50hz = 0;
+   sprintf(auto_workaround_path, "/Resolutions/Force_50Hz/%dx%d_%s_%s.txt", detectedwidth, detectedheight, EDID_name, manufacturer_id);
+   log_info("Testing force 50Hz refresh path: %s", auto_workaround_path);
+   if (test_file(auto_workaround_path)) {
+        log_info("Force 50hz detected");
+        Vrefresh_lo = 50;
+        force_50hz = 1;
+   }
+
+   if (!force_50hz) {
+        if (EIA_CEA_861_extension && supports1080i && !supports1080p) {      //could add year limit here as well
+            log_info("Monitor has EIA/CEA-861 extension, supports 1080i@50 but doesn't support 1080p@50, limiting 50Hz support");
+            Vrefresh_lo = 60;
+        }
    }
 
    log_info("Lowest vertical frequency supported by monitor = %d Hz", Vrefresh_lo);
@@ -7843,7 +7966,13 @@ void osd_init() {
    }
 
    int auto_workaround = 0;
-   char auto_workaround_path[MAX_STRING_SIZE];
+   int resolution_confirmed = 0;
+
+
+   sprintf(auto_workaround_path, "/Resolutions/60Hz/%dx%d_%s_%s/Auto@60Hz.txt", get_hdisplay(), get_true_vdisplay(), EDID_name, manufacturer_id);
+   if (test_file(auto_workaround_path) || (detectedwidth == get_hdisplay() && detectedheight == get_true_vdisplay()) ) {
+       resolution_confirmed = 1;
+   }
 
    sprintf(auto_workaround_path, "/Resolutions/60Hz/%dx%d/Auto@60Hz.txt", detectedwidth, detectedheight);
 #ifdef RPI4
@@ -7852,10 +7981,18 @@ void osd_init() {
    if (test_file(auto_workaround_path) && detectedwidth != 3840 && detectedheight != 2160) {
 #endif
       auto_workaround = 1;
-      log_info("Auto %dx%d workaround = %d",detectedwidth, detectedheight, auto_workaround);
+      log_info("Auto workaround detected for %s", auto_workaround_path);
       sprintf(auto_workaround_path, "%dx%d/", detectedwidth, detectedheight);
    } else {
-      auto_workaround_path[0] = 0;
+      sprintf(auto_workaround_path, "/Resolutions/60Hz/%dx%d_%s_%s/Auto@60Hz.txt", detectedwidth, detectedheight, EDID_name, manufacturer_id);
+      log_info("Testing Resolution force path: %s", auto_workaround_path);
+      if (test_file(auto_workaround_path)) {
+         auto_workaround = 1;
+         log_info("Auto workaround detected for %s", auto_workaround_path);
+         sprintf(auto_workaround_path, "%dx%d_%s_%s/", detectedwidth, detectedheight, EDID_name, manufacturer_id);
+      } else {
+         auto_workaround_path[0] = 0;
+      }
    }
 
    int auto_workaround_detected = 1;
@@ -7867,12 +8004,13 @@ void osd_init() {
    }
 
    int reboot = 0;
-   if (auto_detected && (auto_workaround_detected != auto_workaround || (auto_workaround && (detectedwidth != get_hdisplay() || detectedheight != get_true_vdisplay() )))) {
+   if (auto_detected && (auto_workaround_detected != auto_workaround || (auto_workaround && !resolution_confirmed))) {
        log_info("reboot %d %d '%s'", auto_workaround_detected, auto_workaround, auto_workaround_path);
        reboot = 1;
    } else {
        log_info("noreboot %d %d '%s'", auto_workaround_detected, auto_workaround, auto_workaround_path);
    }
+
    if (valid_edid) {
    set_auto_workaround_path(auto_workaround_path, reboot);
    }
