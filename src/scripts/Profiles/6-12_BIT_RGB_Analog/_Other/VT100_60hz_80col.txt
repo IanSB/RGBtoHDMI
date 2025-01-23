@@ -1,0 +1,8 @@
+sampling=0,0,0,0,0,0,0,0,1,0,3,0,0,0,0,0,1,1,1,0,54,27,256,256,256,11,256,256
+geometry=72,15,808,240,800,240,0,0,1,1,16044826,1020,15000,262,4,0,0
+palette=Mono_(3_level_Bright)
+ntsc_colour=1
+ntsc_type=2
+genlock_mode=1
+num_buffers=3
+overclock_cpu=38
