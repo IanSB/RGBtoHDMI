@@ -1,0 +1,1 @@
+Force 50Hz for this monitor
