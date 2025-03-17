@@ -1,5 +1,5 @@
 sampling=4,4,4,4,4,4,4,0,1,0,4,0,0,0,0,0,0,4,0,0,100,256,100,256,100,256,0,256
 geometry=188,37,640,256,720,280,1,2,1,2,16000000,1024,5000,316,4,6,0
 palette=RrGgBb_(EGA)
-overclock_core=50
+overclock_core=100
 powerup_message=0
