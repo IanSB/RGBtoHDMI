@@ -4,6 +4,18 @@
 
 #define DMA_CB_MAX 2560
 
+#define DMA_CS(x)                  ((volatile uint32_t *)(_get_peripheral_base() + 0x7000 + (0x100 * (x))))
+#define DMA_CB_ADDR(x)             ((volatile uint32_t *)(_get_peripheral_base() + 0x7004 + (0x100 * (x))))
+#define DMA_TI(x)                  ((volatile uint32_t *)(_get_peripheral_base() + 0x7008 + (0x100 * (x))))
+#define DMA_S_ADDR(x)              ((volatile uint32_t *)(_get_peripheral_base() + 0x700c + (0x100 * (x))))
+#define DMA_D_ADDR(x)              ((volatile uint32_t *)(_get_peripheral_base() + 0x7010 + (0x100 * (x))))
+#define DMA_TXFR_LEN(x)            ((volatile uint32_t *)(_get_peripheral_base() + 0x7014 + (0x100 * (x))))
+#define DMA_STRIDE(x)              ((volatile uint32_t *)(_get_peripheral_base() + 0x7018 + (0x100 * (x))))
+#define DMA_NEXTCONBK(x)           ((volatile uint32_t *)(_get_peripheral_base() + 0x701c + (0x100 * (x))))
+#define DMA_DEBUG(x)               ((volatile uint32_t *)(_get_peripheral_base() + 0x7020 + (0x100 * (x))))
+#define DMA_INT_STATUS             ((volatile uint32_t *)(_get_peripheral_base() + 0x7FE0))
+#define DMA_ENABLE                 ((volatile uint32_t *)(_get_peripheral_base() + 0x7FF0))
+
 enum {
 	DMA_PERMAP_DEFAULT = 0,
 	DMA_PERMAP_DSI_0,
@@ -72,5 +84,5 @@ void dma_debug(int x);
 void dma_init();
 void dma_submit_cb(int ch);
 void dma_wait(int ch);
-void start_sound_dma(uint32_t *buffer, uint32_t size);
+uint32_t start_sound_dma(uint32_t *buffer, uint32_t size);
 void stop_dma(int ch);

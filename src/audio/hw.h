@@ -137,3 +137,9 @@
 
 #endif
 
+#define HD_MAI_CTL_ERRORF   (1<<1)
+#define HD_MAI_CTL_ERRORE   (1<<2)
+#define HD_MAI_CTL_EMPTY 	(1<<10)
+#define HD_MAI_CTL_FULL     (1<<11)
+#define HD_MAI_CTL_BUSY     (1<<14)
+#define HD_MAI_CTL_DLATE    (1<<15)   

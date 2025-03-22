@@ -271,6 +271,13 @@ enum {
 };
 
 enum {
+    CLOCK_SAMPLES,
+    CLOCK_PLL_SAMPLES,
+    CLOCK_PLL,
+    NUM_CLOCK
+};
+
+enum {
    F_AUTO_SWITCH,
    F_RESOLUTION,
    F_REFRESH,
@@ -341,6 +348,13 @@ enum {
    F_BORDER_HEIGHT,
 
    F_WAVS,
+   F_AUDIO_CAP,
+   F_DMA,
+   F_DMA_DELAY,
+   F_CLOCK_SYNC,
+   F_OPTIMISE,
+   F_LIVE_DEBUG,
+   F_DEBUG_MENU,
 
    F_FRONTEND,       //must be last
 
@@ -379,4 +393,5 @@ int get_existing_frontend(int frontend);
 void set_auto_name(char* name);
 int normalised_gamma_correct(int old_value);
 int get_inhibit_palette_dimming16();
+void set_feature(int num, int value);
 #endif

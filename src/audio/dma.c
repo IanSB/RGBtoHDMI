@@ -47,24 +47,12 @@
 #include "../startup.h"
 #include "../logging.h"
 #include "../cache.h"
+#include "../rgb_to_hdmi.h"
 
-#define DMA_CS(x)                  ((volatile uint32_t *)(_get_peripheral_base() + 0x7000 + (0x100 * (x))))
-#define DMA_CB_ADDR(x)             ((volatile uint32_t *)(_get_peripheral_base() + 0x7004 + (0x100 * (x))))
-#define DMA_TI(x)                  ((volatile uint32_t *)(_get_peripheral_base() + 0x7008 + (0x100 * (x))))
-#define DMA_S_ADDR(x)              ((volatile uint32_t *)(_get_peripheral_base() + 0x700c + (0x100 * (x))))
-#define DMA_D_ADDR(x)              ((volatile uint32_t *)(_get_peripheral_base() + 0x7010 + (0x100 * (x))))
-#define DMA_TXFR_LEN(x)            ((volatile uint32_t *)(_get_peripheral_base() + 0x7014 + (0x100 * (x))))
-#define DMA_STRIDE(x)              ((volatile uint32_t *)(_get_peripheral_base() + 0x7018 + (0x100 * (x))))
-#define DMA_NEXTCONBK(x)           ((volatile uint32_t *)(_get_peripheral_base() + 0x701c + (0x100 * (x))))
-#define DMA_DEBUG(x)               ((volatile uint32_t *)(_get_peripheral_base() + 0x7020 + (0x100 * (x))))
-#define DMA_INT_STATUS             ((volatile uint32_t *)(_get_peripheral_base() + 0x7FE0))
-#define DMA_ENABLE                 ((volatile uint32_t *)(_get_peripheral_base() + 0x7FF0))
 
-#define GPU_MEMORY_OFFSET 0xc0000000         //required when GPU L2 cache disabled to avoid clicks in audio. Maybe change to 0x4 or 0x8 if GPU L2 cache enabled
-#define GPU_MEMORY_OFFSET_MASK 0x3fffffff
 
 //static dma_control_block g_dma_cbs[DMA_CB_MAX]  __attribute__ ((aligned (32))) ;
-static dma_control_block *g_dma_cbs = (dma_control_block*) (UNCACHED_MEM_BASE + 0xf0000);  //todo: investigate some problems with cached control block
+static dma_control_block *g_dma_cbs = (dma_control_block*) (UNCACHED_MEM_BASE + 0xf0000)  ;  //todo: investigate some problems with cached control block
 struct dma_control_block_t *g_dma_cb_head;
 static int dma_cb_index;
 
@@ -172,6 +160,7 @@ dma_control_block *dma_get_cb() {
 }
 
 void dma_debug(int x) {
+    /*
 	log_info("----------------------------------------------------------------");
     log_info("DMA : DMA_INT_STATUS   (%08X) : %08X", DMA_INT_STATUS, *DMA_INT_STATUS);
     log_info("DMA : DMA_ENABLE       (%08X) : %08X", DMA_ENABLE, *DMA_ENABLE);
@@ -186,11 +175,12 @@ void dma_debug(int x) {
     log_info("DMA : DMA_DEBUG(%d)     (%08X) : %08X", x, DMA_DEBUG(x), *DMA_DEBUG(x));
     log_info("DMA : g_dma_cb_head               : %08X",(uint32_t)g_dma_cb_head);
 	log_info("----------------------------------------------------------------");
+    */
 }
 
 void dma_submit_cb(int ch) {
 	*DMA_CS(ch) = (1 << 31);
-	*DMA_CB_ADDR(ch) = (uint32_t)g_dma_cb_head | GPU_MEMORY_OFFSET;    //the control block pointers have to be at GPU_MEMORY_OFFSET in GPU address space when audio data is also at that offset
+	*DMA_CB_ADDR(ch) = (uint32_t)g_dma_cb_head | get_GPU_top_bits();    //the control block pointers have to be at GPU_MEMORY_OFFSET in GPU address space when audio data is also at that offset
 //	/InvalidateData();
     //CleanDataCache();
 	*DMA_CS(ch) |= (1 << 28);
@@ -217,12 +207,16 @@ void dma_wait(int ch) {
 	}
 }
 
-void start_sound_dma(uint32_t *buffer, uint32_t size) {
+uint32_t start_sound_dma(uint32_t *buffer, uint32_t size) {
     dma_init();
     dma_control_block *dmadata = dma_get_cb();
-    dma_cb_set_addr(dmadata, (uint32_t)HDMI_MAI_DATA_BUS, (uint32_t) buffer | GPU_MEMORY_OFFSET); //the audio data has to be at GPU_MEMORY_OFFSET in GPU address space to avoid clicks when L2 cache disabled
+    if (((uint32_t)buffer >> 24) == 0x7e) {
+        dma_cb_set_addr(dmadata, (uint32_t)HDMI_MAI_DATA_BUS, (uint32_t) buffer); //buffer is in register block
+    } else {
+        dma_cb_set_addr(dmadata, (uint32_t)HDMI_MAI_DATA_BUS, (uint32_t) buffer | get_GPU_top_bits()); //the audio data has to be at GPU_MEMORY_OFFSET in GPU address space to avoid clicks when L2 cache disabled
+    }
     dma_cb_set_ti_src_inc(dmadata, 1);
-    dma_cb_set_ti_burst_length(dmadata, 2);
+    dma_cb_set_ti_burst_length(dmadata, 2);    //was2
     dma_cb_set_txfr_len(dmadata, size);
     //enable dreq from HDMI
     dma_cb_set_ti_dst_dreq(dmadata, 1);
@@ -230,8 +224,9 @@ void start_sound_dma(uint32_t *buffer, uint32_t size) {
     //make ring link
     dma_control_block *dmadata2 = dma_get_cb();
     dma_cb_dup(dmadata2, dmadata);
-    dmadata->next_cb = (dma_control_block*) ((uint32_t) dmadata->next_cb | GPU_MEMORY_OFFSET);   //the control block pointers have to be at GPU_MEMORY_OFFSET in GPU address space when audio data is also at that offset
-    dmadata2->next_cb = (dma_control_block*) ((uint32_t) dmadata | GPU_MEMORY_OFFSET);           //the control block pointers have to be at GPU_MEMORY_OFFSET in GPU address space when audio data is also at that offset
+    dmadata->next_cb = (dma_control_block*) ((uint32_t) dmadata->next_cb | get_GPU_top_bits());   //the control block pointers have to be at GPU_MEMORY_OFFSET in GPU address space when audio data is also at that offset
+    dmadata2->next_cb = (dma_control_block*) ((uint32_t) dmadata | get_GPU_top_bits());           //the control block pointers have to be at GPU_MEMORY_OFFSET in GPU address space when audio data is also at that offset
     //kick
     dma_submit_cb(0);
+    return (uint32_t) dmadata;
 }

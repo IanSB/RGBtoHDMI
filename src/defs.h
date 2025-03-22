@@ -54,6 +54,8 @@
 
 #define VSYNCINT 16
 
+
+
 // Control bits (maintained in r3)
 
 //the BITDUP bits reuse some bits in the inner capture loops
@@ -179,7 +181,7 @@
 
 #define SMICTRL_OFFSET    0x600000
 
-//#define GPFSEL0 (PERIPHERAL_BASE + 0x200000)  // controls GPIOs 0..9
+//#define GPFSEL0 (volatile uint32_t *)(_get_peripheral_base() + 0x200000)  // controls GPIOs 0..9
 //#define GPFSEL1 (PERIPHERAL_BASE + 0x200004)  // controls GPIOs 10..19
 //#define GPFSEL2 (PERIPHERAL_BASE + 0x200008)  // controls GPIOs 20..29
 //#define GPEDS0  (PERIPHERAL_BASE + 0x200040)
@@ -262,6 +264,13 @@ typedef struct {
 } clk_info_t;
 
 #endif // __ASSEMBLER__
+
+#define AUDIO_TEST_DURATION 100000000 //100 milliseconds
+
+#define AUDIO_CLOCK_PIN 15
+#define AUDIO_DATA1_PIN 24
+#define AUDIO_DATA2_PIN 25
+
 
 // Quad Pixel input on GPIOs 2..13
 #define PIXEL_BASE   (2)
@@ -377,7 +386,7 @@ typedef struct {
 
 
 #define BBC_VERSION 0x79
-#define RGB_VERSION 0x95
+#define RGB_VERSION 0x94
 #define YUV_VERSION 0x91
 
 //these defines are adjusted for different clock speeds
@@ -429,7 +438,7 @@ typedef struct {
 #define GENLOCK_NLINES_THRESHOLD 350
 #define GENLOCK_FORCE 1
 
-#define GENLOCK_PPM_STEP 334
+#define GENLOCK_PPM_STEP 200
 #define GENLOCK_MAX_STEPS 6
 #define GENLOCK_THRESHOLDS {0, 5, 10, 16, 25, 35}
 #define GENLOCK_LOCKED_THRESHOLD 2
@@ -529,6 +538,8 @@ typedef struct {
 #define A2W_PLL_CHANNEL_DISABLE               (1 << 8)
 #define GZ_CLK_BUSY                           (1 << 7)
 #define GZ_CLK_ENA                            (1 << 4)
+#define GP_CLK0_CTL (volatile uint32_t *)(_get_peripheral_base() + 0x101070)
+#define GP_CLK0_DIV (volatile uint32_t *)(_get_peripheral_base() + 0x101074)
 #define GP_CLK1_CTL (volatile uint32_t *)(_get_peripheral_base() + 0x101078)
 #define GP_CLK1_DIV (volatile uint32_t *)(_get_peripheral_base() + 0x10107C)
 #define CM_PLLA     (volatile uint32_t *)(_get_peripheral_base() + 0x101104)
@@ -626,7 +637,10 @@ typedef struct {
 #define Bit8u uint8_t
 #define Bitu uint32_t
 
+#define INT_BASE ((volatile uint32_t *)(_get_peripheral_base() + 0x00B000))
 
+//#define SMI_DSR0 ((volatile uint32_t *)0xc8800000)
+#define SMI_DSR0 ((volatile uint32_t *)(_get_peripheral_base() + 0x600010))
 
 /*
 Working registers for comms

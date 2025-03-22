@@ -14,8 +14,10 @@
 #include "../startup.h"
 #include "../defs.h"
 #include "../info.h"
+#include "../rgb_to_hdmi.h"
 
 void hd_print_regs() {
+/*
     log_info("-------------------------------------------");
     log_info("HDMI_M_CTL         = %08X", *HDMI_M_CTL       );
     log_info("HDMI_MAI_CTL       = %08X", *HDMI_MAI_CTL     );
@@ -33,9 +35,14 @@ void hd_print_regs() {
     log_info("HDMI_CSC_34_33     = %08X", *HDMI_CSC_34_33   );
     log_info("HDMI_FRAME_COUNT   = %08X", *HDMI_FRAME_COUNT );
     log_info("-------------------------------------------");
+*/
 }
 
+void log_MAI_CTL() {
+    log_info("%04X", *HDMI_MAI_CTL     );
+}
 void hdmi_print_regs() {
+/*
     log_info("-------------------------------------------");
     log_info("HDMI_CORE_REV             = %08X",              *HDMI_CORE_REV            );
     log_info("HDMI_SW_RESET_CONTROL     = %08X",              *HDMI_SW_RESET_CONTROL    );
@@ -81,6 +88,7 @@ void hdmi_print_regs() {
     log_info("HDMI_CEC_CPU_MASK_CLEAR   = %08X",              *HDMI_CEC_CPU_MASK_CLEAR  );
     log_info("HDMI_RAM_PACKET_START     = %08X",              *HDMI_RAM_PACKET_START    );
     log_info("-------------------------------------------");
+*/
 }
 
 // ConvertIEC958 derived from  https://github.com/rsta2/circle
@@ -332,7 +340,7 @@ double get_pixel_clock_rate(void) {
    return pixel_clock;
 }
 
-unsigned long GetHSMClockRate(void)
+unsigned long GetHSMClockRate()
 {
     gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
 
@@ -363,17 +371,17 @@ unsigned long GetHSMClockRate(void)
 	return rate;
 }
 
-void hdmi_audio_prepare() {
+void hdmi_audio_prepare(unsigned long measured_sample_rate) {
     log_info("hdmi_audio_prepare");
 
-    unsigned long m_ulAudioClockRate = GetHSMClockRate();
     unsigned long m_nSampleRate = 48000;
+    unsigned long m_ulAudioClockRate = GetHSMClockRate();
+
     unsigned long ulNumerator, ulDenominator;
 	rational_best_approximation (m_ulAudioClockRate, m_nSampleRate,
 				     0xFFFFFFU,
 				     0xFFU + 1,
 				     &ulNumerator, &ulDenominator);
-
     log_info("HSM = %d, n=%d, d=%d", (uint32_t) m_ulAudioClockRate, (uint32_t) ulNumerator, (uint32_t) ulDenominator );
     log_info("val = %lf",  ((double)m_ulAudioClockRate*ulDenominator/ulNumerator));
     uint32_t mai_smp = (uint32_t) ulNumerator << 8
@@ -393,12 +401,12 @@ void hdmi_audio_prepare() {
 
     *HDMI_MAI_FMT = 0x20900; //ch:2, fs:48000hz //checked against circle
 
-    *HDMI_MAI_THR = 0x08080608; //DREQ     //checked against linux, was 0x10101010 in circle but causes glitches in video capture
+    *HDMI_MAI_THR = 0x08080608; //DREQ     0x08080608 //checked against linux, was 0x10101010 in circle but causes glitches in video capture
  	//REGSHIFT (MaiThreshold, DREQLow, 0);
 	//REGSHIFT (MaiThreshold, DREQHigh, 8);
 	//REGSHIFT (MaiThreshold, PanicLow, 16);
 	//REGSHIFT (MaiThreshold, PanicHigh, 24);
-
+    // buffer fullish appears to be after 0x11 pair writes
     *HDMI_MAI_CONFIG = (1 << 27) | (1 << 26) | (1 << 1) | (1 << 0);    //checked against circle
 
 #ifdef RPI4
@@ -421,8 +429,8 @@ void hdmi_audio_prepare() {
     int cts_n = nSampleRateMul128 / 1000; //0x1800
     *HDMI_CRP_CFG = cts_n | (1 << 24); //EXTERNAL CTS EN   //checked against circle
 
-    unsigned long pixel_clock = get_pixel_clock_rate();
-
+    unsigned long pixel_clock = get_pixel_clock_rate() * measured_sample_rate / (m_nSampleRate * 1000);
+    log_info("adjuted Pixel Clock: %d Hz", pixel_clock);
 	uint32_t nCTS = (uint32_t) (((uint64_t) pixel_clock * cts_n) / nSampleRateMul128);
     log_info("nCTS = %08x",nCTS);
 
@@ -452,10 +460,12 @@ void hdmi_audio_prepare() {
     *HDMI_RAM_PACKET(0, (9 * 5) + 7) = 0x00000000;
     *HDMI_RAM_PACKET(0, (9 * 5) + 8) = 0x00000000;
     hdmi_audio_start_packet(0);
+
 }
 
-void hdmi_audio_setup() {
+void hdmi_audio_setup(unsigned long measured_sample_rate) {
     hdmi_audio_reset();
     hdmi_audio_startup();
-    hdmi_audio_prepare();
+    hdmi_audio_prepare(measured_sample_rate);
+
 }

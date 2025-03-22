@@ -30,7 +30,7 @@
 #include "videocore.c"
 #include "gitversion.h"
 #include "vid_cga_comp.h"
-
+#include "audio/start.h"
 // #define INSTRUMENT_CAL
 #define NUM_CAL_PASSES 1
 
@@ -255,19 +255,21 @@ static int restricted_slew_rate = 0;
 static unsigned int framebuffer = 0;
 static unsigned int framebuffer_topbits = 0;
 static int hdmi_error_ppm = 0;
+static int system_stable = 0;
 static volatile uint32_t display_list_index = 0;
 volatile uint32_t* display_list;
 volatile uint32_t* pi4_hdmi0_regs;
 
 
+
 static int parameters[MAX_PARAMETERS] = {0};
 
 
-void start_vc_1() {
+void start_vc_1( uint32_t flags, uint32_t param1, uint32_t param2, uint32_t param3) {
    int func;
-   func = (int) &___videocore_asm[0];
+   func = (int) &___videocore_asm[0] + 4;
    RPI_PropertyInit();
-   RPI_PropertyAddTag(TAG_LAUNCH_VPU1,func,0,0,0,0,0,0);
+   RPI_PropertyAddTag(TAG_LAUNCH_VPU1,func, 0, flags, param1, param2, param3, 0);
    RPI_PropertyProcessNoCheck();
 }
 
@@ -395,6 +397,44 @@ static void init_gpclk(int source, int divisor) {
    log_debug("G GP_CLK1_CTL = %08"PRIx32, *GP_CLK1_CTL);
 
    log_debug("H GP_CLK1_DIV = %08"PRIx32, *GP_CLK1_DIV);
+}
+
+void init_gpclk0(int source, int divisor) {
+
+   log_debug("A GP_CLK0_DIV = %08"PRIx32, *GP_CLK0_DIV);
+
+   log_debug("B GP_CLK0_CTL = %08"PRIx32, *GP_CLK0_CTL);
+
+   // Stop the clock generator (retaining the existing source)
+   *GP_CLK0_CTL = CM_PASSWORD | ((*GP_CLK0_CTL) & ~GZ_CLK_ENA);
+
+   // Wait for BUSY low
+   log_debug("C GP_CLK0_CTL = %08"PRIx32, *GP_CLK0_CTL);
+   while ((*GP_CLK0_CTL) & GZ_CLK_BUSY) {}
+   log_debug("D GP_CLK0_CTL = %08"PRIx32, *GP_CLK0_CTL);
+
+   // Configure the clock generator
+   *GP_CLK0_CTL = CM_PASSWORD | source;
+   *GP_CLK0_DIV = CM_PASSWORD | divisor;
+
+   log_debug("E GP_CLK0_CTL = %08"PRIx32, *GP_CLK0_CTL);
+
+   // Start the clock generator
+   *GP_CLK0_CTL = CM_PASSWORD | (source | GZ_CLK_ENA);
+
+   log_debug("F GP_CLK0_CTL = %08"PRIx32, *GP_CLK0_CTL);
+   while (!((*GP_CLK0_CTL) & GZ_CLK_BUSY)) {}    // Wait for BUSY high
+   log_debug("G GP_CLK0_CTL = %08"PRIx32, *GP_CLK0_CTL);
+
+   log_debug("H GP_CLK0_DIV = %08"PRIx32, *GP_CLK0_DIV);
+}
+
+uint32_t get_GPU_top_bits() {
+    if (framebuffer_topbits == 0) {
+        return 0xc0000000;
+    } else {
+        return framebuffer_topbits;
+    }
 }
 
 void write_palette(uint32_t * current_palette) {
@@ -1319,10 +1359,11 @@ static void recalculate_hdmi_clock(int genlock_mode, int genlock_adjust) {
           double current_pllh_clock = (CRYSTAL * ((double)(gpioreg[PLLH_CTRL] & 0x3ff) + ((double)gpioreg[PLLH_FRAC]) / ((double)(1 << 20)))) * PLLH_ANA1_PREDIV;
 #endif
           int ppm_diff = (int)((1 - (current_pllh_clock / f2)) * 1000000);
-          int genlock_speed;
+          int genlock_speed = 200;
+/*
           switch(parameters[F_GENLOCK_SPEED]) {
               case GENLOCK_SPEED_SLOW:
-                  genlock_speed = 333;
+                  genlock_speed = 200;
               break;
               case GENLOCK_SPEED_MEDIUM:
                   genlock_speed = 1000;
@@ -1332,6 +1373,10 @@ static void recalculate_hdmi_clock(int genlock_mode, int genlock_adjust) {
                   genlock_speed = 2000;
               break;
           }
+          if (get_audio_hardware_type() !=0 && parameters[F_AUDIO_CAP] && parameters[F_OPTIMISE]) {
+              genlock_speed = 200;
+          }
+*/
           //log_info("%d", ppm_diff);
           if (abs(ppm_diff) > genlock_speed && abs(ppm_diff) < GENLOCK_SLEW_RATE_THRESHOLD) {
              restricted_slew_rate = 1;
@@ -1506,16 +1551,16 @@ int __attribute__ ((aligned (64))) recalculate_hdmi_clock_line_locked_update(int
             genlock_adjust = 0;
             switch (parameters[F_GENLOCK_MODE]) {
                 case HDMI_SLOW_2000PPM:
-                    genlock_adjust = 6;
+                    genlock_adjust = 10;
                     break;
                 case HDMI_SLOW_1000PPM:
-                    genlock_adjust = 3;
+                    genlock_adjust = 5;
                     break;
                 case HDMI_FAST_1000PPM:
-                    genlock_adjust = -3;
+                    genlock_adjust = -5;
                     break;
                 case HDMI_FAST_2000PPM:
-                    genlock_adjust = -6;
+                    genlock_adjust = -10;
                     break;
             }
             if (last_vlock != parameters[F_GENLOCK_MODE] || vlock_limited != 0) {
@@ -1538,6 +1583,7 @@ int __attribute__ ((aligned (64))) recalculate_hdmi_clock_line_locked_update(int
                     frame_delay <<= 1;
                 }
             }
+
             signed int difference = (vsync_line >> adjustment) - ((total_lines >> adjustment) - parameters[F_GENLOCK_LINE]);
             if (abs(difference) > (total_lines >> (adjustment + 1))) {
                 difference = -difference;
@@ -1691,6 +1737,11 @@ int mono_board_detected() {
 void set_vsync_psync(int state) {
     cpld->set_vsync_psync(state);
 }
+
+int get_cpuspeed(){
+    return cpuspeed;
+}
+
 
 void calculate_cpu_timings() {
 static int old_cpuspeed = 0;
@@ -1891,6 +1942,14 @@ static void init_hardware() {
    // Initialize the cpld after the gpclk generator has been started
    cpld_init();
 
+   if (mono_board_detected()) {
+        RPI_SetGpioPinFunction(4, FS_ALT0);
+
+        init_gpclk0(5 | 0x200, 97<<12 | 2688);
+
+
+   }
+
    // Initialize the On-Screen Display
    osd_init();
 
@@ -1909,7 +1968,7 @@ static void cpld_init() {
 // so clock out 32 bits of 0 into register chain as later CPLDs have mux as a register bit
 
   // int sp = 0x1180;  //15 bits sets the rate bits to 12bit capture for testing simple mode with amiga
-   int sp = 0x200000;  //24 bits sets the rate bits to 12bit capture for testing simple mode with amiga
+   int sp = 0x230000;  //24 bits sets the rate bits to 12bit capture for testing simple mode with amiga
    for (int i = 0; i < 24; i++) {
       RPI_SetGpioValue(SP_DATA_PIN, sp & 1);
       delay_in_arm_cycles_cpu_adjust(250);
@@ -2062,6 +2121,7 @@ static void cpld_init() {
    cpld->init(cpld_version_id);
    // Initialize the geometry
    geometry_init(cpld_version_id);
+
 }
 
 int extra_flags() {
@@ -3003,6 +3063,10 @@ int get_parameter(int parameter) {
     }
 }
 
+int get_system_stable() {
+    return system_stable;
+}
+
 void set_parameter(int parameter, int value) {
     switch (parameter) {
         //space for special case handling
@@ -3300,9 +3364,11 @@ void rgb_to_hdmi_main() {
 
 #ifndef USE_ARM_CAPTURE
 //   RPI_PropertySetWord(0x00038030,12,1); // Set domain 12 ISP
-   log_info("Starting GPU code");
+//   log_info("Starting GPU code");
 //   start_vc_1();
 #endif
+
+
 
    // Determine initial sync polarity (and correct whether inversion required or not)
    capinfo->detected_sync_type = cpld->analyse(capinfo->sync_type, 1);
@@ -3356,6 +3422,8 @@ void rgb_to_hdmi_main() {
            log_info("Second core NOT available");
        }
    }
+   initialise_audio_capture_on_VC1();
+
    while (1) {
       log_info("-----------------------LOOP------------------------");
       if (parameters[F_PROFILE] != last_profile || last_saved_config_number != parameters[F_SAVED_CONFIG]) {
@@ -3429,7 +3497,6 @@ void rgb_to_hdmi_main() {
            log_info("GPU: GPIO read = %dns, MBOX write = %dns", (int)((double) benchmarkRAM(1) * 1000 / cpuspeed / 100000 + 0.5), (int)((double) benchmarkRAM(2) * 1000 / cpuspeed / 100000 + 0.5));
            log_info("RAM: Cached read = %dns, Uncached screen read = %dns", (int)((double) benchmarkRAM(0x2000000) * 1000 / cpuspeed / 100000 + 0.5), (int)((double) benchmarkRAM((int)capinfo->fb) * 1000 / cpuspeed / 100000 + 0.5));
 
-
 //***********test CGA artifact decode*********************
            update_cga16_color();
            Bit8u pixels[1024];
@@ -3444,6 +3511,7 @@ void rgb_to_hdmi_main() {
            Composite_Process_Asm(720/8, pixels, 0); //720 pixels to include some border
            duration = abs(get_cycle_counter() - startcycle);
            log_info("Test_Composite_Process 720 pixel artifact decode: = %dns", duration);
+
 //***********end of test CGA artifact decode***************
 
            if (reboot_required == 0) {
@@ -3564,7 +3632,7 @@ void rgb_to_hdmi_main() {
 
          int flags =  extra_flags() | clear;
 
-         if (parameters[F_VSYNC_INDICATOR]) {
+         if (parameters[F_VSYNC_INDICATOR] || (get_audio_hardware_type() !=0 && parameters[F_LIVE_DEBUG])) {
             flags |= BIT_VSYNC;
          }
          if (parameters[F_DEBUG]) {
@@ -3656,6 +3724,7 @@ void rgb_to_hdmi_main() {
          }
          capinfo->intensity = parameters[F_SCANLINE_LEVEL];
 
+
          int old_palette_control = capinfo->palette_control;
          int old_flags = flags;
          if (get_parameter(F_DROP_FRAME) != 0 || half_frame_rate) {   //half frame rate display detected (4K @ 25Hz / 30Hz)
@@ -3673,6 +3742,7 @@ void rgb_to_hdmi_main() {
          log_debug("Entering rgb_to_fb, flags=%08x", flags);
          result = rgb_to_fb(capinfo, flags);
          log_debug("Leaving rgb_to_fb, result=%04x", result);
+      //log_info("Audio capture error count = %d", SMI_DSR0[5]);
          capinfo->palette_control = old_palette_control;
          flags = old_flags;
 
@@ -3707,6 +3777,16 @@ void rgb_to_hdmi_main() {
             osd_timer = 0;
             ncapture = osd_key(OSD_SW3);
          }
+
+         if (system_stable == 0) {
+             system_stable = 1;
+             if (get_audio_hardware_type() != 0 && get_parameter(F_AUDIO_CAP) != 0) {
+                log_info("System stable: Starting audio");
+                set_feature(F_AUDIO_CAP, get_parameter(F_AUDIO_CAP));
+             }
+         }
+
+
 
          cpld->update_capture_info(capinfo);
          geometry_get_fb_params(capinfo);

@@ -6,6 +6,7 @@
 #include "logging.h"
 #include "rgb_to_hdmi.h"
 #include "startup.h"
+#include "audio/start.h"
 
 static const char *px_sampling_names[] = {
    "Normal",
@@ -407,18 +408,26 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         capinfo->video_type = VIDEO_PROGRESSIVE;
     }
 
+    if (get_audio_hardware_type() !=0 && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE)) {
+        if (capinfo->bpp < 16) {
+            capinfo->bpp = 16;         //force 16bpp if audio switched on and optimise set (some will be forced back below)
+        }
+    }
+
     if (capinfo->video_type == VIDEO_TELETEXT) {
         capinfo->bpp = 4; //force 4bpp for teletext
     } else if (capinfo->sample_width >= SAMPLE_WIDTH_9LO && capinfo->bpp == 4) {
         capinfo->bpp = 8; //force at least 8bpp in 12 bit modes as no capture loops for capture into 4bpp buffer
     } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp < 8) {
         capinfo->bpp = 8; //force 8bpp in 6 bit modes as no capture loops for 6 bit capture into 4 bpp buffer
-    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_LUMACODE || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_YUV)
-              && (get_parameter(F_NTSC_COLOUR) == 0 || (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) == 0)) {
-        capinfo->bpp = 8; //force 8bpp in 6 bit modes when pal artifact disabled
-    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI_LUMACODE)
-              && (get_parameter(F_SCANLINES) == 0 || (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) == 0)) {
-        capinfo->bpp = 8; //force 8bpp in 6 bit modes when scanlines disabled
+
+    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp == 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_LUMACODE || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_YUV)
+              && get_parameter(F_NTSC_COLOUR) != 0 && (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) != 0) {
+        capinfo->bpp = 16; //force 16bpp in 6 bit modes when pal artifact enabled
+    } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp == 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI_LUMACODE)
+              && get_parameter(F_SCANLINES) != 0 && (capinfo->sizex2 & SIZEX2_DOUBLE_WIDTH) != 0) {
+        capinfo->bpp = 16; //force 16bpp in 6 bit modes when scanlines enabled
+
     } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8 && (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI_GTIA || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_ATARI2600_LUMACODE)) {
         capinfo->bpp = 8; //force 8bpp in 6 bit modes when Atari GTIA or 2600 as no 16 bit capture loops
     } else if (capinfo->sample_width == SAMPLE_WIDTH_6 && capinfo->bpp > 8
@@ -428,6 +437,10 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
     } else if (capinfo->sample_width <= SAMPLE_WIDTH_3 && capinfo->bpp > 8) {
         capinfo->bpp = 8; //force 8bpp in 1 & 3 bit modes as no capture loops for 1 or 3 bit capture into 16bpp buffer
     }
+
+
+
+
 
 #ifdef USE_ARM_CAPTURE
     if ((_get_hardware_id() == _RPI2 || _get_hardware_id() == _RPI3) && capinfo->video_type != VIDEO_TELETEXT) {
@@ -1050,12 +1063,17 @@ int get_vdisplay() {
         v_size = 1080;
     } else if (v_size <= 288) {
         v_size <<= 1;
+    } else if (v_size == 540 && get_hdisplay() == 1920){
+        v_size <<= 1;
     }
     return v_size;
 }
 
 int get_true_vdisplay() {
     int v_size = (*PIXELVALVE2_VERTB) & 0xFFFF;
+    if (v_size == 540 && get_hdisplay() == 1920){
+        v_size <<= 1;
+    }
     return v_size;
 }
 

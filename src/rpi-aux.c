@@ -109,7 +109,7 @@ void RPI_AuxMiniUartInit_With_Freq(int baud, int bits, int sys_freq)
    /* Setup GPIO 14 and 15 as alternative function 5 which is
       UART 1 TXD/RXD. These need to be set before enabling the UART */
    RPI_SetGpioPinFunction(RPI_GPIO14, FS_ALT5);
-   RPI_SetGpioPinFunction(RPI_GPIO15, FS_ALT5);
+   RPI_SetGpioPinFunction(RPI_GPIO15, FS_INPUT); //use for audio clock (was_FS_ALT5)
 
    // Enable weak pullups
    RPI_GpioBase->GPPUD = 2;

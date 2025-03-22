@@ -70,6 +70,7 @@
 .global scan_for_single_pixels_12bpp
 .global scan_for_diffs_12bpp
 .global terminate_vc_0_asm
+.global measure_audio_clock
 
 #ifdef USE_MULTICORE
 .global run_core
@@ -1810,6 +1811,8 @@ exit_vsync:
         mov    r8, r8, lsr #1
         str    r8, vsync_period
         pop    {pc}
+
+
 
 // ======================================================================
 // MEASURE_N_LINES
@@ -3764,6 +3767,54 @@ poll_keys_loop:
 poll_keys_exit:
         pop    {r4-r12, lr}
         mov    pc, lr
+
+measure_audio_clock:
+        push   {r4-r12, lr}
+        ldr    r8, =AUDIO_TEST_DURATION
+        mov    r3, #0
+        bl     set_hardware_id_r3
+        // Setup R4 as a constant
+        bl     _get_GPLEV0_r4
+         
+        READ_CYCLE_COUNTER r10
+        mov    r0, #0
+        mov    r1, #0
+        mov    r2, #0
+        mov    r5, #0
+audio_time_loop:
+        ldr     r6, [r4]
+        eor     r7, r6, r5
+
+        tst     r7, #(1 << AUDIO_CLOCK_PIN)
+        addeq   r0, r0, #1
+        eoreq   r5, #(1 << AUDIO_CLOCK_PIN)
+
+        tst     r7, #(1 << AUDIO_DATA1_PIN)
+        addeq   r1, r1, #1
+        eoreq   r5, #(1 << AUDIO_DATA1_PIN)
+
+        tst     r7, #(1 << AUDIO_DATA2_PIN)
+        addeq   r2, r2, #1
+        eoreq   r5, #(1 << AUDIO_DATA2_PIN)
+
+        READ_CYCLE_COUNTER r11
+
+        subs    r12, r11, r10
+        rsbmi   r12, r12, #0
+        cmp     r12, r8
+        blt     audio_time_loop
+        str     r0, clock_pin_count
+        str     r1, data1_pin_count
+        str     r2, data2_pin_count
+        adr     r0, clock_pin_count
+        pop    {r4-r12, pc}
+
+clock_pin_count:
+        .word      0
+data1_pin_count:
+        .word      0
+data2_pin_count:
+        .word      0
 
         .ltorg
 

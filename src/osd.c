@@ -25,7 +25,8 @@
 #include "vid_cga_comp.h"
 #include <math.h>
 #include "audio/start.h"
-
+#include "audio/hw.h"
+#include "audio/dma.h"
 // =============================================================
 // Definitions for the size of the OSD
 // =============================================================
@@ -289,7 +290,7 @@ static const char *frontend_names_mono_luma[] = {
 };
 
 static const char *genlock_speed_names[] = {
-   "Slow (333PPM)",
+   "Slow (200PPM)",
    "Medium (1000PPM)",
    "Fast (2000PPM)"
 };
@@ -400,6 +401,18 @@ static const char *mono_palette_names[] = {
    "Use Red (Swap Grn/Red)"
 };
 
+static const char *dma_names[] = {
+   "Direct",
+   "Delayed DMA"
+};
+
+static const char *clock_sync_names[] = {
+   "Samples Only",
+   "PLL + Samples",
+   "Variable PLL (Slow)",
+   "Variable PLL (Fast)"
+};
+
 // =============================================================
 // Feature definitions
 // =============================================================
@@ -477,7 +490,16 @@ static param_t features[] = {
    {            F_V_OFFSET,          "V Offset",    "pixel_v_offset", -256,               256, 1, 0 },
    {        F_BORDER_WIDTH,      "Border Width",      "border_width", 0,               512, 8, 0 },
    {       F_BORDER_HEIGHT,     "Border Height",     "border_height", 0,               256, 2, 0 },
-   {                F_WAVS,          "WAV File",          "wav_file", 0,                 0, 1, 0 },
+   {                F_WAVS,     "Test WAV File",          "wav_file", 0,                 0, 1, 0 },
+
+   {           F_AUDIO_CAP,     "Audio Capture",     "audio_capture", 0,                 1, 1, 1 },
+   {                 F_DMA,      "Capture Type",      "capture_type", 0,                 1, 1, 1 },
+   {           F_DMA_DELAY,      "DMA Delay ms",         "dma_delay", 1,               500, 1, 1 },
+   {          F_CLOCK_SYNC,        "Clock Sync",        "clock_sync", 0,                 3, 1, 1 },
+   {            F_OPTIMISE,  "Optimise Profile",          "optimise", 0,                 1, 1, 1 },
+   {          F_LIVE_DEBUG,        "Debug Info",        "debug_info", 0,                 1, 1, 1 },
+   {          F_DEBUG_MENU,  "Audio Debug Menu",   "debug_info_menu", 0,                 1, 1, 1 },
+
 
    {            F_FRONTEND,         "Interface",         "interface", 0,    NUM_FRONTENDS - 1, 1, 0 },
    {                -1,                NULL,                NULL, 0,                    0, 0, 0 }
@@ -610,8 +632,8 @@ static info_menu_item_t test_50hz_ref                = { I_TEST, "Test Monitor f
 
 static info_menu_item_t stop_playing_audio_ref       = { I_INFO, "Stop Playing Audio", stop_playing_audio};
 static info_menu_item_t audio_tone_ref               = { I_INFO, "Play Test Tone", audio_tone};
-static info_menu_item_t audio_wav_ref                = { I_INFO, "Play Selected WAV", audio_wav};
-static info_menu_item_t audio_all_wavs_ref           = { I_INFO, "Play All WAVs", audio_all_wavs};
+static info_menu_item_t audio_wav_ref                = { I_INFO, "Play Test WAV", audio_wav};
+static info_menu_item_t audio_all_wavs_ref           = { I_INFO, "Play All Test WAVs", audio_all_wavs};
 
 static menu_t update_cpld_menu = {
    "Update CPLD Menu",
@@ -802,6 +824,13 @@ static param_menu_item_t border_width_ref    = { I_FEATURE, &features[F_BORDER_W
 static param_menu_item_t border_height_ref   = { I_FEATURE, &features[F_BORDER_HEIGHT]      };
 
 static param_menu_item_t wavs_ref            = { I_FEATURE, &features[F_WAVS]          };
+static param_menu_item_t audio_cap_ref       = { I_FEATURE, &features[F_AUDIO_CAP]          };
+static param_menu_item_t dma_ref             = { I_FEATURE, &features[F_DMA]          };
+static param_menu_item_t dma_delay_ref       = { I_FEATURE, &features[F_DMA_DELAY]          };
+static param_menu_item_t clock_sync_ref      = { I_FEATURE, &features[F_CLOCK_SYNC]          };
+static param_menu_item_t optimise_ref        = { I_FEATURE, &features[F_OPTIMISE]          };
+static param_menu_item_t live_debug_ref      = { I_FEATURE, &features[F_LIVE_DEBUG]          };
+//static param_menu_item_t debug_menu_ref      = { I_FEATURE, &features[F_DEBUG_MENU]          };
 
 #ifndef HIDE_INTERFACE_SETTING
 static param_menu_item_t frontend_ref        = { I_FEATURE, &features[F_FRONTEND]       };
@@ -832,16 +861,24 @@ static menu_t custom_profile_menu = {
    }
 };
 
+#define LIVE_DEBUG_POSITION 11
+
 static menu_t audio_test_menu = {
-   "Audio Test Menu",
+   "HDMI Audio Menu",
    NULL,
    {
       (base_menu_item_t *) &back_ref,
+      (base_menu_item_t *) &audio_cap_ref,
+      (base_menu_item_t *) &dma_ref,
+      (base_menu_item_t *) &dma_delay_ref,
+      (base_menu_item_t *) &clock_sync_ref,
+      (base_menu_item_t *) &optimise_ref,
       (base_menu_item_t *) &wavs_ref,
       (base_menu_item_t *) &audio_wav_ref,
       (base_menu_item_t *) &audio_all_wavs_ref,
       (base_menu_item_t *) &audio_tone_ref,
       (base_menu_item_t *) &stop_playing_audio_ref,
+      (base_menu_item_t *) &live_debug_ref,
       NULL
    }
 };
@@ -1333,6 +1370,12 @@ void set_menu_table() {
           }
           break;
       }
+
+    if (get_parameter(F_DEBUG_MENU) == 0) {
+        audio_test_menu.items[LIVE_DEBUG_POSITION] = NULL;
+    } else {
+        audio_test_menu.items[LIVE_DEBUG_POSITION] = (base_menu_item_t *) &live_debug_ref;
+    }
 }
 
 static void cycle_menu(menu_t *menu) {
@@ -1455,11 +1498,11 @@ static void autoset_geometry() {
 }
 
 
-static int get_feature(int num) {
+int get_feature(int num) {
     return get_parameter(num);
 }
 
-static void set_feature(int num, int value) {
+void set_feature(int num, int value) {
    if (value < features[num].min) {
       value = features[num].min;
    }
@@ -1636,6 +1679,25 @@ static void set_feature(int num, int value) {
       set_parameter(num, value);
       set_menu_table();
       osd_refresh();
+      break;
+
+   case F_AUDIO_CAP:
+      set_parameter(num, value);
+      if (get_system_stable()) {
+          set_audio_capture(value);
+      }
+      break;
+   case F_DMA:
+      set_parameter(num, value);
+      set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
+      break;
+   case F_DMA_DELAY:
+      set_parameter(num, value);
+      set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
+      break;
+   case F_CLOCK_SYNC:
+      set_parameter(num, value);
+      set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
       break;
    }
 }
@@ -1814,6 +1876,11 @@ static const char *get_param_string(param_menu_item_t *param_item) {
          return integer_aspect_names[value];
       case F_INTEGER_SCALING:
          return integer_scaling_names[value];
+      case F_DMA:
+         return dma_names[value];
+      case F_CLOCK_SYNC:
+         return clock_sync_names[value];
+
       }
    } else if (type == I_GEOMETRY) {
       const char *value_str = geometry_get_value_string(param->key);
@@ -1835,10 +1902,50 @@ static const char *get_param_string(param_menu_item_t *param_item) {
 
 static volatile uint32_t *gpioreg;
 
+char* get_audio_hardware_string() {
+static char msg[MAX_STRING_SIZE];
+    int hardware = get_audio_hardware_type();
+    int clk = 0;
+    int pins = 0;
+    switch (hardware) {
+        case 2:
+            clk = 24;
+            pins = 3;
+            break;
+        case 3:
+            clk = 24;
+            pins = 3;
+            break;
+        case 4:
+            clk = 48;
+            pins = 3;
+            break;
+        case 5:
+            clk = 48;
+            pins = 3;
+            break;
+        case 8:
+            clk = 24;
+            pins = 2;
+            break;
+        case 16:
+            clk = 48;
+            pins = 2;
+            break;
+    }
+    if (clk == 0) {
+        sprintf(msg, "No Capture Hardware");
+    } else {
+        sprintf(msg, "%dKhz Capture (%d GPIO)", clk, pins);
+    }
+    return msg;
+}
+
 void osd_display_interface(int line) {
     gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
     char osdline[256];
-    sprintf(osdline, "Interface: %s", get_interface_name());
+    sprintf(osdline, "Interface: %s, ", get_interface_name());
+    sprintf(osdline, "Audio: %s", get_audio_hardware_string());
     osd_set(line++, 0, osdline);
     sprintf(osdline, "Scaling: %s", scaling_names[get_parameter(F_SCALING)]);
     osd_set(line++, 0, osdline);
@@ -1898,6 +2005,8 @@ static void info_system_summary(int line) {
            (cpld->get_version() >> VERSION_MINOR_BIT) & 0xF);
    osd_set(line++, 0, message);
    sprintf(message, "      Interface: %s", get_interface_name());
+   osd_set(line++, 0, message);
+   sprintf(message, "          Audio: %s", get_audio_hardware_string());
    osd_set(line++, 0, message);
 
    switch (_get_hardware_id()) {
@@ -2348,10 +2457,11 @@ char * clean_underscore(char *string) {
 }
 
 static int audio_msg1(int line){
-   osd_set(line++, 0, "This is a test of HDMI audio output:");
-   osd_set(line++, 0, "(Currently only WAV files can be played)");
-   osd_set(line++, 0, "An addon audio capture interface is under");
-   osd_set(line++, 0, "development.");
+   osd_set(line++, 0, "You can use the WAV player and tone to");
+   osd_set(line++, 0, "check compatibility of audio output" );
+   osd_set(line++, 0, "with your monitor.");
+   line++;
+   osd_set(line++, 0, "Audio capture requires an addon board.");
    line++;
    return line;
 }
@@ -2367,20 +2477,23 @@ static int audio_msg2(int line){
 }
 
 static void stop_playing_audio(int line) {
-   stop_audio();
+   set_parameter(F_AUDIO_CAP, 0);
+   stop_all_audio();
    line = audio_msg1(line);
    osd_set(line++, 0, "Stopping Audio...");
    line = audio_msg2(line);
 }
 
 static void audio_tone(int line) {
+   set_parameter(F_AUDIO_CAP, 0);
    start_tone();
    line = audio_msg1(line);
-   osd_set(line++, 0, "Playing test tone...");
+   osd_set(line++, 0, "Playing test cap...");
    line = audio_msg2(line);
 }
 
 static void audio_wav(int line) {
+   set_parameter(F_AUDIO_CAP, 0);
    char path[MAX_STRING_SIZE];
    char temp_buffer[MAX_STRING_SIZE * 4];
    char *prop;
@@ -2402,6 +2515,7 @@ static void audio_wav(int line) {
 }
 
 static void audio_all_wavs(int line) {
+   set_parameter(F_AUDIO_CAP, 0);
    char msg[MAX_STRING_SIZE];
    sprintf(msg, "Please wait, loading %d WAV files...", features[F_WAVS].max + 1);
    osd_set_clear(line - 1, 0, msg);
@@ -5688,56 +5802,65 @@ void osd_update_palette(int hardware_direct) {
     }
 
     if (get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_LUMACODE || get_parameter(F_PALETTE_CONTROL) == PALETTECONTROL_C64_YUV) {
-        for (int i=0; i < 256; i++) {
-            double R = (double)(palette_data[i & 0x0f] & 0xff) / 255;
-            double G = (double)((palette_data[i & 0x0f] >> 8) & 0xff) / 255;
-            double B = (double)((palette_data[i & 0x0f] >> 16) & 0xff) / 255;
+        if (get_parameter(F_NTSC_COLOUR)) {
+            for (int i=0; i < 256; i++) {
+                double R = (double)(palette_data[i & 0x0f] & 0xff) / 255;
+                double G = (double)((palette_data[i & 0x0f] >> 8) & 0xff) / 255;
+                double B = (double)((palette_data[i & 0x0f] >> 16) & 0xff) / 255;
 
-            double R2 = (double)(palette_data[i >> 4] & 0xff) / 255;
-            double G2 = (double)((palette_data[i >> 4] >> 8) & 0xff) / 255;
-            double B2 = (double)((palette_data[i >> 4] >> 16) & 0xff) / 255;
+                double R2 = (double)(palette_data[i >> 4] & 0xff) / 255;
+                double G2 = (double)((palette_data[i >> 4] >> 8) & 0xff) / 255;
+                double B2 = (double)((palette_data[i >> 4] >> 16) & 0xff) / 255;
 
-            double Y = 0.299 * R + 0.587 * G + 0.114 * B;
-            double U = -0.14713 * R - 0.28886 * G + 0.436 * B;
-            double V = 0.615 * R - 0.51499 * G - 0.10001 * B;
+                double Y = 0.299 * R + 0.587 * G + 0.114 * B;
+                double U = -0.14713 * R - 0.28886 * G + 0.436 * B;
+                double V = 0.615 * R - 0.51499 * G - 0.10001 * B;
 
-            //double Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2;
-            double U2 = -0.14713 * R2 - 0.28886 * G2 + 0.436 * B2;
-            double V2 = 0.615 * R2 - 0.51499 * G2 - 0.10001 * B2;
+                //double Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2;
+                double U2 = -0.14713 * R2 - 0.28886 * G2 + 0.436 * B2;
+                double V2 = 0.615 * R2 - 0.51499 * G2 - 0.10001 * B2;
 
-            double hue = get_parameter(F_PAL_ODD_LEVEL) * PI / 180.0f;
-            double U3 = (U2 * cos(hue) - V2 * sin(hue));
-            double V3 = (V2 * cos(hue) - U2 * sin(hue));
+                double hue = get_parameter(F_PAL_ODD_LEVEL) * PI / 180.0f;
+                double U3 = (U2 * cos(hue) - V2 * sin(hue));
+                double V3 = (V2 * cos(hue) - U2 * sin(hue));
 
-            if (get_parameter(F_PAL_ODD_LINE) == PAL_ODD_ALL || (get_parameter(F_PAL_ODD_LINE) == PAL_ODD_BLENDED && (i & 0x0f) != (i >> 4))){
-                U3 = (U + U3) / 2;
-                V3 = (V + V3) / 2;
-            } else {
-                U3 = (U + U2) / 2;
-                V3 = (V + V2) / 2;
+                if (get_parameter(F_PAL_ODD_LINE) == PAL_ODD_ALL || (get_parameter(F_PAL_ODD_LINE) == PAL_ODD_BLENDED && (i & 0x0f) != (i >> 4))){
+                    U3 = (U + U3) / 2;
+                    V3 = (V + V3) / 2;
+                } else {
+                    U3 = (U + U2) / 2;
+                    V3 = (V + V2) / 2;
+                }
+
+                U = (U + U2) / 2;
+                V = (V + V2) / 2;
+
+                R = (Y + 1.140 * V);
+                G = (Y - 0.396 * U - 0.581 * V);
+                B = (Y + 2.029 * U);
+
+                R2 = (Y + 1.140 * V3);
+                G2 = (Y - 0.396 * U3 - 0.581 * V3);
+                B2 = (Y + 2.029 * U3);
+
+                double normalised_gamma = 1.0f;
+                R = gamma_correct(R, normalised_gamma) / 16;
+                G = gamma_correct(G, normalised_gamma) / 16;
+                B = gamma_correct(B, normalised_gamma) / 16;
+
+                R2 = gamma_correct(R2, normalised_gamma) / 16;
+                G2 = gamma_correct(G2, normalised_gamma) / 16;
+                B2 = gamma_correct(B2, normalised_gamma) / 16;
+                //log_info("%d = %04f, %04f, %04f : %04f, %04f, %04f", i,R,G,B,R2,G2,B2);
+                c64_artifact_palette_16[i] = ((int)R2 << 24) | ((int)G2 << 20) | ((int)B2 << 16) | ((int)R << 8) | ((int)G << 4) | (int)B;
             }
-
-            U = (U + U2) / 2;
-            V = (V + V2) / 2;
-
-            R = (Y + 1.140 * V);
-            G = (Y - 0.396 * U - 0.581 * V);
-            B = (Y + 2.029 * U);
-
-            R2 = (Y + 1.140 * V3);
-            G2 = (Y - 0.396 * U3 - 0.581 * V3);
-            B2 = (Y + 2.029 * U3);
-
-            double normalised_gamma = 1.0f;
-            R = gamma_correct(R, normalised_gamma) / 16;
-            G = gamma_correct(G, normalised_gamma) / 16;
-            B = gamma_correct(B, normalised_gamma) / 16;
-
-            R2 = gamma_correct(R2, normalised_gamma) / 16;
-            G2 = gamma_correct(G2, normalised_gamma) / 16;
-            B2 = gamma_correct(B2, normalised_gamma) / 16;
-            //log_info("%d = %04f, %04f, %04f : %04f, %04f, %04f", i,R,G,B,R2,G2,B2);
-            c64_artifact_palette_16[i] = ((int)R2 << 24) | ((int)G2 << 20) | ((int)B2 << 16) | ((int)R << 8) | ((int)G << 4) | (int)B;
+        } else {
+            for (int i=0; i < 256; i++) {
+                int R = (palette_data[i & 0x0f] & 0xff) >> 4;
+                int G = ((palette_data[i & 0x0f] >> 8) & 0xff) >> 4;
+                int B = ((palette_data[i & 0x0f] >> 16) & 0xff) >> 4;
+                c64_artifact_palette_16[i] = ((int)R << 24) | ((int)G << 20) | ((int)B << 16) | ((int)R << 8) | ((int)G << 4) | (int)B;
+            }
         }
     }
 
@@ -8203,11 +8326,83 @@ void osd_init() {
    set_menu_table();
 }
 
+
+void live_debug_info() {
+static int last_pll = -1;
+static int count = 0;
+    if (get_audio_hardware_type() !=0 && get_system_stable() && get_parameter(F_AUDIO_CAP) && get_parameter(F_LIVE_DEBUG)) {
+        memset(buffer + 1 * LINELEN, 0, LINELEN);
+        gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
+        int pll = gpioreg[PLLD_FRAC]& 0xFFFFF;
+        int error = (SMI_DSR0[5] & 0xFFFF) % 10000;
+        int sync = SMI_DSR0[6];
+        int drop = (sync & 0xFFFF) % 10000;
+        int repeat = (sync >> 16) % 10000;
+        int membuf;
+        char type;
+        if (get_parameter(F_DMA)) {
+            membuf  = (SMI_DSR0[7]) & 0xFFFF;
+            type = 'B';
+        } else {
+            membuf = *(HDMI_MAI_CTL) & (HD_MAI_CTL_ERRORF | HD_MAI_CTL_ERRORE | HD_MAI_CTL_EMPTY | HD_MAI_CTL_FULL | HD_MAI_CTL_BUSY | HD_MAI_CTL_DLATE);
+            type = 'C';
+        }
+        int hardware = get_audio_hardware_type();
+        int clk = 0;
+        int pins = 0;
+        char swapped = ' ';
+
+        switch (hardware) {
+            case 2:
+                clk = 24;
+                pins = 3;
+                swapped = 'N';
+                break;
+            case 3:
+                clk = 24;
+                pins = 3;
+                swapped = 'R';
+                break;
+            case 4:
+                clk = 48;
+                pins = 3;
+                swapped = 'N';
+                break;
+            case 5:
+                clk = 48;
+                pins = 3;
+                swapped = 'R';
+                break;
+            case 8:
+                clk = 24;
+                pins = 2;
+                swapped = 'N';
+                break;
+            case 16:
+                clk = 48;
+                pins = 2;
+                swapped = 'R';
+                break;
+        }
+
+        sprintf(buffer + 1 * LINELEN, "%02dK%d%c:F=%04d,D=%04d,R=%04d,P=%05X,%c=%04X",clk,pins,swapped,error,drop,repeat,pll, type, membuf);
+        if (pll != last_pll && count > 100) {
+            log_info("%03X", pll & 0xFFF);
+            last_pll = pll;
+            count = 0;
+        } else {
+            count++;
+        }
+    }
+}
+
+
+
 void osd_update(uint32_t *osd_base, int bytes_per_line, int relocate) {
    if (!active) {
       return;
    }
-
+   live_debug_info();
 #if defined(USE_CACHED_SCREEN )
    if (capinfo->video_type == VIDEO_TELETEXT && relocate) {
         osd_base += (CACHED_SCREEN_OFFSET >> 2);
@@ -8448,6 +8643,7 @@ void __attribute__ ((aligned (64))) osd_update_fast(uint32_t *osd_base, int byte
    if (!active) {
       return;
    }
+   live_debug_info();
    if (capinfo->bpp == 16 && capinfo->video_type == VIDEO_INTERLACED && (capinfo->detected_sync_type & SYNC_BIT_INTERLACED) && get_parameter(F_NORMAL_DEINTERLACE) == DEINTERLACE_NONE) {
       clear_screen();
    }
