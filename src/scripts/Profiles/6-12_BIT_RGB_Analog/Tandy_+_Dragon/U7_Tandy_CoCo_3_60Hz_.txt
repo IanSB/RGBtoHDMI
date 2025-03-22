@@ -3,3 +3,4 @@ geometry=100,32,640,200,720,240,2,5,1,1,14318180,912,5000,263,5,0,0
 palette=RrGgBb_(EGA)
 palette_control=3
 ntsc_phase=2
+audio_capture=1

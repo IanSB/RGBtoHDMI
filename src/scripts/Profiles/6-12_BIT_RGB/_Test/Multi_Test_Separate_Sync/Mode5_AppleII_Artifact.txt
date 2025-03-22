@@ -6,3 +6,4 @@ ntsc_colour=1
 ntsc_phase=2
 ntsc_type=2
 powerup_message=0
+audio_capture=1

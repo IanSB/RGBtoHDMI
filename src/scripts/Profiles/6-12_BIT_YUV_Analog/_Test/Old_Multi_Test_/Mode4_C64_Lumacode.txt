@@ -4,3 +4,4 @@ palette=Commodore_64
 palette_control=7
 powerup_message=0
 gamma=102
+audio_capture=1

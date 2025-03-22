@@ -4,3 +4,4 @@ hdmi_standby=1
 palette=RrGgBb_(EGA)
 overclock_core=50
 powerup_message=0
+audio_capture=1
