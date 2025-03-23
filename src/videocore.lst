@@ -1826,32 +1826,32 @@ Source: "videocore.s"
                             	   960: 
                             	   961: 
                             	   962: .macro CAPTURE_AUDIO
-                            	   963:    LO_LRCLK
-                            	   964:    HI_LRCLK
+                            	   963:    HI_LRCLK
+                            	   964:    LO_LRCLK
                             	   965:    b  audio_main_loop\@
-                            	   966: bad_sync_LR_low1\@:
+                            	   966: bad_sync_LR_high1\@:
                             	   967: #WRITE_LEFT_RIGHT  using causes PLL trouble
-                            	   968:    HI_LRCLK
+                            	   968:    LO_LRCLK
                             	   969:    WRITE_LEFT_RIGHT
                             	   970:    b  increment_error\@
                             	   971: 
-                            	   972: bad_sync_LR_high1\@:
+                            	   972: bad_sync_LR_low1\@:
                             	   973: #WRITE_LEFT_RIGHT  using causes PLL trouble
-                            	   974:    LO_LRCLK
-                            	   975:    HI_LRCLK
+                            	   974:    HI_LRCLK
+                            	   975:    LO_LRCLK
                             	   976:    WRITE_LEFT_RIGHT
                             	   977:    b  increment_error\@
                             	   978: 
-                            	   979: bad_sync_LR_high2\@:
+                            	   979: bad_sync_LR_low2\@:
                             	   980:    WRITE_LEFT_RIGHT   #removing causes PLL trouble
-                            	   981:    LO_LRCLK
-                            	   982:    HI_LRCLK
+                            	   981:    HI_LRCLK
+                            	   982:    LO_LRCLK
                             	   983:    WRITE_LEFT_RIGHT
                             	   984:    b  increment_error\@
                             	   985: 
-                            	   986: bad_sync_LR_low2\@:
+                            	   986: bad_sync_LR_high2\@:
                             	   987:    WRITE_LEFT_RIGHT
-                            	   988:    HI_LRCLK
+                            	   988:    LO_LRCLK
                             	   989:    WRITE_LEFT_RIGHT
                             	   990: 
                             	   991: increment_error\@:
@@ -1907,11 +1907,11 @@ Source: "videocore.s"
                             	  1041: skip_log\@:
                             	  1042: 
                             	  1043:    WAIT_FOR_LR_BIT
-                            	  1044:    beq    bad_sync_LR_low1\@
+                            	  1044:    bne    bad_sync_LR_high1\@
                             	  1045:    WAIT_HI_TWOGPIO_ONLY
                             	  1046: 
                             	  1047:    WAIT_FOR_LR_BIT
-                            	  1048:    bne    bad_sync_LR_high1\@
+                            	  1048:    beq    bad_sync_LR_low1\@
                             	  1049:    mov    r1, r17
                             	  1050:    mov    r11, r1   #save in case of repeat
                             	  1051:    IEC958_STATUS
@@ -1961,11 +1961,11 @@ Source: "videocore.s"
                             	  1095:    mov    r1, r0
                             	  1096: 
                             	  1097:    WAIT_FOR_LR_BIT
-                            	  1098:    bne    bad_sync_LR_high2\@
+                            	  1098:    beq    bad_sync_LR_low2\@
                             	  1099:    WAIT_HI_TWOGPIO_ONLY
                             	  1100: 
                             	  1101:    WAIT_FOR_LR_BIT
-                            	  1102:    beq    bad_sync_LR_low2\@
+                            	  1102:    bne    bad_sync_LR_high2\@
                             	  1103:    mov    r12, r1   #save in case of repeat
                             	  1104:    WAIT_HI_TWOGPIO_ONLY
                             	  1105: 
@@ -2144,15 +2144,15 @@ Source: "videocore.s"
                             	  1273: 
                             	  1274: .set TWOGPIO, 0
                             	  1275:    CAPTURE_AUDIO
-                            	     1M    LO_LRCLK
+                            	     1M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCL2118:
+                            	     2M waitLRCH2118:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    bne    waitLRCL2118
+                            	     5M    beq    waitLRCH2118
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCL118:
+                            	     8M waitLRCH118:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH119:
                             	     2M    DELAY_NOP
@@ -2168,17 +2168,17 @@ Source: "videocore.s"
 00:0000091E 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:00000920 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000922 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000926 F418            	    10M    bne    waitLRCL118
+00:00000926 7418            	    10M    beq    waitLRCH118
                             	    11M .endif
-                            	     2M    HI_LRCLK
+                            	     2M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2121:
+                            	     2M waitLRCL2121:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    beq    waitLRCH2121
+                            	     5M    bne    waitLRCL2121
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCH121:
+                            	     8M waitLRCL121:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH122:
                             	     2M    DELAY_NOP
@@ -2194,20 +2194,20 @@ Source: "videocore.s"
 00:00000938 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:0000093A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:0000093C 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000940 7418            	    10M    beq    waitLRCH121
+00:00000940 F418            	    10M    bne    waitLRCL121
                             	    11M .endif
 00:00000942 009E7C00        	     3M    b  audio_main_loop117
-                            	     4M bad_sync_LR_low1117:
+                            	     4M bad_sync_LR_high1117:
                             	     5M #WRITE_LEFT_RIGHT  using causes PLL trouble
-                            	     6M    HI_LRCLK
+                            	     6M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2124:
+                            	     2M waitLRCL2124:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    beq    waitLRCH2124
+                            	     5M    bne    waitLRCL2124
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCH124:
+                            	     8M waitLRCL124:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH125:
                             	     2M    DELAY_NOP
@@ -2223,7 +2223,7 @@ Source: "videocore.s"
 00:00000956 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:00000958 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:0000095A 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:0000095E 7418            	    10M    beq    waitLRCH124
+00:0000095E F418            	    10M    bne    waitLRCL124
                             	    11M .endif
                             	     7M    WRITE_LEFT_RIGHT
 00:00000960 FF9FE7FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -2233,17 +2233,17 @@ Source: "videocore.s"
                             	     5M no_repeat_sample127:
 00:0000096C 009E6400        	     8M    b  increment_error117
                             	     9M 
-                            	    10M bad_sync_LR_high1117:
+                            	    10M bad_sync_LR_low1117:
                             	    11M #WRITE_LEFT_RIGHT  using causes PLL trouble
-                            	    12M    LO_LRCLK
+                            	    12M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCL2128:
+                            	     2M waitLRCH2128:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    bne    waitLRCL2128
+                            	     5M    beq    waitLRCH2128
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCL128:
+                            	     8M waitLRCH128:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH129:
                             	     2M    DELAY_NOP
@@ -2259,17 +2259,17 @@ Source: "videocore.s"
 00:00000980 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:00000982 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000984 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000988 F418            	    10M    bne    waitLRCL128
+00:00000988 7418            	    10M    beq    waitLRCH128
                             	    11M .endif
-                            	    13M    HI_LRCLK
+                            	    13M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2131:
+                            	     2M waitLRCL2131:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    beq    waitLRCH2131
+                            	     5M    bne    waitLRCL2131
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCH131:
+                            	     8M waitLRCL131:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH132:
                             	     2M    DELAY_NOP
@@ -2285,7 +2285,7 @@ Source: "videocore.s"
 00:0000099A 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:0000099C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:0000099E 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:000009A2 7418            	    10M    beq    waitLRCH131
+00:000009A2 F418            	    10M    bne    waitLRCL131
                             	    11M .endif
                             	    14M    WRITE_LEFT_RIGHT
 00:000009A4 FF9FC5FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -2295,22 +2295,22 @@ Source: "videocore.s"
                             	     5M no_repeat_sample134:
 00:000009B0 009E4200        	    15M    b  increment_error117
                             	    16M 
-                            	    17M bad_sync_LR_high2117:
+                            	    17M bad_sync_LR_low2117:
                             	    18M    WRITE_LEFT_RIGHT   #removing causes PLL trouble
 00:000009B4 FF9FBDFE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
 00:000009B8 026C            	     2M    btst   r2, REPEAT_22Khz
 00:000009BA 0318            	     3M    beq    no_repeat_sample135
 00:000009BC FF9FB9FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample135:
-                            	    19M    LO_LRCLK
+                            	    19M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCL2136:
+                            	     2M waitLRCH2136:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    bne    waitLRCL2136
+                            	     5M    beq    waitLRCH2136
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCL136:
+                            	     8M waitLRCH136:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH137:
                             	     2M    DELAY_NOP
@@ -2326,17 +2326,17 @@ Source: "videocore.s"
 00:000009D0 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:000009D2 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:000009D4 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:000009D8 F418            	    10M    bne    waitLRCL136
+00:000009D8 7418            	    10M    beq    waitLRCH136
                             	    11M .endif
-                            	    20M    HI_LRCLK
+                            	    20M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2139:
+                            	     2M waitLRCL2139:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    beq    waitLRCH2139
+                            	     5M    bne    waitLRCL2139
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCH139:
+                            	     8M waitLRCL139:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH140:
                             	     2M    DELAY_NOP
@@ -2352,7 +2352,7 @@ Source: "videocore.s"
 00:000009EA 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:000009EC F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:000009EE 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:000009F2 7418            	    10M    beq    waitLRCH139
+00:000009F2 F418            	    10M    bne    waitLRCL139
                             	    11M .endif
                             	    21M    WRITE_LEFT_RIGHT
 00:000009F4 FF9F9DFE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -2362,22 +2362,22 @@ Source: "videocore.s"
                             	     5M no_repeat_sample142:
 00:00000A00 1A1F            	    22M    b  increment_error117
                             	    23M 
-                            	    24M bad_sync_LR_low2117:
+                            	    24M bad_sync_LR_high2117:
                             	    25M    WRITE_LEFT_RIGHT
 00:00000A02 FF9F96FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
 00:00000A06 026C            	     2M    btst   r2, REPEAT_22Khz
 00:00000A08 0318            	     3M    beq    no_repeat_sample143
 00:00000A0A FF9F92FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample143:
-                            	    26M    HI_LRCLK
+                            	    26M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2144:
+                            	     2M waitLRCL2144:
                             	     3M    HI_BITCLK
                             	     4M    LO_BITCLK_FOR_LR_BIT
-                            	     5M    beq    waitLRCH2144
+                            	     5M    bne    waitLRCL2144
                             	     6M    HI_BITCLK
                             	     7M .else
-                            	     8M waitLRCH144:
+                            	     8M waitLRCL144:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH145:
                             	     2M    DELAY_NOP
@@ -2393,7 +2393,7 @@ Source: "videocore.s"
 00:00000A1E 4008            	     7M   ld     r0, (r4)          #second read for reliability
 00:00000A20 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000A22 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000A26 7418            	    10M    beq    waitLRCH144
+00:00000A26 F418            	    10M    bne    waitLRCL144
                             	    11M .endif
                             	    27M    WRITE_LEFT_RIGHT
 00:00000A28 FF9F83FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -2617,7 +2617,7 @@ Source: "videocore.s"
 00:00000B94 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000B96 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000B9A 7F90D6FE        	    82M    beq    bad_sync_LR_low1117
+00:00000B9A 7F91D6FE        	    82M    bne    bad_sync_LR_high1117
                             	    83M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
@@ -2643,7 +2643,7 @@ Source: "videocore.s"
 00:00000BB0 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000BB2 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000BB6 7F91DDFE        	    86M    bne    bad_sync_LR_high1117
+00:00000BB6 7F90DDFE        	    86M    beq    bad_sync_LR_low1117
 00:00000BBA 01C0110F        	    87M    mov    r1, r17
 00:00000BBE 1B40            	    88M    mov    r11, r1   #save in case of repeat
                             	    89M    IEC958_STATUS
@@ -2954,7 +2954,7 @@ Source: "videocore.s"
 00:00000E02 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000E04 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000E08 7F91D6FD        	   136M    bne    bad_sync_LR_high2117
+00:00000E08 7F90D6FD        	   136M    beq    bad_sync_LR_low2117
                             	   137M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
@@ -2980,7 +2980,7 @@ Source: "videocore.s"
 00:00000E1E F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000E20 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000E24 7F90EFFD        	   140M    beq    bad_sync_LR_low2117
+00:00000E24 7F91EFFD        	   140M    bne    bad_sync_LR_high2117
 00:00000E28 1C40            	   141M    mov    r12, r1   #save in case of repeat
                             	   142M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
@@ -3025,9 +3025,9 @@ Source: "videocore.s"
                             	  1277: two_gpio_capture:
                             	  1278: .set TWOGPIO, 1
                             	  1279:    CAPTURE_AUDIO
-                            	     1M    LO_LRCLK
+                            	     1M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCL2195:
+                            	     2M waitLRCH2195:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO196:
 00:00000E72 4008            	     2M    ld     r0, (r4)
@@ -3040,20 +3040,20 @@ Source: "videocore.s"
 00:00000E7C 7E18            	     4M    beq    waitBCL197
 00:00000E7E 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000E80 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000E84 F718            	     5M    bne    waitLRCL2195
+00:00000E84 7718            	     5M    beq    waitLRCH2195
                             	     6M    HI_BITCLK
                             	     1M waitBCHO198:
 00:00000E86 4008            	     2M    ld     r0, (r4)
 00:00000E88 F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000E8A FE18            	     4M    bne    waitBCHO198
                             	     7M .else
-                            	     8M waitLRCL195:
+                            	     8M waitLRCH195:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    bne    waitLRCL195
+                            	    10M    beq    waitLRCH195
                             	    11M .endif
-                            	     2M    HI_LRCLK
+                            	     2M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2199:
+                            	     2M waitLRCL2199:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO200:
 00:00000E8C 4008            	     2M    ld     r0, (r4)
@@ -3066,23 +3066,23 @@ Source: "videocore.s"
 00:00000E96 7E18            	     4M    beq    waitBCL201
 00:00000E98 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000E9A 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000E9E 7718            	     5M    beq    waitLRCH2199
+00:00000E9E F718            	     5M    bne    waitLRCL2199
                             	     6M    HI_BITCLK
                             	     1M waitBCHO202:
 00:00000EA0 4008            	     2M    ld     r0, (r4)
 00:00000EA2 F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000EA4 FE18            	     4M    bne    waitBCHO202
                             	     7M .else
-                            	     8M waitLRCH199:
+                            	     8M waitLRCL199:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    beq    waitLRCH199
+                            	    10M    bne    waitLRCL199
                             	    11M .endif
 00:00000EA6 009E7C00        	     3M    b  audio_main_loop194
-                            	     4M bad_sync_LR_low1194:
+                            	     4M bad_sync_LR_high1194:
                             	     5M #WRITE_LEFT_RIGHT  using causes PLL trouble
-                            	     6M    HI_LRCLK
+                            	     6M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2203:
+                            	     2M waitLRCL2203:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO204:
 00:00000EAA 4008            	     2M    ld     r0, (r4)
@@ -3095,16 +3095,16 @@ Source: "videocore.s"
 00:00000EB4 7E18            	     4M    beq    waitBCL205
 00:00000EB6 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000EB8 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000EBC 7718            	     5M    beq    waitLRCH2203
+00:00000EBC F718            	     5M    bne    waitLRCL2203
                             	     6M    HI_BITCLK
                             	     1M waitBCHO206:
 00:00000EBE 4008            	     2M    ld     r0, (r4)
 00:00000EC0 F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000EC2 FE18            	     4M    bne    waitBCHO206
                             	     7M .else
-                            	     8M waitLRCH203:
+                            	     8M waitLRCL203:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    beq    waitLRCH203
+                            	    10M    bne    waitLRCL203
                             	    11M .endif
                             	     7M    WRITE_LEFT_RIGHT
 00:00000EC4 FF9F35FC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -3114,11 +3114,11 @@ Source: "videocore.s"
                             	     5M no_repeat_sample207:
 00:00000ED0 009E6400        	     8M    b  increment_error194
                             	     9M 
-                            	    10M bad_sync_LR_high1194:
+                            	    10M bad_sync_LR_low1194:
                             	    11M #WRITE_LEFT_RIGHT  using causes PLL trouble
-                            	    12M    LO_LRCLK
+                            	    12M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCL2208:
+                            	     2M waitLRCH2208:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO209:
 00:00000ED4 4008            	     2M    ld     r0, (r4)
@@ -3131,20 +3131,20 @@ Source: "videocore.s"
 00:00000EDE 7E18            	     4M    beq    waitBCL210
 00:00000EE0 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000EE2 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000EE6 F718            	     5M    bne    waitLRCL2208
+00:00000EE6 7718            	     5M    beq    waitLRCH2208
                             	     6M    HI_BITCLK
                             	     1M waitBCHO211:
 00:00000EE8 4008            	     2M    ld     r0, (r4)
 00:00000EEA F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000EEC FE18            	     4M    bne    waitBCHO211
                             	     7M .else
-                            	     8M waitLRCL208:
+                            	     8M waitLRCH208:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    bne    waitLRCL208
+                            	    10M    beq    waitLRCH208
                             	    11M .endif
-                            	    13M    HI_LRCLK
+                            	    13M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2212:
+                            	     2M waitLRCL2212:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO213:
 00:00000EEE 4008            	     2M    ld     r0, (r4)
@@ -3157,16 +3157,16 @@ Source: "videocore.s"
 00:00000EF8 7E18            	     4M    beq    waitBCL214
 00:00000EFA 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000EFC 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000F00 7718            	     5M    beq    waitLRCH2212
+00:00000F00 F718            	     5M    bne    waitLRCL2212
                             	     6M    HI_BITCLK
                             	     1M waitBCHO215:
 00:00000F02 4008            	     2M    ld     r0, (r4)
 00:00000F04 F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000F06 FE18            	     4M    bne    waitBCHO215
                             	     7M .else
-                            	     8M waitLRCH212:
+                            	     8M waitLRCL212:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    beq    waitLRCH212
+                            	    10M    bne    waitLRCL212
                             	    11M .endif
                             	    14M    WRITE_LEFT_RIGHT
 00:00000F08 FF9F13FC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -3176,16 +3176,16 @@ Source: "videocore.s"
                             	     5M no_repeat_sample216:
 00:00000F14 009E4200        	    15M    b  increment_error194
                             	    16M 
-                            	    17M bad_sync_LR_high2194:
+                            	    17M bad_sync_LR_low2194:
                             	    18M    WRITE_LEFT_RIGHT   #removing causes PLL trouble
 00:00000F18 FF9F0BFC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
 00:00000F1C 026C            	     2M    btst   r2, REPEAT_22Khz
 00:00000F1E 0318            	     3M    beq    no_repeat_sample217
 00:00000F20 FF9F07FC        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample217:
-                            	    19M    LO_LRCLK
+                            	    19M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCL2218:
+                            	     2M waitLRCH2218:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO219:
 00:00000F24 4008            	     2M    ld     r0, (r4)
@@ -3198,20 +3198,20 @@ Source: "videocore.s"
 00:00000F2E 7E18            	     4M    beq    waitBCL220
 00:00000F30 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000F32 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000F36 F718            	     5M    bne    waitLRCL2218
+00:00000F36 7718            	     5M    beq    waitLRCH2218
                             	     6M    HI_BITCLK
                             	     1M waitBCHO221:
 00:00000F38 4008            	     2M    ld     r0, (r4)
 00:00000F3A F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000F3C FE18            	     4M    bne    waitBCHO221
                             	     7M .else
-                            	     8M waitLRCL218:
+                            	     8M waitLRCH218:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    bne    waitLRCL218
+                            	    10M    beq    waitLRCH218
                             	    11M .endif
-                            	    20M    HI_LRCLK
+                            	    20M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2222:
+                            	     2M waitLRCL2222:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO223:
 00:00000F3E 4008            	     2M    ld     r0, (r4)
@@ -3224,16 +3224,16 @@ Source: "videocore.s"
 00:00000F48 7E18            	     4M    beq    waitBCL224
 00:00000F4A 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000F4C 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000F50 7718            	     5M    beq    waitLRCH2222
+00:00000F50 F718            	     5M    bne    waitLRCL2222
                             	     6M    HI_BITCLK
                             	     1M waitBCHO225:
 00:00000F52 4008            	     2M    ld     r0, (r4)
 00:00000F54 F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000F56 FE18            	     4M    bne    waitBCHO225
                             	     7M .else
-                            	     8M waitLRCH222:
+                            	     8M waitLRCL222:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    beq    waitLRCH222
+                            	    10M    bne    waitLRCL222
                             	    11M .endif
                             	    21M    WRITE_LEFT_RIGHT
 00:00000F58 FF9FEBFB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -3243,16 +3243,16 @@ Source: "videocore.s"
                             	     5M no_repeat_sample226:
 00:00000F64 1A1F            	    22M    b  increment_error194
                             	    23M 
-                            	    24M bad_sync_LR_low2194:
+                            	    24M bad_sync_LR_high2194:
                             	    25M    WRITE_LEFT_RIGHT
 00:00000F66 FF9FE4FB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
 00:00000F6A 026C            	     2M    btst   r2, REPEAT_22Khz
 00:00000F6C 0318            	     3M    beq    no_repeat_sample227
 00:00000F6E FF9FE0FB        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample227:
-                            	    26M    HI_LRCLK
+                            	    26M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
-                            	     2M waitLRCH2228:
+                            	     2M waitLRCL2228:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO229:
 00:00000F72 4008            	     2M    ld     r0, (r4)
@@ -3265,16 +3265,16 @@ Source: "videocore.s"
 00:00000F7C 7E18            	     4M    beq    waitBCL230
 00:00000F7E 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
 00:00000F80 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000F84 7718            	     5M    beq    waitLRCH2228
+00:00000F84 F718            	     5M    bne    waitLRCL2228
                             	     6M    HI_BITCLK
                             	     1M waitBCHO231:
 00:00000F86 4008            	     2M    ld     r0, (r4)
 00:00000F88 F06C            	     3M    btst   r0, CLOCK_BIT
 00:00000F8A FE18            	     4M    bne    waitBCHO231
                             	     7M .else
-                            	     8M waitLRCH228:
+                            	     8M waitLRCL228:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
-                            	    10M    beq    waitLRCH228
+                            	    10M    bne    waitLRCL228
                             	    11M .endif
                             	    27M    WRITE_LEFT_RIGHT
 00:00000F8C FF9FD1FB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
@@ -3474,7 +3474,7 @@ Source: "videocore.s"
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:000010DA 7F90E8FE        	    82M    beq    bad_sync_LR_low1194
+00:000010DA 7F91E8FE        	    82M    bne    bad_sync_LR_high1194
                             	    83M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
@@ -3496,7 +3496,7 @@ Source: "videocore.s"
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:000010F0 7F91F2FE        	    86M    bne    bad_sync_LR_high1194
+00:000010F0 7F90F2FE        	    86M    beq    bad_sync_LR_low1194
 00:000010F4 01C0110F        	    87M    mov    r1, r17
 00:000010F8 1B40            	    88M    mov    r11, r1   #save in case of repeat
                             	    89M    IEC958_STATUS
@@ -3787,7 +3787,7 @@ Source: "videocore.s"
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:00001324 7F91FAFD        	   136M    bne    bad_sync_LR_high2194
+00:00001324 7F90FAFD        	   136M    beq    bad_sync_LR_low2194
                             	   137M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
@@ -3809,7 +3809,7 @@ Source: "videocore.s"
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:0000133A 7F9016FE        	   140M    beq    bad_sync_LR_low2194
+00:0000133A 7F9116FE        	   140M    bne    bad_sync_LR_high2194
 00:0000133E 1C40            	   141M    mov    r12, r1   #save in case of repeat
                             	   142M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
@@ -3927,14 +3927,14 @@ abort_audio                     00:0000086E
 audio_capture                   00:00000846
 audio_main_loop117              00:00000A3A
 audio_main_loop194              00:00000F9E
-bad_sync_LR_high1117            00:00000970
-bad_sync_LR_high1194            00:00000ED4
-bad_sync_LR_high2117            00:000009B4
-bad_sync_LR_high2194            00:00000F18
-bad_sync_LR_low1117             00:00000946
-bad_sync_LR_low1194             00:00000EAA
-bad_sync_LR_low2117             00:00000A02
-bad_sync_LR_low2194             00:00000F66
+bad_sync_LR_high1117            00:00000946
+bad_sync_LR_high1194            00:00000EAA
+bad_sync_LR_high2117            00:00000A02
+bad_sync_LR_high2194            00:00000F66
+bad_sync_LR_low1117             00:00000970
+bad_sync_LR_low1194             00:00000ED4
+bad_sync_LR_low2117             00:000009B4
+bad_sync_LR_low2194             00:00000F18
 capture_loop                    00:0000020C
 capture_rest                    00:00000200
 command_loop                    00:0000088E
@@ -4097,22 +4097,22 @@ waitBCL263                      00:00001258
 waitBCL266                      00:00001278
 waitBCL270                      00:00001318
 waitBCL274                      00:0000132E
-waitLRCH121                     00:00000928
-waitLRCH124                     00:00000946
-waitLRCH131                     00:0000098A
-waitLRCH139                     00:000009DA
-waitLRCH144                     00:00000A0E
-waitLRCH2199                    00:00000E8C
-waitLRCH2203                    00:00000EAA
-waitLRCH2212                    00:00000EEE
-waitLRCH2222                    00:00000F3E
-waitLRCH2228                    00:00000F72
-waitLRCL118                     00:0000090E
-waitLRCL128                     00:00000970
-waitLRCL136                     00:000009C0
-waitLRCL2195                    00:00000E72
-waitLRCL2208                    00:00000ED4
-waitLRCL2218                    00:00000F24
+waitLRCH118                     00:0000090E
+waitLRCH128                     00:00000970
+waitLRCH136                     00:000009C0
+waitLRCH2195                    00:00000E72
+waitLRCH2208                    00:00000ED4
+waitLRCH2218                    00:00000F24
+waitLRCL121                     00:00000928
+waitLRCL124                     00:00000946
+waitLRCL131                     00:0000098A
+waitLRCL139                     00:000009DA
+waitLRCL144                     00:00000A0E
+waitLRCL2199                    00:00000E8C
+waitLRCL2203                    00:00000EAA
+waitLRCL2212                    00:00000EEE
+waitLRCL2222                    00:00000F3E
+waitLRCL2228                    00:00000F72
 waitPSE1                        00:000000EC
 waitPSE11                       00:00000166
 waitPSE13                       00:00000178
@@ -4322,30 +4322,30 @@ Symbols by value:
 000008F8 fill
 00000906 use_dma
 0000090E waitBCH119
-0000090E waitLRCL118
+0000090E waitLRCH118
 00000928 waitBCH122
-00000928 waitLRCH121
-00000946 bad_sync_LR_low1117
+00000928 waitLRCL121
+00000946 bad_sync_LR_high1117
 00000946 waitBCH125
-00000946 waitLRCH124
+00000946 waitLRCL124
 0000096C no_repeat_sample127
-00000970 bad_sync_LR_high1117
+00000970 bad_sync_LR_low1117
 00000970 waitBCH129
-00000970 waitLRCL128
+00000970 waitLRCH128
 0000098A waitBCH132
-0000098A waitLRCH131
+0000098A waitLRCL131
 000009B0 no_repeat_sample134
-000009B4 bad_sync_LR_high2117
+000009B4 bad_sync_LR_low2117
 000009C0 no_repeat_sample135
 000009C0 waitBCH137
-000009C0 waitLRCL136
+000009C0 waitLRCH136
 000009DA waitBCH140
-000009DA waitLRCH139
+000009DA waitLRCL139
 00000A00 no_repeat_sample142
-00000A02 bad_sync_LR_low2117
+00000A02 bad_sync_LR_high2117
 00000A0E no_repeat_sample143
 00000A0E waitBCH145
-00000A0E waitLRCH144
+00000A0E waitLRCL144
 00000A34 increment_error117
 00000A34 no_repeat_sample147
 00000A3A audio_main_loop117
@@ -4386,44 +4386,44 @@ Symbols by value:
 00000E62 no_repeat_sample_main117
 00000E72 two_gpio_capture
 00000E72 waitBCHO196
-00000E72 waitLRCL2195
+00000E72 waitLRCH2195
 00000E78 waitBCL197
 00000E86 waitBCHO198
 00000E8C waitBCHO200
-00000E8C waitLRCH2199
+00000E8C waitLRCL2199
 00000E92 waitBCL201
 00000EA0 waitBCHO202
-00000EAA bad_sync_LR_low1194
+00000EAA bad_sync_LR_high1194
 00000EAA waitBCHO204
-00000EAA waitLRCH2203
+00000EAA waitLRCL2203
 00000EB0 waitBCL205
 00000EBE waitBCHO206
 00000ED0 no_repeat_sample207
-00000ED4 bad_sync_LR_high1194
+00000ED4 bad_sync_LR_low1194
 00000ED4 waitBCHO209
-00000ED4 waitLRCL2208
+00000ED4 waitLRCH2208
 00000EDA waitBCL210
 00000EE8 waitBCHO211
 00000EEE waitBCHO213
-00000EEE waitLRCH2212
+00000EEE waitLRCL2212
 00000EF4 waitBCL214
 00000F02 waitBCHO215
 00000F14 no_repeat_sample216
-00000F18 bad_sync_LR_high2194
+00000F18 bad_sync_LR_low2194
 00000F24 no_repeat_sample217
 00000F24 waitBCHO219
-00000F24 waitLRCL2218
+00000F24 waitLRCH2218
 00000F2A waitBCL220
 00000F38 waitBCHO221
 00000F3E waitBCHO223
-00000F3E waitLRCH2222
+00000F3E waitLRCL2222
 00000F44 waitBCL224
 00000F52 waitBCHO225
 00000F64 no_repeat_sample226
-00000F66 bad_sync_LR_low2194
+00000F66 bad_sync_LR_high2194
 00000F72 no_repeat_sample227
 00000F72 waitBCHO229
-00000F72 waitLRCH2228
+00000F72 waitLRCL2228
 00000F78 waitBCL230
 00000F86 waitBCHO231
 00000F98 increment_error194

@@ -960,32 +960,32 @@ no_repeat_sample\@:
 
 
 .macro CAPTURE_AUDIO
+   HI_LRCLK
    LO_LRCLK
-   HI_LRCLK
    b  audio_main_loop\@
-bad_sync_LR_low1\@:
-#WRITE_LEFT_RIGHT  using causes PLL trouble
-   HI_LRCLK
-   WRITE_LEFT_RIGHT
-   b  increment_error\@
-
 bad_sync_LR_high1\@:
 #WRITE_LEFT_RIGHT  using causes PLL trouble
    LO_LRCLK
-   HI_LRCLK
    WRITE_LEFT_RIGHT
    b  increment_error\@
 
-bad_sync_LR_high2\@:
-   WRITE_LEFT_RIGHT   #removing causes PLL trouble
-   LO_LRCLK
+bad_sync_LR_low1\@:
+#WRITE_LEFT_RIGHT  using causes PLL trouble
    HI_LRCLK
+   LO_LRCLK
    WRITE_LEFT_RIGHT
    b  increment_error\@
 
 bad_sync_LR_low2\@:
-   WRITE_LEFT_RIGHT
+   WRITE_LEFT_RIGHT   #removing causes PLL trouble
    HI_LRCLK
+   LO_LRCLK
+   WRITE_LEFT_RIGHT
+   b  increment_error\@
+
+bad_sync_LR_high2\@:
+   WRITE_LEFT_RIGHT
+   LO_LRCLK
    WRITE_LEFT_RIGHT
 
 increment_error\@:
@@ -1041,11 +1041,11 @@ firstremain\@:
 skip_log\@:
 
    WAIT_FOR_LR_BIT
-   beq    bad_sync_LR_low1\@
+   bne    bad_sync_LR_high1\@
    WAIT_HI_TWOGPIO_ONLY
 
    WAIT_FOR_LR_BIT
-   bne    bad_sync_LR_high1\@
+   beq    bad_sync_LR_low1\@
    mov    r1, r17
    mov    r11, r1   #save in case of repeat
    IEC958_STATUS
@@ -1095,11 +1095,11 @@ secondremain\@:
    mov    r1, r0
 
    WAIT_FOR_LR_BIT
-   bne    bad_sync_LR_high2\@
+   beq    bad_sync_LR_low2\@
    WAIT_HI_TWOGPIO_ONLY
 
    WAIT_FOR_LR_BIT
-   beq    bad_sync_LR_low2\@
+   bne    bad_sync_LR_high2\@
    mov    r12, r1   #save in case of repeat
    WAIT_HI_TWOGPIO_ONLY
 
