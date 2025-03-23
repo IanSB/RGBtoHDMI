@@ -494,7 +494,7 @@ static param_t features[] = {
 
    {           F_AUDIO_CAP,     "Audio Capture",     "audio_capture", 0,                 1, 1, 1 },
    {                 F_DMA,      "Capture Type",      "capture_type", 0,                 1, 1, 1 },
-   {           F_DMA_DELAY,      "DMA Delay ms",         "dma_delay", 1,               500, 1, 1 },
+   {           F_DMA_DELAY,      "DMA Delay ms",         "dma_delay", 3,               500, 1, 1 },
    {          F_CLOCK_SYNC,        "Clock Sync",        "clock_sync", 0,                 3, 1, 1 },
    {            F_OPTIMISE,  "Optimise Profile",          "optimise", 0,                 1, 1, 1 },
    {          F_LIVE_DEBUG,        "Debug Info",        "debug_info", 0,                 1, 1, 1 },
@@ -8340,8 +8340,8 @@ void osd_init() {
 
 
 void live_debug_info() {
-static int last_pll = -1;
-static int count = 0;
+//static int last_pll = -1;
+//static int count = 0;
     if (get_audio_hardware_type() !=0 && get_system_stable() && get_parameter(F_AUDIO_CAP) && get_parameter(F_LIVE_DEBUG)) {
         memset(buffer + 1 * LINELEN, 0, LINELEN);
         gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
