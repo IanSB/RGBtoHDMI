@@ -1204,7 +1204,12 @@ command_loop:
    mov    r0,0
    st     r0, SMI_STATUS(r20)
 
+   mov    r1, 256
+sleep:
    DELAY_NOP
+   sub   r1, 1
+   cmp   r1, 0
+   bne   sleep
 
    ld     r21, SMI_CTRL(r20)      #read the control register
    btst   r21, SMI_CTRL_BIT_RUN

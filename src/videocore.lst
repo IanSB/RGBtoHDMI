@@ -1,5 +1,5 @@
 Sections:
-00: ".text" (0-1382)
+00: ".text" (0-138E)
 
 
 Source: "videocore.s"
@@ -1794,7 +1794,7 @@ Source: "videocore.s"
                             	   928: #   mov    r0, r19
                             	   929: #   add    r0, PLL_OFFSET_FAST
                             	   930:    add    r19, PLL_OFFSET_FAST
-                            	   931:    mov    r0, r19   
+                            	   931:    mov    r0, r19
                             	   932:    or     r0, CM_PASSWORD
                             	   933:    st     r0, (r18)
                             	   934:    b      not_full\@
@@ -2070,75 +2070,80 @@ Source: "videocore.s"
 00:0000088E 0060            	  1204:    mov    r0,0
 00:00000890 20A204A0        	  1205:    st     r0, SMI_STATUS(r20)
                             	  1206: 
-                            	  1207:    DELAY_NOP
-00:00000894 0100            	     1M    nop
-00:00000896 0100            	     2M    nop
-00:00000898 0100            	     3M    nop
-00:0000089A 0100            	     4M    nop
+00:00000894 01E800010000    	  1207:    mov    r1, 256
+                            	  1208: sleep:
+                            	  1209:    DELAY_NOP
+00:0000089A 0100            	     1M    nop
+00:0000089C 0100            	     2M    nop
+00:0000089E 0100            	     3M    nop
+00:000008A0 0100            	     4M    nop
                             	     5M 
-                            	  1208: 
-00:0000089C 15A200A0        	  1209:    ld     r21, SMI_CTRL(r20)      #read the control register
-00:000008A0 95C140AF        	  1210:    btst   r21, SMI_CTRL_BIT_RUN
-00:000008A4 7518            	  1211:    beq    command_loop
-                            	  1212: 
-00:000008A6 13A20090        	  1213:    ld     r19, (r18)
-                            	  1214: 
-                            	  1215:    #set the pll
-                            	  1216: #   mov    r0, r19
-                            	  1217: #   btst   r21, SMI_CTRL_BIT_PLL
-                            	  1218: #   beq    norunfast
-                            	  1219: #   sub    r0, PLL_OFFSET_SLOW     # run pll fast so buffer fills up
-                            	  1220: #norunfast:
-                            	  1221: #   or     r0, CM_PASSWORD
-                            	  1222: #   st     r0, (r18)
-                            	  1223: 
-                            	  1224: 
-00:000008AA 0660            	  1225:    mov    r6,  0 #nFrame
-                            	  1226: 
-00:000008AC 0960            	  1227:    mov    r9,  0 #overundercheck counter
+00:000008A2 1166            	  1210:    sub   r1, 1
+00:000008A4 016A            	  1211:    cmp   r1, 0
+00:000008A6 FA18            	  1212:    bne   sleep
+                            	  1213: 
+00:000008A8 15A200A0        	  1214:    ld     r21, SMI_CTRL(r20)      #read the control register
+00:000008AC 95C140AF        	  1215:    btst   r21, SMI_CTRL_BIT_RUN
+00:000008B0 6F18            	  1216:    beq    command_loop
+                            	  1217: 
+00:000008B2 13A20090        	  1218:    ld     r19, (r18)
+                            	  1219: 
+                            	  1220:    #set the pll
+                            	  1221: #   mov    r0, r19
+                            	  1222: #   btst   r21, SMI_CTRL_BIT_PLL
+                            	  1223: #   beq    norunfast
+                            	  1224: #   sub    r0, PLL_OFFSET_SLOW     # run pll fast so buffer fills up
+                            	  1225: #norunfast:
+                            	  1226: #   or     r0, CM_PASSWORD
+                            	  1227: #   st     r0, (r18)
                             	  1228: 
-00:000008AE 0B60            	  1229:    mov    r11, 0 #copy of first sample
-00:000008B0 0C60            	  1230:    mov    r12, 0 #copy of second sample
-00:000008B2 F272            	  1231:    bclr   r2, CLOCK_BIT #flags
-00:000008B4 16C040B7        	  1232:    mov    r22, 0 #error count
-00:000008B8 17C040BF        	  1233:    mov    r23, 0 # drop/rep count
-00:000008BC 18C040C7        	  1234:    mov    r24, 0
-                            	  1235: 
-00:000008C0 1060            	  1236:    mov    r0, 1
-00:000008C2 20A204A0        	  1237:    st     r0, SMI_STATUS(r20)
-                            	  1238: 
-                            	  1239:    # get buffer
-00:000008C6 0DA20CA0        	  1240:    ld     r13, SMI_BUFFER_START(r20)
-00:000008CA 0EA210A0        	  1241:    ld     r14, SMI_BUFFER_END(r20)
-                            	  1242: 
-00:000008CE 95C143AF        	  1243:    btst   r21, SMI_CTRL_BIT_DMA
-00:000008D2 0B18            	  1244:    beq    no_dma
-00:000008D4 A508            	  1245:    ld     r5, (r10) #get dma pointer
-00:000008D6 C3C00D77        	  1246:    sub    r3, r14, r13  #buffer size
-00:000008DA 3040            	  1247:    mov    r0, r3
-00:000008DC 107A            	  1248:    lsr    r0, 1
-00:000008DE 0542            	  1249:    add    r5, r0
-00:000008E0 354A            	  1250:    cmp    r5, r3
-00:000008E2 C5C0032D        	  1251:    subge  r5, r3
-00:000008E6 0A1F            	  1252:    b      use_dma
-                            	  1253: no_dma:
-00:000008E8 D540            	  1254:    mov   r5, r13   #pointer to HDMI_MAI_DATA_BUS in non dma mode
-                            	  1255:    #put some zero samples in the buffer
-00:000008EA 8360            	  1256:    mov r3, 8 #half of buffer which is 0x11 pair writes
-                            	  1257: fill:
-00:000008EC 0B60            	  1258:    mov    r11, 0
-00:000008EE 0C60            	  1259:    mov    r12, 0
-00:000008F0 FF9F1FFF        	  1260:    bl     SINGLE_WRITE_LEFT_RIGHT
-00:000008F4 1366            	  1261:    sub    r3, 1
-00:000008F6 036A            	  1262:    cmp    r3, 0
-00:000008F8 FA18            	  1263:    bne    fill
-                            	  1264: 
-                            	  1265: use_dma:
-00:000008FA 4FC1107F        	  1266:    cmp    r15, r16             # if data pin and LR pin are the same then two GPIO capture
-00:000008FE 0090B402        	  1267:    beq    two_gpio_capture
-                            	  1268: 
-                            	  1269: .set TWOGPIO, 0
-                            	  1270:    CAPTURE_AUDIO
+                            	  1229: 
+00:000008B6 0660            	  1230:    mov    r6,  0 #nFrame
+                            	  1231: 
+00:000008B8 0960            	  1232:    mov    r9,  0 #overundercheck counter
+                            	  1233: 
+00:000008BA 0B60            	  1234:    mov    r11, 0 #copy of first sample
+00:000008BC 0C60            	  1235:    mov    r12, 0 #copy of second sample
+00:000008BE F272            	  1236:    bclr   r2, CLOCK_BIT #flags
+00:000008C0 16C040B7        	  1237:    mov    r22, 0 #error count
+00:000008C4 17C040BF        	  1238:    mov    r23, 0 # drop/rep count
+00:000008C8 18C040C7        	  1239:    mov    r24, 0
+                            	  1240: 
+00:000008CC 1060            	  1241:    mov    r0, 1
+00:000008CE 20A204A0        	  1242:    st     r0, SMI_STATUS(r20)
+                            	  1243: 
+                            	  1244:    # get buffer
+00:000008D2 0DA20CA0        	  1245:    ld     r13, SMI_BUFFER_START(r20)
+00:000008D6 0EA210A0        	  1246:    ld     r14, SMI_BUFFER_END(r20)
+                            	  1247: 
+00:000008DA 95C143AF        	  1248:    btst   r21, SMI_CTRL_BIT_DMA
+00:000008DE 0B18            	  1249:    beq    no_dma
+00:000008E0 A508            	  1250:    ld     r5, (r10) #get dma pointer
+00:000008E2 C3C00D77        	  1251:    sub    r3, r14, r13  #buffer size
+00:000008E6 3040            	  1252:    mov    r0, r3
+00:000008E8 107A            	  1253:    lsr    r0, 1
+00:000008EA 0542            	  1254:    add    r5, r0
+00:000008EC 354A            	  1255:    cmp    r5, r3
+00:000008EE C5C0032D        	  1256:    subge  r5, r3
+00:000008F2 0A1F            	  1257:    b      use_dma
+                            	  1258: no_dma:
+00:000008F4 D540            	  1259:    mov   r5, r13   #pointer to HDMI_MAI_DATA_BUS in non dma mode
+                            	  1260:    #put some zero samples in the buffer
+00:000008F6 8360            	  1261:    mov r3, 8 #half of buffer which is 0x11 pair writes
+                            	  1262: fill:
+00:000008F8 0B60            	  1263:    mov    r11, 0
+00:000008FA 0C60            	  1264:    mov    r12, 0
+00:000008FC FF9F19FF        	  1265:    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000900 1366            	  1266:    sub    r3, 1
+00:00000902 036A            	  1267:    cmp    r3, 0
+00:00000904 FA18            	  1268:    bne    fill
+                            	  1269: 
+                            	  1270: use_dma:
+00:00000906 4FC1107F        	  1271:    cmp    r15, r16             # if data pin and LR pin are the same then two GPIO capture
+00:0000090A 0090B402        	  1272:    beq    two_gpio_capture
+                            	  1273: 
+                            	  1274: .set TWOGPIO, 0
+                            	  1275:    CAPTURE_AUDIO
                             	     1M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
                             	     2M waitLRCL2118:
@@ -2151,19 +2156,19 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH119:
                             	     2M    DELAY_NOP
-00:00000902 0100            	     1M    nop
-00:00000904 0100            	     2M    nop
-00:00000906 0100            	     3M    nop
-00:00000908 0100            	     4M    nop
+00:0000090E 0100            	     1M    nop
+00:00000910 0100            	     2M    nop
+00:00000912 0100            	     3M    nop
+00:00000914 0100            	     4M    nop
                             	     5M 
-00:0000090A 4008            	     3M    ld     r0, (r4)
-00:0000090C 2045            	     4M    eor    r0, r2
-00:0000090E F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000910 7918            	     6M    beq    waitBCH119
-00:00000912 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000914 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000916 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:0000091A F418            	    10M    bne    waitLRCL118
+00:00000916 4008            	     3M    ld     r0, (r4)
+00:00000918 2045            	     4M    eor    r0, r2
+00:0000091A F06C            	     5M    btst   r0, CLOCK_BIT
+00:0000091C 7918            	     6M    beq    waitBCH119
+00:0000091E 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000920 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000922 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000926 F418            	    10M    bne    waitLRCL118
                             	    11M .endif
                             	     2M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
@@ -2177,21 +2182,21 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH122:
                             	     2M    DELAY_NOP
-00:0000091C 0100            	     1M    nop
-00:0000091E 0100            	     2M    nop
-00:00000920 0100            	     3M    nop
-00:00000922 0100            	     4M    nop
+00:00000928 0100            	     1M    nop
+00:0000092A 0100            	     2M    nop
+00:0000092C 0100            	     3M    nop
+00:0000092E 0100            	     4M    nop
                             	     5M 
-00:00000924 4008            	     3M    ld     r0, (r4)
-00:00000926 2045            	     4M    eor    r0, r2
-00:00000928 F06C            	     5M    btst   r0, CLOCK_BIT
-00:0000092A 7918            	     6M    beq    waitBCH122
-00:0000092C 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:0000092E F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000930 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000934 7418            	    10M    beq    waitLRCH121
+00:00000930 4008            	     3M    ld     r0, (r4)
+00:00000932 2045            	     4M    eor    r0, r2
+00:00000934 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000936 7918            	     6M    beq    waitBCH122
+00:00000938 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:0000093A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:0000093C 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000940 7418            	    10M    beq    waitLRCH121
                             	    11M .endif
-00:00000936 009E7C00        	     3M    b  audio_main_loop117
+00:00000942 009E7C00        	     3M    b  audio_main_loop117
                             	     4M bad_sync_LR_low1117:
                             	     5M #WRITE_LEFT_RIGHT  using causes PLL trouble
                             	     6M    HI_LRCLK
@@ -2206,27 +2211,27 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH125:
                             	     2M    DELAY_NOP
-00:0000093A 0100            	     1M    nop
-00:0000093C 0100            	     2M    nop
-00:0000093E 0100            	     3M    nop
-00:00000940 0100            	     4M    nop
+00:00000946 0100            	     1M    nop
+00:00000948 0100            	     2M    nop
+00:0000094A 0100            	     3M    nop
+00:0000094C 0100            	     4M    nop
                             	     5M 
-00:00000942 4008            	     3M    ld     r0, (r4)
-00:00000944 2045            	     4M    eor    r0, r2
-00:00000946 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000948 7918            	     6M    beq    waitBCH125
-00:0000094A 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:0000094C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:0000094E 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000952 7418            	    10M    beq    waitLRCH124
+00:0000094E 4008            	     3M    ld     r0, (r4)
+00:00000950 2045            	     4M    eor    r0, r2
+00:00000952 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000954 7918            	     6M    beq    waitBCH125
+00:00000956 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000958 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:0000095A 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:0000095E 7418            	    10M    beq    waitLRCH124
                             	    11M .endif
                             	     7M    WRITE_LEFT_RIGHT
-00:00000954 FF9FEDFE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000958 026C            	     2M    btst   r2, REPEAT_22Khz
-00:0000095A 0318            	     3M    beq    no_repeat_sample127
-00:0000095C FF9FE9FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000960 FF9FE7FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000964 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000966 0318            	     3M    beq    no_repeat_sample127
+00:00000968 FF9FE3FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample127:
-00:00000960 009E6400        	     8M    b  increment_error117
+00:0000096C 009E6400        	     8M    b  increment_error117
                             	     9M 
                             	    10M bad_sync_LR_high1117:
                             	    11M #WRITE_LEFT_RIGHT  using causes PLL trouble
@@ -2242,19 +2247,19 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH129:
                             	     2M    DELAY_NOP
-00:00000964 0100            	     1M    nop
-00:00000966 0100            	     2M    nop
-00:00000968 0100            	     3M    nop
-00:0000096A 0100            	     4M    nop
+00:00000970 0100            	     1M    nop
+00:00000972 0100            	     2M    nop
+00:00000974 0100            	     3M    nop
+00:00000976 0100            	     4M    nop
                             	     5M 
-00:0000096C 4008            	     3M    ld     r0, (r4)
-00:0000096E 2045            	     4M    eor    r0, r2
-00:00000970 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000972 7918            	     6M    beq    waitBCH129
-00:00000974 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000976 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000978 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:0000097C F418            	    10M    bne    waitLRCL128
+00:00000978 4008            	     3M    ld     r0, (r4)
+00:0000097A 2045            	     4M    eor    r0, r2
+00:0000097C F06C            	     5M    btst   r0, CLOCK_BIT
+00:0000097E 7918            	     6M    beq    waitBCH129
+00:00000980 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000982 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000984 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000988 F418            	    10M    bne    waitLRCL128
                             	    11M .endif
                             	    13M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
@@ -2268,34 +2273,34 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH132:
                             	     2M    DELAY_NOP
-00:0000097E 0100            	     1M    nop
-00:00000980 0100            	     2M    nop
-00:00000982 0100            	     3M    nop
-00:00000984 0100            	     4M    nop
+00:0000098A 0100            	     1M    nop
+00:0000098C 0100            	     2M    nop
+00:0000098E 0100            	     3M    nop
+00:00000990 0100            	     4M    nop
                             	     5M 
-00:00000986 4008            	     3M    ld     r0, (r4)
-00:00000988 2045            	     4M    eor    r0, r2
-00:0000098A F06C            	     5M    btst   r0, CLOCK_BIT
-00:0000098C 7918            	     6M    beq    waitBCH132
-00:0000098E 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000990 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000992 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000996 7418            	    10M    beq    waitLRCH131
+00:00000992 4008            	     3M    ld     r0, (r4)
+00:00000994 2045            	     4M    eor    r0, r2
+00:00000996 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000998 7918            	     6M    beq    waitBCH132
+00:0000099A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:0000099C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:0000099E 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:000009A2 7418            	    10M    beq    waitLRCH131
                             	    11M .endif
                             	    14M    WRITE_LEFT_RIGHT
-00:00000998 FF9FCBFE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:0000099C 026C            	     2M    btst   r2, REPEAT_22Khz
-00:0000099E 0318            	     3M    beq    no_repeat_sample134
-00:000009A0 FF9FC7FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:000009A4 FF9FC5FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:000009A8 026C            	     2M    btst   r2, REPEAT_22Khz
+00:000009AA 0318            	     3M    beq    no_repeat_sample134
+00:000009AC FF9FC1FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample134:
-00:000009A4 009E4200        	    15M    b  increment_error117
+00:000009B0 009E4200        	    15M    b  increment_error117
                             	    16M 
                             	    17M bad_sync_LR_high2117:
                             	    18M    WRITE_LEFT_RIGHT   #removing causes PLL trouble
-00:000009A8 FF9FC3FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:000009AC 026C            	     2M    btst   r2, REPEAT_22Khz
-00:000009AE 0318            	     3M    beq    no_repeat_sample135
-00:000009B0 FF9FBFFE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:000009B4 FF9FBDFE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:000009B8 026C            	     2M    btst   r2, REPEAT_22Khz
+00:000009BA 0318            	     3M    beq    no_repeat_sample135
+00:000009BC FF9FB9FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample135:
                             	    19M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
@@ -2309,19 +2314,19 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH137:
                             	     2M    DELAY_NOP
-00:000009B4 0100            	     1M    nop
-00:000009B6 0100            	     2M    nop
-00:000009B8 0100            	     3M    nop
-00:000009BA 0100            	     4M    nop
+00:000009C0 0100            	     1M    nop
+00:000009C2 0100            	     2M    nop
+00:000009C4 0100            	     3M    nop
+00:000009C6 0100            	     4M    nop
                             	     5M 
-00:000009BC 4008            	     3M    ld     r0, (r4)
-00:000009BE 2045            	     4M    eor    r0, r2
-00:000009C0 F06C            	     5M    btst   r0, CLOCK_BIT
-00:000009C2 7918            	     6M    beq    waitBCH137
-00:000009C4 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:000009C6 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:000009C8 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:000009CC F418            	    10M    bne    waitLRCL136
+00:000009C8 4008            	     3M    ld     r0, (r4)
+00:000009CA 2045            	     4M    eor    r0, r2
+00:000009CC F06C            	     5M    btst   r0, CLOCK_BIT
+00:000009CE 7918            	     6M    beq    waitBCH137
+00:000009D0 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:000009D2 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:000009D4 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:000009D8 F418            	    10M    bne    waitLRCL136
                             	    11M .endif
                             	    20M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
@@ -2335,34 +2340,34 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH140:
                             	     2M    DELAY_NOP
-00:000009CE 0100            	     1M    nop
-00:000009D0 0100            	     2M    nop
-00:000009D2 0100            	     3M    nop
-00:000009D4 0100            	     4M    nop
+00:000009DA 0100            	     1M    nop
+00:000009DC 0100            	     2M    nop
+00:000009DE 0100            	     3M    nop
+00:000009E0 0100            	     4M    nop
                             	     5M 
-00:000009D6 4008            	     3M    ld     r0, (r4)
-00:000009D8 2045            	     4M    eor    r0, r2
-00:000009DA F06C            	     5M    btst   r0, CLOCK_BIT
-00:000009DC 7918            	     6M    beq    waitBCH140
-00:000009DE 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:000009E0 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:000009E2 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:000009E6 7418            	    10M    beq    waitLRCH139
+00:000009E2 4008            	     3M    ld     r0, (r4)
+00:000009E4 2045            	     4M    eor    r0, r2
+00:000009E6 F06C            	     5M    btst   r0, CLOCK_BIT
+00:000009E8 7918            	     6M    beq    waitBCH140
+00:000009EA 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:000009EC F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:000009EE 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:000009F2 7418            	    10M    beq    waitLRCH139
                             	    11M .endif
                             	    21M    WRITE_LEFT_RIGHT
-00:000009E8 FF9FA3FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:000009EC 026C            	     2M    btst   r2, REPEAT_22Khz
-00:000009EE 0318            	     3M    beq    no_repeat_sample142
-00:000009F0 FF9F9FFE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:000009F4 FF9F9DFE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:000009F8 026C            	     2M    btst   r2, REPEAT_22Khz
+00:000009FA 0318            	     3M    beq    no_repeat_sample142
+00:000009FC FF9F99FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample142:
-00:000009F4 1A1F            	    22M    b  increment_error117
+00:00000A00 1A1F            	    22M    b  increment_error117
                             	    23M 
                             	    24M bad_sync_LR_low2117:
                             	    25M    WRITE_LEFT_RIGHT
-00:000009F6 FF9F9CFE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:000009FA 026C            	     2M    btst   r2, REPEAT_22Khz
-00:000009FC 0318            	     3M    beq    no_repeat_sample143
-00:000009FE FF9F98FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000A02 FF9F96FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000A06 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000A08 0318            	     3M    beq    no_repeat_sample143
+00:00000A0A FF9F92FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample143:
                             	    26M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
@@ -2376,42 +2381,42 @@ Source: "videocore.s"
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH145:
                             	     2M    DELAY_NOP
-00:00000A02 0100            	     1M    nop
-00:00000A04 0100            	     2M    nop
-00:00000A06 0100            	     3M    nop
-00:00000A08 0100            	     4M    nop
+00:00000A0E 0100            	     1M    nop
+00:00000A10 0100            	     2M    nop
+00:00000A12 0100            	     3M    nop
+00:00000A14 0100            	     4M    nop
                             	     5M 
-00:00000A0A 4008            	     3M    ld     r0, (r4)
-00:00000A0C 2045            	     4M    eor    r0, r2
-00:00000A0E F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000A10 7918            	     6M    beq    waitBCH145
-00:00000A12 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000A14 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000A16 80C11007        	     9M    btst   r0, r16 # LRBIT
-00:00000A1A 7418            	    10M    beq    waitLRCH144
+00:00000A16 4008            	     3M    ld     r0, (r4)
+00:00000A18 2045            	     4M    eor    r0, r2
+00:00000A1A F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000A1C 7918            	     6M    beq    waitBCH145
+00:00000A1E 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000A20 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000A22 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000A26 7418            	    10M    beq    waitLRCH144
                             	    11M .endif
                             	    27M    WRITE_LEFT_RIGHT
-00:00000A1C FF9F89FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000A20 026C            	     2M    btst   r2, REPEAT_22Khz
-00:00000A22 0318            	     3M    beq    no_repeat_sample147
-00:00000A24 FF9F85FE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000A28 FF9F83FE        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000A2C 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000A2E 0318            	     3M    beq    no_repeat_sample147
+00:00000A30 FF9F7FFE        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample147:
                             	    28M 
                             	    29M increment_error117:
-00:00000A28 56C041B7        	    30M    add    r22, 1
-00:00000A2C 9271            	    31M    bset   r2, LOG_FRAME_ERROR
+00:00000A34 56C041B7        	    30M    add    r22, 1
+00:00000A38 9271            	    31M    bset   r2, LOG_FRAME_ERROR
                             	    32M audio_main_loop117:
                             	    33M 
                             	    34M    #capture first sample
                             	    35M    #LR clock has just gone high
-00:00000A2E 95C140AF        	    36M    btst   r21, SMI_CTRL_BIT_RUN
-00:00000A32 7F901EFF        	    37M    beq    abort_audio            #destination not in macro
+00:00000A3A 95C140AF        	    36M    btst   r21, SMI_CTRL_BIT_RUN
+00:00000A3E 7F9018FF        	    37M    beq    abort_audio            #destination not in macro
                             	    38M 
-00:00000A36 8361            	    39M    mov    r3, 24
-00:00000A38 0160            	    40M    mov    r1, 0
-00:00000A3A 0860            	    41M    mov    r8, 0 #parity count
+00:00000A42 8361            	    39M    mov    r3, 24
+00:00000A44 0160            	    40M    mov    r1, 0
+00:00000A46 0860            	    41M    mov    r8, 0 #parity count
                             	    42M firstloop117:
-00:00000A3C 117C            	    43M    lsl    r1, 1
+00:00000A48 117C            	    43M    lsl    r1, 1
                             	    44M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
@@ -2420,29 +2425,29 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH149:
                             	     2M    DELAY_NOP
-00:00000A3E 0100            	     1M    nop
-00:00000A40 0100            	     2M    nop
-00:00000A42 0100            	     3M    nop
-00:00000A44 0100            	     4M    nop
+00:00000A4A 0100            	     1M    nop
+00:00000A4C 0100            	     2M    nop
+00:00000A4E 0100            	     3M    nop
+00:00000A50 0100            	     4M    nop
                             	     5M 
-00:00000A46 4008            	     3M    ld     r0, (r4)
-00:00000A48 2045            	     4M    eor    r0, r2
-00:00000A4A F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000A4C 7918            	     6M    beq    waitBCH149
-00:00000A4E 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000A50 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000A52 F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000A54 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000A52 4008            	     3M    ld     r0, (r4)
+00:00000A54 2045            	     4M    eor    r0, r2
+00:00000A56 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000A58 7918            	     6M    beq    waitBCH149
+00:00000A5A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000A5C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000A5E F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000A60 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
-00:00000A58 A1C1C108        	    45M    orne   r1, 1
-00:00000A5C 1366            	    46M    sub    r3, 1
-00:00000A5E 036A            	    47M    cmp    r3, 0
-00:00000A60 EE18            	    48M    bne    firstloop117
-00:00000A62 417C            	    49M    lsl    r1, 4
-00:00000A64 086C            	    50M    btst   r8, 0
-00:00000A66 01C2DF08        	    51M    bsetne r1, 31   # temp set parity bit if count is odd
+00:00000A64 A1C1C108        	    45M    orne   r1, 1
+00:00000A68 1366            	    46M    sub    r3, 1
+00:00000A6A 036A            	    47M    cmp    r3, 0
+00:00000A6C EE18            	    48M    bne    firstloop117
+00:00000A6E 417C            	    49M    lsl    r1, 4
+00:00000A70 086C            	    50M    btst   r8, 0
+00:00000A72 01C2DF08        	    51M    bsetne r1, 31   # temp set parity bit if count is odd
                             	    52M 
-00:00000A6A 11C0018F        	    53M    mov    r17, r1   #temp save
+00:00000A76 11C0018F        	    53M    mov    r17, r1   #temp save
                             	    54M 
                             	    55M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
@@ -2452,79 +2457,79 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH152:
                             	     2M    DELAY_NOP
-00:00000A6E 0100            	     1M    nop
-00:00000A70 0100            	     2M    nop
-00:00000A72 0100            	     3M    nop
-00:00000A74 0100            	     4M    nop
+00:00000A7A 0100            	     1M    nop
+00:00000A7C 0100            	     2M    nop
+00:00000A7E 0100            	     3M    nop
+00:00000A80 0100            	     4M    nop
                             	     5M 
-00:00000A76 4008            	     3M    ld     r0, (r4)
-00:00000A78 2045            	     4M    eor    r0, r2
-00:00000A7A F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000A7C 7918            	     6M    beq    waitBCH152
-00:00000A7E 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000A80 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000A82 F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000A84 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000A82 4008            	     3M    ld     r0, (r4)
+00:00000A84 2045            	     4M    eor    r0, r2
+00:00000A86 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000A88 7918            	     6M    beq    waitBCH152
+00:00000A8A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000A8C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000A8E F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000A90 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
                             	    56M 
                             	    57M    CHECK_OVERRUN
                             	     1M    # check for overrun
-00:00000A88 49E920000000    	     2M    cmp    r9, 0x20           #only check once per frame
-00:00000A8E 00914700        	     3M    bne    not_full154
-00:00000A92 E26D            	     4M    btst   r2, DROP_SAMPLE
-00:00000A94 00914400        	     5M    bne    not_full154    #drop pending
-00:00000A98 95C143AF        	     6M    btst   r21, SMI_CTRL_BIT_DMA
-00:00000A9C 1918            	     7M    beq  not_dma_overrun154
+00:00000A94 49E920000000    	     2M    cmp    r9, 0x20           #only check once per frame
+00:00000A9A 00914700        	     3M    bne    not_full154
+00:00000A9E E26D            	     4M    btst   r2, DROP_SAMPLE
+00:00000AA0 00914400        	     5M    bne    not_full154    #drop pending
+00:00000AA4 95C143AF        	     6M    btst   r21, SMI_CTRL_BIT_DMA
+00:00000AA8 1918            	     7M    beq  not_dma_overrun154
                             	     8M 
-00:00000A9E A008            	     9M    ld     r0, (r10) #get dma pointer
-00:00000AA0 C3C00D77        	    10M    sub    r3, r14, r13  #buffer size
-00:00000AA4 054A            	    11M    cmp    r5, r0
-00:00000AA6 C1C0002D        	    12M    subge  r1, r5, r0
-00:00000AAA 051D            	    13M    bge    got_offset_over154
-00:00000AAC C1C00507        	    14M    sub    r1, r0, r5
-00:00000AB0 C1C0011F        	    15M    sub    r1, r3, r1
+00:00000AAA A008            	     9M    ld     r0, (r10) #get dma pointer
+00:00000AAC C3C00D77        	    10M    sub    r3, r14, r13  #buffer size
+00:00000AB0 054A            	    11M    cmp    r5, r0
+00:00000AB2 C1C0002D        	    12M    subge  r1, r5, r0
+00:00000AB6 051D            	    13M    bge    got_offset_over154
+00:00000AB8 C1C00507        	    14M    sub    r1, r0, r5
+00:00000ABC C1C0011F        	    15M    sub    r1, r3, r1
                             	    16M got_offset_over154:
-00:00000AB4 137A            	    17M    lsr    r3, 1
-00:00000AB6 3146            	    18M    sub    r1, r3
-00:00000AB8 21A21CA0        	    19M    st     r1, SMI_DMA_OFFSET(r20)
-00:00000ABC 41E990000000    	    20M    cmp    r1, MAX_DMA_DRIFT_ERROR
-00:00000AC2 261E            	    21M    bgt    drop_full154
-00:00000AC4 41E970000000    	    22M    cmp    r1, MAX_DMA_DRIFT
-00:00000ACA 071E            	    23M    bgt    full154
-00:00000ACC 281F            	    24M    b      not_full154
+00:00000AC0 137A            	    17M    lsr    r3, 1
+00:00000AC2 3146            	    18M    sub    r1, r3
+00:00000AC4 21A21CA0        	    19M    st     r1, SMI_DMA_OFFSET(r20)
+00:00000AC8 41E990000000    	    20M    cmp    r1, MAX_DMA_DRIFT_ERROR
+00:00000ACE 261E            	    21M    bgt    drop_full154
+00:00000AD0 41E970000000    	    22M    cmp    r1, MAX_DMA_DRIFT
+00:00000AD6 071E            	    23M    bgt    full154
+00:00000AD8 281F            	    24M    b      not_full154
                             	    25M 
                             	    26M not_dma_overrun154:
-00:00000ACE 7008            	    27M    ld     r0, (r7)  #read MAI CTL
-00:00000AD0 106C            	    28M    btst   r0, HD_MAI_CTL_ERRORF
-00:00000AD2 9E18            	    29M    bne    drop_full154
-00:00000AD4 B06C            	    30M    btst   r0, HD_MAI_CTL_FULL
-00:00000AD6 2318            	    31M    beq    not_full154
+00:00000ADA 7008            	    27M    ld     r0, (r7)  #read MAI CTL
+00:00000ADC 106C            	    28M    btst   r0, HD_MAI_CTL_ERRORF
+00:00000ADE 9E18            	    29M    bne    drop_full154
+00:00000AE0 B06C            	    30M    btst   r0, HD_MAI_CTL_FULL
+00:00000AE2 2318            	    31M    beq    not_full154
                             	    32M full154:
-00:00000AD8 95C142AF        	    33M    btst   r21, SMI_CTRL_BIT_PLL_1
-00:00000ADC 1918            	    34M    beq    drop_full154
-00:00000ADE 95C141AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_0
-00:00000AE2 0C18            	    36M    beq    use_slow_pll_full154
+00:00000AE4 95C142AF        	    33M    btst   r21, SMI_CTRL_BIT_PLL_1
+00:00000AE8 1918            	    34M    beq    drop_full154
+00:00000AEA 95C141AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_0
+00:00000AEE 0C18            	    36M    beq    use_slow_pll_full154
                             	    37M 
                             	    38M #   mov    r0, r19
                             	    39M #   add    r0, PLL_OFFSET_FAST
-00:00000AE4 53E840000000    	    40M    add    r19, PLL_OFFSET_FAST
-00:00000AEA 00C01307        	    41M    mov    r0, r19   
-00:00000AEE A0E90000005A    	    42M    or     r0, CM_PASSWORD
-00:00000AF4 20A20090        	    43M    st     r0, (r18)
-00:00000AF8 121F            	    44M    b      not_full154
+00:00000AF0 53E840000000    	    40M    add    r19, PLL_OFFSET_FAST
+00:00000AF6 00C01307        	    41M    mov    r0, r19
+00:00000AFA A0E90000005A    	    42M    or     r0, CM_PASSWORD
+00:00000B00 20A20090        	    43M    st     r0, (r18)
+00:00000B04 121F            	    44M    b      not_full154
                             	    45M 
                             	    46M use_slow_pll_full154:
-00:00000AFA 53C0449F        	    47M    add    r19, PLL_OFFSET_SLOW
-00:00000AFE 00C01307        	    48M    mov    r0, r19
-00:00000B02 A0E90000005A    	    49M    or     r0, CM_PASSWORD
-00:00000B08 20A20090        	    50M    st     r0, (r18)
-00:00000B0C 081F            	    51M    b      not_full154
+00:00000B06 53C0449F        	    47M    add    r19, PLL_OFFSET_SLOW
+00:00000B0A 00C01307        	    48M    mov    r0, r19
+00:00000B0E A0E90000005A    	    49M    or     r0, CM_PASSWORD
+00:00000B14 20A20090        	    50M    st     r0, (r18)
+00:00000B18 081F            	    51M    b      not_full154
                             	    52M 
                             	    53M drop_full154:
-00:00000B0E E271            	    54M    bset   r2, DROP_SAMPLE
-00:00000B10 57C041BF        	    55M    add    r23, 1
-00:00000B14 57C24FBF        	    56M    bclr   r23, 15  #max 32767
-00:00000B18 37A218A0        	    57M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
+00:00000B1A E271            	    54M    bset   r2, DROP_SAMPLE
+00:00000B1C 57C041BF        	    55M    add    r23, 1
+00:00000B20 57C24FBF        	    56M    bclr   r23, 15  #max 32767
+00:00000B24 37A218A0        	    57M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
                             	    58M not_full154:
                             	    59M 
                             	    58M 
@@ -2536,27 +2541,27 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH156:
                             	     2M    DELAY_NOP
-00:00000B1C 0100            	     1M    nop
-00:00000B1E 0100            	     2M    nop
-00:00000B20 0100            	     3M    nop
-00:00000B22 0100            	     4M    nop
+00:00000B28 0100            	     1M    nop
+00:00000B2A 0100            	     2M    nop
+00:00000B2C 0100            	     3M    nop
+00:00000B2E 0100            	     4M    nop
                             	     5M 
-00:00000B24 4008            	     3M    ld     r0, (r4)
-00:00000B26 2045            	     4M    eor    r0, r2
-00:00000B28 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000B2A 7918            	     6M    beq    waitBCH156
-00:00000B2C 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000B2E F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000B30 F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000B32 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000B30 4008            	     3M    ld     r0, (r4)
+00:00000B32 2045            	     4M    eor    r0, r2
+00:00000B34 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000B36 7918            	     6M    beq    waitBCH156
+00:00000B38 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000B3A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000B3C F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000B3E 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
                             	    60M 
-00:00000B36 49E980010000    	    61M    cmp    r9, BUFFER_CHECK_COUNT >> 1
-00:00000B3C 8318            	    62M    bne    skip_update117
-00:00000B3E 15A200A0        	    63M    ld     r21, SMI_CTRL(r20)      #update the control register
+00:00000B42 49E980010000    	    61M    cmp    r9, BUFFER_CHECK_COUNT >> 1
+00:00000B48 8318            	    62M    bne    skip_update117
+00:00000B4A 15A200A0        	    63M    ld     r21, SMI_CTRL(r20)      #update the control register
                             	    64M skip_update117:
                             	    65M 
-00:00000B42 4360            	    66M    mov    r3, 4
+00:00000B4E 4360            	    66M    mov    r3, 4
                             	    67M firstremain117:
                             	    68M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
@@ -2566,30 +2571,30 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH159:
                             	     2M    DELAY_NOP
-00:00000B44 0100            	     1M    nop
-00:00000B46 0100            	     2M    nop
-00:00000B48 0100            	     3M    nop
-00:00000B4A 0100            	     4M    nop
+00:00000B50 0100            	     1M    nop
+00:00000B52 0100            	     2M    nop
+00:00000B54 0100            	     3M    nop
+00:00000B56 0100            	     4M    nop
                             	     5M 
-00:00000B4C 4008            	     3M    ld     r0, (r4)
-00:00000B4E 2045            	     4M    eor    r0, r2
-00:00000B50 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000B52 7918            	     6M    beq    waitBCH159
-00:00000B54 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000B56 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000B58 F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000B5A 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000B58 4008            	     3M    ld     r0, (r4)
+00:00000B5A 2045            	     4M    eor    r0, r2
+00:00000B5C F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000B5E 7918            	     6M    beq    waitBCH159
+00:00000B60 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000B62 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000B64 F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000B66 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
-00:00000B5E 1366            	    69M    sub    r3, 1
-00:00000B60 036A            	    70M    cmp    r3, 0
-00:00000B62 F118            	    71M    bne    firstremain117
+00:00000B6A 1366            	    69M    sub    r3, 1
+00:00000B6C 036A            	    70M    cmp    r3, 0
+00:00000B6E F118            	    71M    bne    firstremain117
                             	    72M 
-00:00000B64 49E990010000    	    73M    cmp    r9, (BUFFER_CHECK_COUNT >> 1) + 0x10
-00:00000B6A 8618            	    74M    bne    skip_log117
-00:00000B6C 926D            	    75M    btst   r2, LOG_FRAME_ERROR
-00:00000B6E 0418            	    76M    beq    skip_log117
-00:00000B70 36A214A0        	    77M    st     r22, SMI_ERROR_COUNT(r20)
-00:00000B74 9273            	    78M    bclr   r2, LOG_FRAME_ERROR
+00:00000B70 49E990010000    	    73M    cmp    r9, (BUFFER_CHECK_COUNT >> 1) + 0x10
+00:00000B76 8618            	    74M    bne    skip_log117
+00:00000B78 926D            	    75M    btst   r2, LOG_FRAME_ERROR
+00:00000B7A 0418            	    76M    beq    skip_log117
+00:00000B7C 36A214A0        	    77M    st     r22, SMI_ERROR_COUNT(r20)
+00:00000B80 9273            	    78M    bclr   r2, LOG_FRAME_ERROR
                             	    79M skip_log117:
                             	    80M 
                             	    81M    WAIT_FOR_LR_BIT
@@ -2599,20 +2604,20 @@ Source: "videocore.s"
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH162:
                             	     2M    DELAY_NOP
-00:00000B76 0100            	     1M    nop
-00:00000B78 0100            	     2M    nop
-00:00000B7A 0100            	     3M    nop
-00:00000B7C 0100            	     4M    nop
+00:00000B82 0100            	     1M    nop
+00:00000B84 0100            	     2M    nop
+00:00000B86 0100            	     3M    nop
+00:00000B88 0100            	     4M    nop
                             	     5M 
-00:00000B7E 4008            	     3M    ld     r0, (r4)
-00:00000B80 2045            	     4M    eor    r0, r2
-00:00000B82 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000B84 7918            	     6M    beq    waitBCH162
-00:00000B86 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000B88 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000B8A 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000B8A 4008            	     3M    ld     r0, (r4)
+00:00000B8C 2045            	     4M    eor    r0, r2
+00:00000B8E F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000B90 7918            	     6M    beq    waitBCH162
+00:00000B92 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000B94 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000B96 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000B8E 7F90D6FE        	    82M    beq    bad_sync_LR_low1117
+00:00000B9A 7F90D6FE        	    82M    beq    bad_sync_LR_low1117
                             	    83M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
@@ -2625,22 +2630,22 @@ Source: "videocore.s"
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH166:
                             	     2M    DELAY_NOP
-00:00000B92 0100            	     1M    nop
-00:00000B94 0100            	     2M    nop
-00:00000B96 0100            	     3M    nop
-00:00000B98 0100            	     4M    nop
+00:00000B9E 0100            	     1M    nop
+00:00000BA0 0100            	     2M    nop
+00:00000BA2 0100            	     3M    nop
+00:00000BA4 0100            	     4M    nop
                             	     5M 
-00:00000B9A 4008            	     3M    ld     r0, (r4)
-00:00000B9C 2045            	     4M    eor    r0, r2
-00:00000B9E F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000BA0 7918            	     6M    beq    waitBCH166
-00:00000BA2 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000BA4 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000BA6 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000BA6 4008            	     3M    ld     r0, (r4)
+00:00000BA8 2045            	     4M    eor    r0, r2
+00:00000BAA F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000BAC 7918            	     6M    beq    waitBCH166
+00:00000BAE 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000BB0 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000BB2 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000BAA 7F91DDFE        	    86M    bne    bad_sync_LR_high1117
-00:00000BAE 01C0110F        	    87M    mov    r1, r17
-00:00000BB2 1B40            	    88M    mov    r11, r1   #save in case of repeat
+00:00000BB6 7F91DDFE        	    86M    bne    bad_sync_LR_high1117
+00:00000BBA 01C0110F        	    87M    mov    r1, r17
+00:00000BBE 1B40            	    88M    mov    r11, r1   #save in case of repeat
                             	    89M    IEC958_STATUS
                             	     1M 
                             	     2M     #byte 0 = 0x04   - bits 0-7,   bit 2 set   // consumer, PCM, no copyright, no pre-emphasis
@@ -2649,47 +2654,47 @@ Source: "videocore.s"
                             	     5M     #byte 3 = 0x02   - bits 24-31  bit 25 set    // sampling frequency uchFS = 2 = 48000
                             	     6M     #byte 4 = 0xDB   - bits 32-39  0b1011 | (13 << 4) bits 1101 1011   bits 32, 33, 35, 36, 38, 39      // 24 bit sampl
                             	     7M 
-00:00000BB4 066A            	     8M     cmp    r6, 0
-00:00000BB6 A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
-00:00000BBA 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
-00:00000BC0 191D            	    11M     bge    no_status_bytes168
-00:00000BC2 266A            	    12M     cmp   r6, 2
-00:00000BC4 46C1D930        	    13M     cmpne r6, 25
-00:00000BC8 01C25E08        	    14M     bseteq r1, 30
-00:00000BCC C6E820000000    	    15M     sub   r6, 32
-00:00000BD2 066A            	    16M     cmp   r6, (32 - 32)
-00:00000BD4 46C1C130        	    17M     cmpne r6, (33 - 32)
-00:00000BD8 46C1C330        	    18M     cmpne r6, (35 - 32)
-00:00000BDC 46C1C430        	    19M     cmpne r6, (36 - 32)
-00:00000BE0 46C1C630        	    20M     cmpne r6, (38 - 32)
-00:00000BE4 46C1C730        	    21M     cmpne r6, (39 - 32)
-00:00000BE8 01C25E08        	    22M     bseteq r1, 30
-00:00000BEC 46E820000000    	    23M     add   r6, 32
+00:00000BC0 066A            	     8M     cmp    r6, 0
+00:00000BC2 A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
+00:00000BC6 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
+00:00000BCC 191D            	    11M     bge    no_status_bytes168
+00:00000BCE 266A            	    12M     cmp   r6, 2
+00:00000BD0 46C1D930        	    13M     cmpne r6, 25
+00:00000BD4 01C25E08        	    14M     bseteq r1, 30
+00:00000BD8 C6E820000000    	    15M     sub   r6, 32
+00:00000BDE 066A            	    16M     cmp   r6, (32 - 32)
+00:00000BE0 46C1C130        	    17M     cmpne r6, (33 - 32)
+00:00000BE4 46C1C330        	    18M     cmpne r6, (35 - 32)
+00:00000BE8 46C1C430        	    19M     cmpne r6, (36 - 32)
+00:00000BEC 46C1C630        	    20M     cmpne r6, (38 - 32)
+00:00000BF0 46C1C730        	    21M     cmpne r6, (39 - 32)
+00:00000BF4 01C25E08        	    22M     bseteq r1, 30
+00:00000BF8 46E820000000    	    23M     add   r6, 32
                             	    24M no_status_bytes168:
-00:00000BF2 0860            	    25M     mov    r8, 0
-00:00000BF4 F16D            	    26M     btst   r1, 31  #test existing parity count
-00:00000BF6 08C0C140        	    27M     movne  r8, 1
-00:00000BFA F173            	    28M     bclr   r1, 31
+00:00000BFE 0860            	    25M     mov    r8, 0
+00:00000C00 F16D            	    26M     btst   r1, 31  #test existing parity count
+00:00000C02 08C0C140        	    27M     movne  r8, 1
+00:00000C06 F173            	    28M     bclr   r1, 31
                             	    29M 
-00:00000BFC 016C            	    30M     btst   r1, 0
-00:00000BFE 48C0C140        	    31M     addne  r8, 1
-00:00000C02 116C            	    32M     btst   r1, 1
-00:00000C04 48C0C140        	    33M     addne  r8, 1
-00:00000C08 216C            	    34M     btst   r1, 2
-00:00000C0A 48C0C140        	    35M     addne  r8, 1
-00:00000C0E 316C            	    36M     btst   r1, 3
-00:00000C10 48C0C140        	    37M     addne  r8, 1
-00:00000C14 C16D            	    38M     btst   r1, 28
-00:00000C16 48C0C140        	    39M     addne  r8, 1
-00:00000C1A D16D            	    40M     btst   r1, 29
-00:00000C1C 48C0C140        	    41M     addne  r8, 1
-00:00000C20 E16D            	    42M     btst   r1, 30
-00:00000C22 48C0C140        	    43M     addne  r8, 1
+00:00000C08 016C            	    30M     btst   r1, 0
+00:00000C0A 48C0C140        	    31M     addne  r8, 1
+00:00000C0E 116C            	    32M     btst   r1, 1
+00:00000C10 48C0C140        	    33M     addne  r8, 1
+00:00000C14 216C            	    34M     btst   r1, 2
+00:00000C16 48C0C140        	    35M     addne  r8, 1
+00:00000C1A 316C            	    36M     btst   r1, 3
+00:00000C1C 48C0C140        	    37M     addne  r8, 1
+00:00000C20 C16D            	    38M     btst   r1, 28
+00:00000C22 48C0C140        	    39M     addne  r8, 1
+00:00000C26 D16D            	    40M     btst   r1, 29
+00:00000C28 48C0C140        	    41M     addne  r8, 1
+00:00000C2C E16D            	    42M     btst   r1, 30
+00:00000C2E 48C0C140        	    43M     addne  r8, 1
                             	    44M 
-00:00000C26 086C            	    45M     btst   r8, 0
-00:00000C28 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
+00:00000C32 086C            	    45M     btst   r8, 0
+00:00000C34 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
                             	    47M 
-00:00000C2C 11C0018F        	    90M    mov    r17, r1
+00:00000C38 11C0018F        	    90M    mov    r17, r1
                             	    91M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
@@ -2697,11 +2702,11 @@ Source: "videocore.s"
                             	    92M 
                             	    93M    #capture second sample
                             	    94M    #LR clock has just gone low
-00:00000C30 8361            	    95M    mov    r3, 24
-00:00000C32 0160            	    96M    mov    r1, 0
-00:00000C34 0860            	    97M    mov    r8, 0 #parity count
+00:00000C3C 8361            	    95M    mov    r3, 24
+00:00000C3E 0160            	    96M    mov    r1, 0
+00:00000C40 0860            	    97M    mov    r8, 0 #parity count
                             	    98M secondloop117:
-00:00000C36 117C            	    99M    lsl    r1, 1
+00:00000C42 117C            	    99M    lsl    r1, 1
                             	   100M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
@@ -2710,28 +2715,28 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH171:
                             	     2M    DELAY_NOP
-00:00000C38 0100            	     1M    nop
-00:00000C3A 0100            	     2M    nop
-00:00000C3C 0100            	     3M    nop
-00:00000C3E 0100            	     4M    nop
+00:00000C44 0100            	     1M    nop
+00:00000C46 0100            	     2M    nop
+00:00000C48 0100            	     3M    nop
+00:00000C4A 0100            	     4M    nop
                             	     5M 
-00:00000C40 4008            	     3M    ld     r0, (r4)
-00:00000C42 2045            	     4M    eor    r0, r2
-00:00000C44 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000C46 7918            	     6M    beq    waitBCH171
-00:00000C48 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000C4A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000C4C F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000C4E 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000C4C 4008            	     3M    ld     r0, (r4)
+00:00000C4E 2045            	     4M    eor    r0, r2
+00:00000C50 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000C52 7918            	     6M    beq    waitBCH171
+00:00000C54 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000C56 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000C58 F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000C5A 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
-00:00000C52 A1C1C108        	   101M    orne   r1, 1
-00:00000C56 1366            	   102M    sub    r3, 1
-00:00000C58 036A            	   103M    cmp    r3, 0
-00:00000C5A EE18            	   104M    bne    secondloop117
-00:00000C5C 417C            	   105M    lsl    r1, 4
-00:00000C5E 086C            	   106M    btst   r8, 0
-00:00000C60 01C2DF08        	   107M    bsetne r1, 31   # temp set parity bit if count is odd
-00:00000C64 18C001C7        	   108M    mov    r24, r1   #temp save
+00:00000C5E A1C1C108        	   101M    orne   r1, 1
+00:00000C62 1366            	   102M    sub    r3, 1
+00:00000C64 036A            	   103M    cmp    r3, 0
+00:00000C66 EE18            	   104M    bne    secondloop117
+00:00000C68 417C            	   105M    lsl    r1, 4
+00:00000C6A 086C            	   106M    btst   r8, 0
+00:00000C6C 01C2DF08        	   107M    bsetne r1, 31   # temp set parity bit if count is odd
+00:00000C70 18C001C7        	   108M    mov    r24, r1   #temp save
                             	   109M 
                             	   110M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
@@ -2741,81 +2746,81 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH174:
                             	     2M    DELAY_NOP
-00:00000C68 0100            	     1M    nop
-00:00000C6A 0100            	     2M    nop
-00:00000C6C 0100            	     3M    nop
-00:00000C6E 0100            	     4M    nop
+00:00000C74 0100            	     1M    nop
+00:00000C76 0100            	     2M    nop
+00:00000C78 0100            	     3M    nop
+00:00000C7A 0100            	     4M    nop
                             	     5M 
-00:00000C70 4008            	     3M    ld     r0, (r4)
-00:00000C72 2045            	     4M    eor    r0, r2
-00:00000C74 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000C76 7918            	     6M    beq    waitBCH174
-00:00000C78 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000C7A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000C7C F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000C7E 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000C7C 4008            	     3M    ld     r0, (r4)
+00:00000C7E 2045            	     4M    eor    r0, r2
+00:00000C80 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000C82 7918            	     6M    beq    waitBCH174
+00:00000C84 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000C86 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000C88 F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000C8A 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
                             	   111M 
                             	   112M    CHECK_UNDERRUN
                             	     1M    # check for underrun
-00:00000C82 096B            	     2M    cmp    r9,0x10
-00:00000C84 00914A00        	     3M    bne    not_empty176             #only check once per frame
-00:00000C88 F26D            	     4M    btst   r2, REPEAT_SAMPLE
-00:00000C8A 00914700        	     5M    bne    not_empty176          #repeat pending
+00:00000C8E 096B            	     2M    cmp    r9,0x10
+00:00000C90 00914A00        	     3M    bne    not_empty176             #only check once per frame
+00:00000C94 F26D            	     4M    btst   r2, REPEAT_SAMPLE
+00:00000C96 00914700        	     5M    bne    not_empty176          #repeat pending
                             	     6M 
-00:00000C8E 95C143AF        	     7M    btst   r21, SMI_CTRL_BIT_DMA
-00:00000C92 1B18            	     8M    beq  not_dma_underrun176
+00:00000C9A 95C143AF        	     7M    btst   r21, SMI_CTRL_BIT_DMA
+00:00000C9E 1B18            	     8M    beq  not_dma_underrun176
                             	     9M 
-00:00000C94 A008            	    10M    ld     r0, (r10) #get dma pointer
-00:00000C96 C3C00D77        	    11M    sub    r3, r14, r13  #buffer size
-00:00000C9A 054A            	    12M    cmp    r5, r0
-00:00000C9C C1C0002D        	    13M    subge  r1, r5, r0
-00:00000CA0 051D            	    14M    bge    got_offset_under176
-00:00000CA2 C1C00507        	    15M    sub    r1, r0, r5
-00:00000CA6 C1C0011F        	    16M    sub    r1, r3, r1
+00:00000CA0 A008            	    10M    ld     r0, (r10) #get dma pointer
+00:00000CA2 C3C00D77        	    11M    sub    r3, r14, r13  #buffer size
+00:00000CA6 054A            	    12M    cmp    r5, r0
+00:00000CA8 C1C0002D        	    13M    subge  r1, r5, r0
+00:00000CAC 051D            	    14M    bge    got_offset_under176
+00:00000CAE C1C00507        	    15M    sub    r1, r0, r5
+00:00000CB2 C1C0011F        	    16M    sub    r1, r3, r1
                             	    17M got_offset_under176:
-00:00000CAA 137A            	    18M    lsr    r3, 1
-00:00000CAC 3146            	    19M    sub    r1, r3
-00:00000CAE 21A21CA0        	    20M    st     r1, SMI_DMA_OFFSET(r20)
-00:00000CB2 61C1400F        	    21M    rsb    r1, 0
-00:00000CB6 41E990000000    	    22M    cmp    r1, MAX_DMA_DRIFT_ERROR
-00:00000CBC 261E            	    23M    bgt    repeat_empty176
-00:00000CBE 41E970000000    	    24M    cmp    r1, MAX_DMA_DRIFT
-00:00000CC4 071E            	    25M    bgt    empty176
-00:00000CC6 291F            	    26M    b      not_empty176
+00:00000CB6 137A            	    18M    lsr    r3, 1
+00:00000CB8 3146            	    19M    sub    r1, r3
+00:00000CBA 21A21CA0        	    20M    st     r1, SMI_DMA_OFFSET(r20)
+00:00000CBE 61C1400F        	    21M    rsb    r1, 0
+00:00000CC2 41E990000000    	    22M    cmp    r1, MAX_DMA_DRIFT_ERROR
+00:00000CC8 261E            	    23M    bgt    repeat_empty176
+00:00000CCA 41E970000000    	    24M    cmp    r1, MAX_DMA_DRIFT
+00:00000CD0 071E            	    25M    bgt    empty176
+00:00000CD2 291F            	    26M    b      not_empty176
                             	    27M 
                             	    28M not_dma_underrun176:
-00:00000CC8 7008            	    29M    ld     r0, (r7)  #read MAI CTL
-00:00000CCA 206C            	    30M    btst   r0, HD_MAI_CTL_ERRORE
-00:00000CCC 9E18            	    31M    bne    repeat_empty176
-00:00000CCE A06C            	    32M    btst   r0, HD_MAI_CTL_EMPTY
-00:00000CD0 2418            	    33M    beq    not_empty176
+00:00000CD4 7008            	    29M    ld     r0, (r7)  #read MAI CTL
+00:00000CD6 206C            	    30M    btst   r0, HD_MAI_CTL_ERRORE
+00:00000CD8 9E18            	    31M    bne    repeat_empty176
+00:00000CDA A06C            	    32M    btst   r0, HD_MAI_CTL_EMPTY
+00:00000CDC 2418            	    33M    beq    not_empty176
                             	    34M empty176:
-00:00000CD2 95C142AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_1
-00:00000CD6 1918            	    36M    beq    repeat_empty176
-00:00000CD8 95C141AF        	    37M    btst   r21, SMI_CTRL_BIT_PLL_0
-00:00000CDC 0C18            	    38M    beq    use_slow_pll_empty176
+00:00000CDE 95C142AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_1
+00:00000CE2 1918            	    36M    beq    repeat_empty176
+00:00000CE4 95C141AF        	    37M    btst   r21, SMI_CTRL_BIT_PLL_0
+00:00000CE8 0C18            	    38M    beq    use_slow_pll_empty176
                             	    39M 
                             	    40M #   mov    r0, r19
                             	    41M #   sub    r0, PLL_OFFSET_FAST
-00:00000CDE D3E840000000    	    42M    sub    r19, PLL_OFFSET_FAST
-00:00000CE4 00C01307        	    43M    mov    r0, r19
-00:00000CE8 A0E90000005A    	    44M    or     r0, CM_PASSWORD
-00:00000CEE 20A20090        	    45M    st     r0, (r18)
-00:00000CF2 131F            	    46M    b      not_empty176
+00:00000CEA D3E840000000    	    42M    sub    r19, PLL_OFFSET_FAST
+00:00000CF0 00C01307        	    43M    mov    r0, r19
+00:00000CF4 A0E90000005A    	    44M    or     r0, CM_PASSWORD
+00:00000CFA 20A20090        	    45M    st     r0, (r18)
+00:00000CFE 131F            	    46M    b      not_empty176
                             	    47M 
                             	    48M use_slow_pll_empty176:
-00:00000CF4 D3C0449F        	    49M    sub    r19, PLL_OFFSET_SLOW
-00:00000CF8 00C01307        	    50M    mov    r0, r19
-00:00000CFC A0E90000005A    	    51M    or     r0, CM_PASSWORD
-00:00000D02 20A20090        	    52M    st     r0, (r18)
-00:00000D06 091F            	    53M    b      not_empty176
+00:00000D00 D3C0449F        	    49M    sub    r19, PLL_OFFSET_SLOW
+00:00000D04 00C01307        	    50M    mov    r0, r19
+00:00000D08 A0E90000005A    	    51M    or     r0, CM_PASSWORD
+00:00000D0E 20A20090        	    52M    st     r0, (r18)
+00:00000D12 091F            	    53M    b      not_empty176
                             	    54M 
                             	    55M repeat_empty176:
-00:00000D08 F271            	    56M    bset   r2, REPEAT_SAMPLE
-00:00000D0A 57E800000100    	    57M    add    r23, 0x10000
-00:00000D10 57C25FBF        	    58M    bclr   r23, 31   #max 32767
-00:00000D14 37A218A0        	    59M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
+00:00000D14 F271            	    56M    bset   r2, REPEAT_SAMPLE
+00:00000D16 57E800000100    	    57M    add    r23, 0x10000
+00:00000D1C 57C25FBF        	    58M    bclr   r23, 31   #max 32767
+00:00000D20 37A218A0        	    59M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
                             	    60M not_empty176:
                             	    61M 
                             	   113M 
@@ -2827,28 +2832,28 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH178:
                             	     2M    DELAY_NOP
-00:00000D18 0100            	     1M    nop
-00:00000D1A 0100            	     2M    nop
-00:00000D1C 0100            	     3M    nop
-00:00000D1E 0100            	     4M    nop
+00:00000D24 0100            	     1M    nop
+00:00000D26 0100            	     2M    nop
+00:00000D28 0100            	     3M    nop
+00:00000D2A 0100            	     4M    nop
                             	     5M 
-00:00000D20 4008            	     3M    ld     r0, (r4)
-00:00000D22 2045            	     4M    eor    r0, r2
-00:00000D24 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000D26 7918            	     6M    beq    waitBCH178
-00:00000D28 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000D2A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000D2C F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000D2E 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000D2C 4008            	     3M    ld     r0, (r4)
+00:00000D2E 2045            	     4M    eor    r0, r2
+00:00000D30 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000D32 7918            	     6M    beq    waitBCH178
+00:00000D34 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000D36 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000D38 F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000D3A 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
                             	   115M 
-00:00000D32 F26D            	   116M    btst   r2, REPEAT_SAMPLE
-00:00000D34 0418            	   117M    beq    no_repeat_main117
-00:00000D36 FF9FFCFC        	   118M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000D3A F273            	   119M    bclr   r2, REPEAT_SAMPLE
+00:00000D3E F26D            	   116M    btst   r2, REPEAT_SAMPLE
+00:00000D40 0418            	   117M    beq    no_repeat_main117
+00:00000D42 FF9FF6FC        	   118M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000D46 F273            	   119M    bclr   r2, REPEAT_SAMPLE
                             	   120M no_repeat_main117:
                             	   121M 
-00:00000D3C 4360            	   122M    mov    r3, 4
+00:00000D48 4360            	   122M    mov    r3, 4
                             	   123M secondremain117:
                             	   124M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
@@ -2858,25 +2863,25 @@ Source: "videocore.s"
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     1M waitBCH181:
                             	     2M    DELAY_NOP
-00:00000D3E 0100            	     1M    nop
-00:00000D40 0100            	     2M    nop
-00:00000D42 0100            	     3M    nop
-00:00000D44 0100            	     4M    nop
+00:00000D4A 0100            	     1M    nop
+00:00000D4C 0100            	     2M    nop
+00:00000D4E 0100            	     3M    nop
+00:00000D50 0100            	     4M    nop
                             	     5M 
-00:00000D46 4008            	     3M    ld     r0, (r4)
-00:00000D48 2045            	     4M    eor    r0, r2
-00:00000D4A F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000D4C 7918            	     6M    beq    waitBCH181
-00:00000D4E 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000D50 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000D52 F04C            	     9M    btst   r0, r15 # DATABIT
-00:00000D54 48C0C140        	    10M    addne  r8, 1  #parity count
+00:00000D52 4008            	     3M    ld     r0, (r4)
+00:00000D54 2045            	     4M    eor    r0, r2
+00:00000D56 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000D58 7918            	     6M    beq    waitBCH181
+00:00000D5A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000D5C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000D5E F04C            	     9M    btst   r0, r15 # DATABIT
+00:00000D60 48C0C140        	    10M    addne  r8, 1  #parity count
                             	     6M .endif
-00:00000D58 1366            	   125M    sub    r3, 1
-00:00000D5A 036A            	   126M    cmp    r3, 0
-00:00000D5C F118            	   127M    bne    secondremain117
+00:00000D64 1366            	   125M    sub    r3, 1
+00:00000D66 036A            	   126M    cmp    r3, 0
+00:00000D68 F118            	   127M    bne    secondremain117
                             	   128M 
-00:00000D5E 01C0180F        	   129M    mov    r1, r24
+00:00000D6A 01C0180F        	   129M    mov    r1, r24
                             	   130M    IEC958_STATUS
                             	     1M 
                             	     2M     #byte 0 = 0x04   - bits 0-7,   bit 2 set   // consumer, PCM, no copyright, no pre-emphasis
@@ -2885,49 +2890,49 @@ Source: "videocore.s"
                             	     5M     #byte 3 = 0x02   - bits 24-31  bit 25 set    // sampling frequency uchFS = 2 = 48000
                             	     6M     #byte 4 = 0xDB   - bits 32-39  0b1011 | (13 << 4) bits 1101 1011   bits 32, 33, 35, 36, 38, 39      // 24 bit sampl
                             	     7M 
-00:00000D62 066A            	     8M     cmp    r6, 0
-00:00000D64 A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
-00:00000D68 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
-00:00000D6E 191D            	    11M     bge    no_status_bytes183
-00:00000D70 266A            	    12M     cmp   r6, 2
-00:00000D72 46C1D930        	    13M     cmpne r6, 25
-00:00000D76 01C25E08        	    14M     bseteq r1, 30
-00:00000D7A C6E820000000    	    15M     sub   r6, 32
-00:00000D80 066A            	    16M     cmp   r6, (32 - 32)
-00:00000D82 46C1C130        	    17M     cmpne r6, (33 - 32)
-00:00000D86 46C1C330        	    18M     cmpne r6, (35 - 32)
-00:00000D8A 46C1C430        	    19M     cmpne r6, (36 - 32)
-00:00000D8E 46C1C630        	    20M     cmpne r6, (38 - 32)
-00:00000D92 46C1C730        	    21M     cmpne r6, (39 - 32)
-00:00000D96 01C25E08        	    22M     bseteq r1, 30
-00:00000D9A 46E820000000    	    23M     add   r6, 32
+00:00000D6E 066A            	     8M     cmp    r6, 0
+00:00000D70 A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
+00:00000D74 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
+00:00000D7A 191D            	    11M     bge    no_status_bytes183
+00:00000D7C 266A            	    12M     cmp   r6, 2
+00:00000D7E 46C1D930        	    13M     cmpne r6, 25
+00:00000D82 01C25E08        	    14M     bseteq r1, 30
+00:00000D86 C6E820000000    	    15M     sub   r6, 32
+00:00000D8C 066A            	    16M     cmp   r6, (32 - 32)
+00:00000D8E 46C1C130        	    17M     cmpne r6, (33 - 32)
+00:00000D92 46C1C330        	    18M     cmpne r6, (35 - 32)
+00:00000D96 46C1C430        	    19M     cmpne r6, (36 - 32)
+00:00000D9A 46C1C630        	    20M     cmpne r6, (38 - 32)
+00:00000D9E 46C1C730        	    21M     cmpne r6, (39 - 32)
+00:00000DA2 01C25E08        	    22M     bseteq r1, 30
+00:00000DA6 46E820000000    	    23M     add   r6, 32
                             	    24M no_status_bytes183:
-00:00000DA0 0860            	    25M     mov    r8, 0
-00:00000DA2 F16D            	    26M     btst   r1, 31  #test existing parity count
-00:00000DA4 08C0C140        	    27M     movne  r8, 1
-00:00000DA8 F173            	    28M     bclr   r1, 31
+00:00000DAC 0860            	    25M     mov    r8, 0
+00:00000DAE F16D            	    26M     btst   r1, 31  #test existing parity count
+00:00000DB0 08C0C140        	    27M     movne  r8, 1
+00:00000DB4 F173            	    28M     bclr   r1, 31
                             	    29M 
-00:00000DAA 016C            	    30M     btst   r1, 0
-00:00000DAC 48C0C140        	    31M     addne  r8, 1
-00:00000DB0 116C            	    32M     btst   r1, 1
-00:00000DB2 48C0C140        	    33M     addne  r8, 1
-00:00000DB6 216C            	    34M     btst   r1, 2
-00:00000DB8 48C0C140        	    35M     addne  r8, 1
-00:00000DBC 316C            	    36M     btst   r1, 3
-00:00000DBE 48C0C140        	    37M     addne  r8, 1
-00:00000DC2 C16D            	    38M     btst   r1, 28
-00:00000DC4 48C0C140        	    39M     addne  r8, 1
-00:00000DC8 D16D            	    40M     btst   r1, 29
-00:00000DCA 48C0C140        	    41M     addne  r8, 1
-00:00000DCE E16D            	    42M     btst   r1, 30
-00:00000DD0 48C0C140        	    43M     addne  r8, 1
+00:00000DB6 016C            	    30M     btst   r1, 0
+00:00000DB8 48C0C140        	    31M     addne  r8, 1
+00:00000DBC 116C            	    32M     btst   r1, 1
+00:00000DBE 48C0C140        	    33M     addne  r8, 1
+00:00000DC2 216C            	    34M     btst   r1, 2
+00:00000DC4 48C0C140        	    35M     addne  r8, 1
+00:00000DC8 316C            	    36M     btst   r1, 3
+00:00000DCA 48C0C140        	    37M     addne  r8, 1
+00:00000DCE C16D            	    38M     btst   r1, 28
+00:00000DD0 48C0C140        	    39M     addne  r8, 1
+00:00000DD4 D16D            	    40M     btst   r1, 29
+00:00000DD6 48C0C140        	    41M     addne  r8, 1
+00:00000DDA E16D            	    42M     btst   r1, 30
+00:00000DDC 48C0C140        	    43M     addne  r8, 1
                             	    44M 
-00:00000DD4 086C            	    45M     btst   r8, 0
-00:00000DD6 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
+00:00000DE0 086C            	    45M     btst   r8, 0
+00:00000DE2 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
                             	    47M 
-00:00000DDA 00C01807        	   131M    mov    r0, r24
-00:00000DDE 18C001C7        	   132M    mov    r24, r1   #temp save
-00:00000DE2 0140            	   133M    mov    r1, r0
+00:00000DE6 00C01807        	   131M    mov    r0, r24
+00:00000DEA 18C001C7        	   132M    mov    r24, r1   #temp save
+00:00000DEE 0140            	   133M    mov    r1, r0
                             	   134M 
                             	   135M    WAIT_FOR_LR_BIT
                             	     1M .if TWOGPIO == 1
@@ -2936,20 +2941,20 @@ Source: "videocore.s"
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH185:
                             	     2M    DELAY_NOP
-00:00000DE4 0100            	     1M    nop
-00:00000DE6 0100            	     2M    nop
-00:00000DE8 0100            	     3M    nop
-00:00000DEA 0100            	     4M    nop
+00:00000DF0 0100            	     1M    nop
+00:00000DF2 0100            	     2M    nop
+00:00000DF4 0100            	     3M    nop
+00:00000DF6 0100            	     4M    nop
                             	     5M 
-00:00000DEC 4008            	     3M    ld     r0, (r4)
-00:00000DEE 2045            	     4M    eor    r0, r2
-00:00000DF0 F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000DF2 7918            	     6M    beq    waitBCH185
-00:00000DF4 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000DF6 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000DF8 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000DF8 4008            	     3M    ld     r0, (r4)
+00:00000DFA 2045            	     4M    eor    r0, r2
+00:00000DFC F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000DFE 7918            	     6M    beq    waitBCH185
+00:00000E00 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000E02 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000E04 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000DFC 7F91D6FD        	   136M    bne    bad_sync_LR_high2117
+00:00000E08 7F91D6FD        	   136M    bne    bad_sync_LR_high2117
                             	   137M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
@@ -2962,85 +2967,85 @@ Source: "videocore.s"
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     1M waitBCH189:
                             	     2M    DELAY_NOP
-00:00000E00 0100            	     1M    nop
-00:00000E02 0100            	     2M    nop
-00:00000E04 0100            	     3M    nop
-00:00000E06 0100            	     4M    nop
+00:00000E0C 0100            	     1M    nop
+00:00000E0E 0100            	     2M    nop
+00:00000E10 0100            	     3M    nop
+00:00000E12 0100            	     4M    nop
                             	     5M 
-00:00000E08 4008            	     3M    ld     r0, (r4)
-00:00000E0A 2045            	     4M    eor    r0, r2
-00:00000E0C F06C            	     5M    btst   r0, CLOCK_BIT
-00:00000E0E 7918            	     6M    beq    waitBCH189
-00:00000E10 4008            	     7M   ld     r0, (r4)          #second read for reliability
-00:00000E12 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
-00:00000E14 80C11007        	     9M    btst   r0, r16 # LRBIT
+00:00000E14 4008            	     3M    ld     r0, (r4)
+00:00000E16 2045            	     4M    eor    r0, r2
+00:00000E18 F06C            	     5M    btst   r0, CLOCK_BIT
+00:00000E1A 7918            	     6M    beq    waitBCH189
+00:00000E1C 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000E1E F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+00:00000E20 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
-00:00000E18 7F90EFFD        	   140M    beq    bad_sync_LR_low2117
-00:00000E1C 1C40            	   141M    mov    r12, r1   #save in case of repeat
+00:00000E24 7F90EFFD        	   140M    beq    bad_sync_LR_low2117
+00:00000E28 1C40            	   141M    mov    r12, r1   #save in case of repeat
                             	   142M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
                             	     3M .endif
                             	   143M 
-00:00000E1E E26D            	   144M    btst   r2, DROP_SAMPLE
-00:00000E20 42C2DE10        	   145M    bclrne r2, DROP_SAMPLE
-00:00000E24 9518            	   146M    bne    drop_main117
+00:00000E2A E26D            	   144M    btst   r2, DROP_SAMPLE
+00:00000E2C 42C2DE10        	   145M    bclrne r2, DROP_SAMPLE
+00:00000E30 9518            	   146M    bne    drop_main117
                             	   147M 
-00:00000E26 01C0110F        	   148M    mov    r1, r17
+00:00000E32 01C0110F        	   148M    mov    r1, r17
                             	   149M    WRITE
-00:00000E2A 5109            	     1M     st     r1, (r5)
+00:00000E36 5109            	     1M     st     r1, (r5)
                             	     2M #increment buffer pointer
-00:00000E2C 4562            	     3M     add    r5, 4
-00:00000E2E E54A            	     4M     cmp    r5, r14
-00:00000E30 05C00D2D        	     5M     movge  r5, r13
-00:00000E34 01C0180F        	   150M    mov    r1, r24
+00:00000E38 4562            	     3M     add    r5, 4
+00:00000E3A E54A            	     4M     cmp    r5, r14
+00:00000E3C 05C00D2D        	     5M     movge  r5, r13
+00:00000E40 01C0180F        	   150M    mov    r1, r24
                             	   151M    WRITE
-00:00000E38 5109            	     1M     st     r1, (r5)
+00:00000E44 5109            	     1M     st     r1, (r5)
                             	     2M #increment buffer pointer
-00:00000E3A 4562            	     3M     add    r5, 4
-00:00000E3C E54A            	     4M     cmp    r5, r14
-00:00000E3E 05C00D2D        	     5M     movge  r5, r13
-00:00000E42 1662            	   152M    add    r6, 1
-00:00000E44 46E9C0000000    	   153M    cmp    r6, IEC958_FRAMES_PER_BLOCK
-00:00000E4A 06C04035        	   154M    movge  r6, 0
+00:00000E46 4562            	     3M     add    r5, 4
+00:00000E48 E54A            	     4M     cmp    r5, r14
+00:00000E4A 05C00D2D        	     5M     movge  r5, r13
+00:00000E4E 1662            	   152M    add    r6, 1
+00:00000E50 46E9C0000000    	   153M    cmp    r6, IEC958_FRAMES_PER_BLOCK
+00:00000E56 06C04035        	   154M    movge  r6, 0
                             	   155M drop_main117:
-00:00000E4E 026C            	   156M    btst   r2, REPEAT_22Khz
-00:00000E50 0318            	   157M    beq    no_repeat_sample_main117
-00:00000E52 FF9F6EFC        	   158M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000E5A 026C            	   156M    btst   r2, REPEAT_22Khz
+00:00000E5C 0318            	   157M    beq    no_repeat_sample_main117
+00:00000E5E FF9F68FC        	   158M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	   159M no_repeat_sample_main117:
                             	   160M 
-00:00000E56 1962            	   161M    add    r9, 1
-00:00000E58 49E900030000    	   162M    cmp    r9, BUFFER_CHECK_COUNT
-00:00000E5E 09C0404D        	   163M    movge  r9, 0
+00:00000E62 1962            	   161M    add    r9, 1
+00:00000E64 49E900030000    	   162M    cmp    r9, BUFFER_CHECK_COUNT
+00:00000E6A 09C0404D        	   163M    movge  r9, 0
                             	   164M 
-00:00000E62 7F9EE6FD        	   165M    b      audio_main_loop117
+00:00000E6E 7F9EE6FD        	   165M    b      audio_main_loop117
                             	   166M 
                             	   167M 
-                            	  1271: 
-                            	  1272: two_gpio_capture:
-                            	  1273: .set TWOGPIO, 1
-                            	  1274:    CAPTURE_AUDIO
+                            	  1276: 
+                            	  1277: two_gpio_capture:
+                            	  1278: .set TWOGPIO, 1
+                            	  1279:    CAPTURE_AUDIO
                             	     1M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
                             	     2M waitLRCL2195:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO196:
-00:00000E66 4008            	     2M    ld     r0, (r4)
-00:00000E68 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000E6A FE18            	     4M    bne    waitBCHO196
+00:00000E72 4008            	     2M    ld     r0, (r4)
+00:00000E74 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000E76 FE18            	     4M    bne    waitBCHO196
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL197:
-00:00000E6C 4008            	     2M    ld     r0, (r4)
-00:00000E6E F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000E70 7E18            	     4M    beq    waitBCL197
-00:00000E72 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000E74 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000E78 F718            	     5M    bne    waitLRCL2195
+00:00000E78 4008            	     2M    ld     r0, (r4)
+00:00000E7A F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000E7C 7E18            	     4M    beq    waitBCL197
+00:00000E7E 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000E80 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000E84 F718            	     5M    bne    waitLRCL2195
                             	     6M    HI_BITCLK
                             	     1M waitBCHO198:
-00:00000E7A 4008            	     2M    ld     r0, (r4)
-00:00000E7C F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000E7E FE18            	     4M    bne    waitBCHO198
+00:00000E86 4008            	     2M    ld     r0, (r4)
+00:00000E88 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000E8A FE18            	     4M    bne    waitBCHO198
                             	     7M .else
                             	     8M waitLRCL195:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
@@ -3051,28 +3056,28 @@ Source: "videocore.s"
                             	     2M waitLRCH2199:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO200:
-00:00000E80 4008            	     2M    ld     r0, (r4)
-00:00000E82 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000E84 FE18            	     4M    bne    waitBCHO200
+00:00000E8C 4008            	     2M    ld     r0, (r4)
+00:00000E8E F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000E90 FE18            	     4M    bne    waitBCHO200
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL201:
-00:00000E86 4008            	     2M    ld     r0, (r4)
-00:00000E88 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000E8A 7E18            	     4M    beq    waitBCL201
-00:00000E8C 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000E8E 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000E92 7718            	     5M    beq    waitLRCH2199
+00:00000E92 4008            	     2M    ld     r0, (r4)
+00:00000E94 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000E96 7E18            	     4M    beq    waitBCL201
+00:00000E98 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000E9A 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000E9E 7718            	     5M    beq    waitLRCH2199
                             	     6M    HI_BITCLK
                             	     1M waitBCHO202:
-00:00000E94 4008            	     2M    ld     r0, (r4)
-00:00000E96 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000E98 FE18            	     4M    bne    waitBCHO202
+00:00000EA0 4008            	     2M    ld     r0, (r4)
+00:00000EA2 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EA4 FE18            	     4M    bne    waitBCHO202
                             	     7M .else
                             	     8M waitLRCH199:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	    10M    beq    waitLRCH199
                             	    11M .endif
-00:00000E9A 009E7C00        	     3M    b  audio_main_loop194
+00:00000EA6 009E7C00        	     3M    b  audio_main_loop194
                             	     4M bad_sync_LR_low1194:
                             	     5M #WRITE_LEFT_RIGHT  using causes PLL trouble
                             	     6M    HI_LRCLK
@@ -3080,34 +3085,34 @@ Source: "videocore.s"
                             	     2M waitLRCH2203:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO204:
-00:00000E9E 4008            	     2M    ld     r0, (r4)
-00:00000EA0 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000EA2 FE18            	     4M    bne    waitBCHO204
+00:00000EAA 4008            	     2M    ld     r0, (r4)
+00:00000EAC F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EAE FE18            	     4M    bne    waitBCHO204
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL205:
-00:00000EA4 4008            	     2M    ld     r0, (r4)
-00:00000EA6 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000EA8 7E18            	     4M    beq    waitBCL205
-00:00000EAA 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000EAC 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000EB0 7718            	     5M    beq    waitLRCH2203
+00:00000EB0 4008            	     2M    ld     r0, (r4)
+00:00000EB2 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EB4 7E18            	     4M    beq    waitBCL205
+00:00000EB6 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000EB8 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000EBC 7718            	     5M    beq    waitLRCH2203
                             	     6M    HI_BITCLK
                             	     1M waitBCHO206:
-00:00000EB2 4008            	     2M    ld     r0, (r4)
-00:00000EB4 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000EB6 FE18            	     4M    bne    waitBCHO206
+00:00000EBE 4008            	     2M    ld     r0, (r4)
+00:00000EC0 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EC2 FE18            	     4M    bne    waitBCHO206
                             	     7M .else
                             	     8M waitLRCH203:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	    10M    beq    waitLRCH203
                             	    11M .endif
                             	     7M    WRITE_LEFT_RIGHT
-00:00000EB8 FF9F3BFC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000EBC 026C            	     2M    btst   r2, REPEAT_22Khz
-00:00000EBE 0318            	     3M    beq    no_repeat_sample207
-00:00000EC0 FF9F37FC        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000EC4 FF9F35FC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000EC8 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000ECA 0318            	     3M    beq    no_repeat_sample207
+00:00000ECC FF9F31FC        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample207:
-00:00000EC4 009E6400        	     8M    b  increment_error194
+00:00000ED0 009E6400        	     8M    b  increment_error194
                             	     9M 
                             	    10M bad_sync_LR_high1194:
                             	    11M #WRITE_LEFT_RIGHT  using causes PLL trouble
@@ -3116,22 +3121,22 @@ Source: "videocore.s"
                             	     2M waitLRCL2208:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO209:
-00:00000EC8 4008            	     2M    ld     r0, (r4)
-00:00000ECA F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000ECC FE18            	     4M    bne    waitBCHO209
+00:00000ED4 4008            	     2M    ld     r0, (r4)
+00:00000ED6 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000ED8 FE18            	     4M    bne    waitBCHO209
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL210:
-00:00000ECE 4008            	     2M    ld     r0, (r4)
-00:00000ED0 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000ED2 7E18            	     4M    beq    waitBCL210
-00:00000ED4 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000ED6 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000EDA F718            	     5M    bne    waitLRCL2208
+00:00000EDA 4008            	     2M    ld     r0, (r4)
+00:00000EDC F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EDE 7E18            	     4M    beq    waitBCL210
+00:00000EE0 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000EE2 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000EE6 F718            	     5M    bne    waitLRCL2208
                             	     6M    HI_BITCLK
                             	     1M waitBCHO211:
-00:00000EDC 4008            	     2M    ld     r0, (r4)
-00:00000EDE F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000EE0 FE18            	     4M    bne    waitBCHO211
+00:00000EE8 4008            	     2M    ld     r0, (r4)
+00:00000EEA F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EEC FE18            	     4M    bne    waitBCHO211
                             	     7M .else
                             	     8M waitLRCL208:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
@@ -3142,63 +3147,63 @@ Source: "videocore.s"
                             	     2M waitLRCH2212:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO213:
-00:00000EE2 4008            	     2M    ld     r0, (r4)
-00:00000EE4 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000EE6 FE18            	     4M    bne    waitBCHO213
+00:00000EEE 4008            	     2M    ld     r0, (r4)
+00:00000EF0 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EF2 FE18            	     4M    bne    waitBCHO213
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL214:
-00:00000EE8 4008            	     2M    ld     r0, (r4)
-00:00000EEA F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000EEC 7E18            	     4M    beq    waitBCL214
-00:00000EEE 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000EF0 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000EF4 7718            	     5M    beq    waitLRCH2212
+00:00000EF4 4008            	     2M    ld     r0, (r4)
+00:00000EF6 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000EF8 7E18            	     4M    beq    waitBCL214
+00:00000EFA 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000EFC 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000F00 7718            	     5M    beq    waitLRCH2212
                             	     6M    HI_BITCLK
                             	     1M waitBCHO215:
-00:00000EF6 4008            	     2M    ld     r0, (r4)
-00:00000EF8 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000EFA FE18            	     4M    bne    waitBCHO215
+00:00000F02 4008            	     2M    ld     r0, (r4)
+00:00000F04 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F06 FE18            	     4M    bne    waitBCHO215
                             	     7M .else
                             	     8M waitLRCH212:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	    10M    beq    waitLRCH212
                             	    11M .endif
                             	    14M    WRITE_LEFT_RIGHT
-00:00000EFC FF9F19FC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000F00 026C            	     2M    btst   r2, REPEAT_22Khz
-00:00000F02 0318            	     3M    beq    no_repeat_sample216
-00:00000F04 FF9F15FC        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F08 FF9F13FC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F0C 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000F0E 0318            	     3M    beq    no_repeat_sample216
+00:00000F10 FF9F0FFC        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample216:
-00:00000F08 009E4200        	    15M    b  increment_error194
+00:00000F14 009E4200        	    15M    b  increment_error194
                             	    16M 
                             	    17M bad_sync_LR_high2194:
                             	    18M    WRITE_LEFT_RIGHT   #removing causes PLL trouble
-00:00000F0C FF9F11FC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000F10 026C            	     2M    btst   r2, REPEAT_22Khz
-00:00000F12 0318            	     3M    beq    no_repeat_sample217
-00:00000F14 FF9F0DFC        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F18 FF9F0BFC        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F1C 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000F1E 0318            	     3M    beq    no_repeat_sample217
+00:00000F20 FF9F07FC        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample217:
                             	    19M    LO_LRCLK
                             	     1M .if TWOGPIO == 1
                             	     2M waitLRCL2218:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO219:
-00:00000F18 4008            	     2M    ld     r0, (r4)
-00:00000F1A F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F1C FE18            	     4M    bne    waitBCHO219
+00:00000F24 4008            	     2M    ld     r0, (r4)
+00:00000F26 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F28 FE18            	     4M    bne    waitBCHO219
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL220:
-00:00000F1E 4008            	     2M    ld     r0, (r4)
-00:00000F20 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F22 7E18            	     4M    beq    waitBCL220
-00:00000F24 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000F26 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000F2A F718            	     5M    bne    waitLRCL2218
+00:00000F2A 4008            	     2M    ld     r0, (r4)
+00:00000F2C F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F2E 7E18            	     4M    beq    waitBCL220
+00:00000F30 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000F32 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000F36 F718            	     5M    bne    waitLRCL2218
                             	     6M    HI_BITCLK
                             	     1M waitBCHO221:
-00:00000F2C 4008            	     2M    ld     r0, (r4)
-00:00000F2E F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F30 FE18            	     4M    bne    waitBCHO221
+00:00000F38 4008            	     2M    ld     r0, (r4)
+00:00000F3A F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F3C FE18            	     4M    bne    waitBCHO221
                             	     7M .else
                             	     8M waitLRCL218:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
@@ -3209,195 +3214,195 @@ Source: "videocore.s"
                             	     2M waitLRCH2222:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO223:
-00:00000F32 4008            	     2M    ld     r0, (r4)
-00:00000F34 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F36 FE18            	     4M    bne    waitBCHO223
+00:00000F3E 4008            	     2M    ld     r0, (r4)
+00:00000F40 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F42 FE18            	     4M    bne    waitBCHO223
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL224:
-00:00000F38 4008            	     2M    ld     r0, (r4)
-00:00000F3A F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F3C 7E18            	     4M    beq    waitBCL224
-00:00000F3E 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000F40 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000F44 7718            	     5M    beq    waitLRCH2222
+00:00000F44 4008            	     2M    ld     r0, (r4)
+00:00000F46 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F48 7E18            	     4M    beq    waitBCL224
+00:00000F4A 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000F4C 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000F50 7718            	     5M    beq    waitLRCH2222
                             	     6M    HI_BITCLK
                             	     1M waitBCHO225:
-00:00000F46 4008            	     2M    ld     r0, (r4)
-00:00000F48 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F4A FE18            	     4M    bne    waitBCHO225
+00:00000F52 4008            	     2M    ld     r0, (r4)
+00:00000F54 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F56 FE18            	     4M    bne    waitBCHO225
                             	     7M .else
                             	     8M waitLRCH222:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	    10M    beq    waitLRCH222
                             	    11M .endif
                             	    21M    WRITE_LEFT_RIGHT
-00:00000F4C FF9FF1FB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000F50 026C            	     2M    btst   r2, REPEAT_22Khz
-00:00000F52 0318            	     3M    beq    no_repeat_sample226
-00:00000F54 FF9FEDFB        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F58 FF9FEBFB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F5C 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000F5E 0318            	     3M    beq    no_repeat_sample226
+00:00000F60 FF9FE7FB        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample226:
-00:00000F58 1A1F            	    22M    b  increment_error194
+00:00000F64 1A1F            	    22M    b  increment_error194
                             	    23M 
                             	    24M bad_sync_LR_low2194:
                             	    25M    WRITE_LEFT_RIGHT
-00:00000F5A FF9FEAFB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000F5E 026C            	     2M    btst   r2, REPEAT_22Khz
-00:00000F60 0318            	     3M    beq    no_repeat_sample227
-00:00000F62 FF9FE6FB        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F66 FF9FE4FB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F6A 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000F6C 0318            	     3M    beq    no_repeat_sample227
+00:00000F6E FF9FE0FB        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample227:
                             	    26M    HI_LRCLK
                             	     1M .if TWOGPIO == 1
                             	     2M waitLRCH2228:
                             	     3M    HI_BITCLK
                             	     1M waitBCHO229:
-00:00000F66 4008            	     2M    ld     r0, (r4)
-00:00000F68 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F6A FE18            	     4M    bne    waitBCHO229
+00:00000F72 4008            	     2M    ld     r0, (r4)
+00:00000F74 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F76 FE18            	     4M    bne    waitBCHO229
                             	     4M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL230:
-00:00000F6C 4008            	     2M    ld     r0, (r4)
-00:00000F6E F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F70 7E18            	     4M    beq    waitBCL230
-00:00000F72 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00000F74 80C11007        	     6M    btst   r0, r16 # LRBIT
-00:00000F78 7718            	     5M    beq    waitLRCH2228
+00:00000F78 4008            	     2M    ld     r0, (r4)
+00:00000F7A F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F7C 7E18            	     4M    beq    waitBCL230
+00:00000F7E 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00000F80 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00000F84 7718            	     5M    beq    waitLRCH2228
                             	     6M    HI_BITCLK
                             	     1M waitBCHO231:
-00:00000F7A 4008            	     2M    ld     r0, (r4)
-00:00000F7C F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000F7E FE18            	     4M    bne    waitBCHO231
+00:00000F86 4008            	     2M    ld     r0, (r4)
+00:00000F88 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000F8A FE18            	     4M    bne    waitBCHO231
                             	     7M .else
                             	     8M waitLRCH228:
                             	     9M    WAIT_EDGE_FOR_LR_BIT
                             	    10M    beq    waitLRCH228
                             	    11M .endif
                             	    27M    WRITE_LEFT_RIGHT
-00:00000F80 FF9FD7FB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00000F84 026C            	     2M    btst   r2, REPEAT_22Khz
-00:00000F86 0318            	     3M    beq    no_repeat_sample232
-00:00000F88 FF9FD3FB        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F8C FF9FD1FB        	     1M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00000F90 026C            	     2M    btst   r2, REPEAT_22Khz
+00:00000F92 0318            	     3M    beq    no_repeat_sample232
+00:00000F94 FF9FCDFB        	     4M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	     5M no_repeat_sample232:
                             	    28M 
                             	    29M increment_error194:
-00:00000F8C 56C041B7        	    30M    add    r22, 1
-00:00000F90 9271            	    31M    bset   r2, LOG_FRAME_ERROR
+00:00000F98 56C041B7        	    30M    add    r22, 1
+00:00000F9C 9271            	    31M    bset   r2, LOG_FRAME_ERROR
                             	    32M audio_main_loop194:
                             	    33M 
                             	    34M    #capture first sample
                             	    35M    #LR clock has just gone high
-00:00000F92 95C140AF        	    36M    btst   r21, SMI_CTRL_BIT_RUN
-00:00000F96 7F906CFC        	    37M    beq    abort_audio            #destination not in macro
+00:00000F9E 95C140AF        	    36M    btst   r21, SMI_CTRL_BIT_RUN
+00:00000FA2 7F9066FC        	    37M    beq    abort_audio            #destination not in macro
                             	    38M 
-00:00000F9A 8361            	    39M    mov    r3, 24
-00:00000F9C 0160            	    40M    mov    r1, 0
-00:00000F9E 0860            	    41M    mov    r8, 0 #parity count
+00:00000FA6 8361            	    39M    mov    r3, 24
+00:00000FA8 0160            	    40M    mov    r1, 0
+00:00000FAA 0860            	    41M    mov    r8, 0 #parity count
                             	    42M firstloop194:
-00:00000FA0 117C            	    43M    lsl    r1, 1
+00:00000FAC 117C            	    43M    lsl    r1, 1
                             	    44M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL234:
-00:00000FA2 4008            	     2M    ld     r0, (r4)
-00:00000FA4 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000FA6 7E18            	     4M    beq    waitBCL234
+00:00000FAE 4008            	     2M    ld     r0, (r4)
+00:00000FB0 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000FB2 7E18            	     4M    beq    waitBCL234
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH235:
-00:00000FA8 4008            	     2M    ld     r0, (r4)
-00:00000FAA F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000FAC FE18            	     4M    bne    waitBCH235
-00:00000FAE 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:00000FB0 F04C            	     6M    btst   r0, r15 # DATABIT
-00:00000FB2 48C0C140        	     7M    addne  r8, 1  #parity count
+00:00000FB4 4008            	     2M    ld     r0, (r4)
+00:00000FB6 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000FB8 FE18            	     4M    bne    waitBCH235
+00:00000FBA 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:00000FBC F04C            	     6M    btst   r0, r15 # DATABIT
+00:00000FBE 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
-00:00000FB6 A1C1C108        	    45M    orne   r1, 1
-00:00000FBA 1366            	    46M    sub    r3, 1
-00:00000FBC 036A            	    47M    cmp    r3, 0
-00:00000FBE F118            	    48M    bne    firstloop194
-00:00000FC0 417C            	    49M    lsl    r1, 4
-00:00000FC2 086C            	    50M    btst   r8, 0
-00:00000FC4 01C2DF08        	    51M    bsetne r1, 31   # temp set parity bit if count is odd
+00:00000FC2 A1C1C108        	    45M    orne   r1, 1
+00:00000FC6 1366            	    46M    sub    r3, 1
+00:00000FC8 036A            	    47M    cmp    r3, 0
+00:00000FCA F118            	    48M    bne    firstloop194
+00:00000FCC 417C            	    49M    lsl    r1, 4
+00:00000FCE 086C            	    50M    btst   r8, 0
+00:00000FD0 01C2DF08        	    51M    bsetne r1, 31   # temp set parity bit if count is odd
                             	    52M 
-00:00000FC8 11C0018F        	    53M    mov    r17, r1   #temp save
+00:00000FD4 11C0018F        	    53M    mov    r17, r1   #temp save
                             	    54M 
                             	    55M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL237:
-00:00000FCC 4008            	     2M    ld     r0, (r4)
-00:00000FCE F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000FD0 7E18            	     4M    beq    waitBCL237
+00:00000FD8 4008            	     2M    ld     r0, (r4)
+00:00000FDA F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000FDC 7E18            	     4M    beq    waitBCL237
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH238:
-00:00000FD2 4008            	     2M    ld     r0, (r4)
-00:00000FD4 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000FD6 FE18            	     4M    bne    waitBCH238
-00:00000FD8 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:00000FDA F04C            	     6M    btst   r0, r15 # DATABIT
-00:00000FDC 48C0C140        	     7M    addne  r8, 1  #parity count
+00:00000FDE 4008            	     2M    ld     r0, (r4)
+00:00000FE0 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00000FE2 FE18            	     4M    bne    waitBCH238
+00:00000FE4 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:00000FE6 F04C            	     6M    btst   r0, r15 # DATABIT
+00:00000FE8 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
                             	    56M 
                             	    57M    CHECK_OVERRUN
                             	     1M    # check for overrun
-00:00000FE0 49E920000000    	     2M    cmp    r9, 0x20           #only check once per frame
-00:00000FE6 00914700        	     3M    bne    not_full239
-00:00000FEA E26D            	     4M    btst   r2, DROP_SAMPLE
-00:00000FEC 00914400        	     5M    bne    not_full239    #drop pending
-00:00000FF0 95C143AF        	     6M    btst   r21, SMI_CTRL_BIT_DMA
-00:00000FF4 1918            	     7M    beq  not_dma_overrun239
+00:00000FEC 49E920000000    	     2M    cmp    r9, 0x20           #only check once per frame
+00:00000FF2 00914700        	     3M    bne    not_full239
+00:00000FF6 E26D            	     4M    btst   r2, DROP_SAMPLE
+00:00000FF8 00914400        	     5M    bne    not_full239    #drop pending
+00:00000FFC 95C143AF        	     6M    btst   r21, SMI_CTRL_BIT_DMA
+00:00001000 1918            	     7M    beq  not_dma_overrun239
                             	     8M 
-00:00000FF6 A008            	     9M    ld     r0, (r10) #get dma pointer
-00:00000FF8 C3C00D77        	    10M    sub    r3, r14, r13  #buffer size
-00:00000FFC 054A            	    11M    cmp    r5, r0
-00:00000FFE C1C0002D        	    12M    subge  r1, r5, r0
-00:00001002 051D            	    13M    bge    got_offset_over239
-00:00001004 C1C00507        	    14M    sub    r1, r0, r5
-00:00001008 C1C0011F        	    15M    sub    r1, r3, r1
+00:00001002 A008            	     9M    ld     r0, (r10) #get dma pointer
+00:00001004 C3C00D77        	    10M    sub    r3, r14, r13  #buffer size
+00:00001008 054A            	    11M    cmp    r5, r0
+00:0000100A C1C0002D        	    12M    subge  r1, r5, r0
+00:0000100E 051D            	    13M    bge    got_offset_over239
+00:00001010 C1C00507        	    14M    sub    r1, r0, r5
+00:00001014 C1C0011F        	    15M    sub    r1, r3, r1
                             	    16M got_offset_over239:
-00:0000100C 137A            	    17M    lsr    r3, 1
-00:0000100E 3146            	    18M    sub    r1, r3
-00:00001010 21A21CA0        	    19M    st     r1, SMI_DMA_OFFSET(r20)
-00:00001014 41E990000000    	    20M    cmp    r1, MAX_DMA_DRIFT_ERROR
-00:0000101A 261E            	    21M    bgt    drop_full239
-00:0000101C 41E970000000    	    22M    cmp    r1, MAX_DMA_DRIFT
-00:00001022 071E            	    23M    bgt    full239
-00:00001024 281F            	    24M    b      not_full239
+00:00001018 137A            	    17M    lsr    r3, 1
+00:0000101A 3146            	    18M    sub    r1, r3
+00:0000101C 21A21CA0        	    19M    st     r1, SMI_DMA_OFFSET(r20)
+00:00001020 41E990000000    	    20M    cmp    r1, MAX_DMA_DRIFT_ERROR
+00:00001026 261E            	    21M    bgt    drop_full239
+00:00001028 41E970000000    	    22M    cmp    r1, MAX_DMA_DRIFT
+00:0000102E 071E            	    23M    bgt    full239
+00:00001030 281F            	    24M    b      not_full239
                             	    25M 
                             	    26M not_dma_overrun239:
-00:00001026 7008            	    27M    ld     r0, (r7)  #read MAI CTL
-00:00001028 106C            	    28M    btst   r0, HD_MAI_CTL_ERRORF
-00:0000102A 9E18            	    29M    bne    drop_full239
-00:0000102C B06C            	    30M    btst   r0, HD_MAI_CTL_FULL
-00:0000102E 2318            	    31M    beq    not_full239
+00:00001032 7008            	    27M    ld     r0, (r7)  #read MAI CTL
+00:00001034 106C            	    28M    btst   r0, HD_MAI_CTL_ERRORF
+00:00001036 9E18            	    29M    bne    drop_full239
+00:00001038 B06C            	    30M    btst   r0, HD_MAI_CTL_FULL
+00:0000103A 2318            	    31M    beq    not_full239
                             	    32M full239:
-00:00001030 95C142AF        	    33M    btst   r21, SMI_CTRL_BIT_PLL_1
-00:00001034 1918            	    34M    beq    drop_full239
-00:00001036 95C141AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_0
-00:0000103A 0C18            	    36M    beq    use_slow_pll_full239
+00:0000103C 95C142AF        	    33M    btst   r21, SMI_CTRL_BIT_PLL_1
+00:00001040 1918            	    34M    beq    drop_full239
+00:00001042 95C141AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_0
+00:00001046 0C18            	    36M    beq    use_slow_pll_full239
                             	    37M 
                             	    38M #   mov    r0, r19
                             	    39M #   add    r0, PLL_OFFSET_FAST
-00:0000103C 53E840000000    	    40M    add    r19, PLL_OFFSET_FAST
-00:00001042 00C01307        	    41M    mov    r0, r19   
-00:00001046 A0E90000005A    	    42M    or     r0, CM_PASSWORD
-00:0000104C 20A20090        	    43M    st     r0, (r18)
-00:00001050 121F            	    44M    b      not_full239
+00:00001048 53E840000000    	    40M    add    r19, PLL_OFFSET_FAST
+00:0000104E 00C01307        	    41M    mov    r0, r19
+00:00001052 A0E90000005A    	    42M    or     r0, CM_PASSWORD
+00:00001058 20A20090        	    43M    st     r0, (r18)
+00:0000105C 121F            	    44M    b      not_full239
                             	    45M 
                             	    46M use_slow_pll_full239:
-00:00001052 53C0449F        	    47M    add    r19, PLL_OFFSET_SLOW
-00:00001056 00C01307        	    48M    mov    r0, r19
-00:0000105A A0E90000005A    	    49M    or     r0, CM_PASSWORD
-00:00001060 20A20090        	    50M    st     r0, (r18)
-00:00001064 081F            	    51M    b      not_full239
+00:0000105E 53C0449F        	    47M    add    r19, PLL_OFFSET_SLOW
+00:00001062 00C01307        	    48M    mov    r0, r19
+00:00001066 A0E90000005A    	    49M    or     r0, CM_PASSWORD
+00:0000106C 20A20090        	    50M    st     r0, (r18)
+00:00001070 081F            	    51M    b      not_full239
                             	    52M 
                             	    53M drop_full239:
-00:00001066 E271            	    54M    bset   r2, DROP_SAMPLE
-00:00001068 57C041BF        	    55M    add    r23, 1
-00:0000106C 57C24FBF        	    56M    bclr   r23, 15  #max 32767
-00:00001070 37A218A0        	    57M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
+00:00001072 E271            	    54M    bset   r2, DROP_SAMPLE
+00:00001074 57C041BF        	    55M    add    r23, 1
+00:00001078 57C24FBF        	    56M    bclr   r23, 15  #max 32767
+00:0000107C 37A218A0        	    57M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
                             	    58M not_full239:
                             	    59M 
                             	    58M 
@@ -3405,95 +3410,95 @@ Source: "videocore.s"
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL241:
-00:00001074 4008            	     2M    ld     r0, (r4)
-00:00001076 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001078 7E18            	     4M    beq    waitBCL241
+00:00001080 4008            	     2M    ld     r0, (r4)
+00:00001082 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00001084 7E18            	     4M    beq    waitBCL241
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH242:
-00:0000107A 4008            	     2M    ld     r0, (r4)
-00:0000107C F06C            	     3M    btst   r0, CLOCK_BIT
-00:0000107E FE18            	     4M    bne    waitBCH242
-00:00001080 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:00001082 F04C            	     6M    btst   r0, r15 # DATABIT
-00:00001084 48C0C140        	     7M    addne  r8, 1  #parity count
+00:00001086 4008            	     2M    ld     r0, (r4)
+00:00001088 F06C            	     3M    btst   r0, CLOCK_BIT
+00:0000108A FE18            	     4M    bne    waitBCH242
+00:0000108C 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:0000108E F04C            	     6M    btst   r0, r15 # DATABIT
+00:00001090 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
                             	    60M 
-00:00001088 49E980010000    	    61M    cmp    r9, BUFFER_CHECK_COUNT >> 1
-00:0000108E 8318            	    62M    bne    skip_update194
-00:00001090 15A200A0        	    63M    ld     r21, SMI_CTRL(r20)      #update the control register
+00:00001094 49E980010000    	    61M    cmp    r9, BUFFER_CHECK_COUNT >> 1
+00:0000109A 8318            	    62M    bne    skip_update194
+00:0000109C 15A200A0        	    63M    ld     r21, SMI_CTRL(r20)      #update the control register
                             	    64M skip_update194:
                             	    65M 
-00:00001094 4360            	    66M    mov    r3, 4
+00:000010A0 4360            	    66M    mov    r3, 4
                             	    67M firstremain194:
                             	    68M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL244:
-00:00001096 4008            	     2M    ld     r0, (r4)
-00:00001098 F06C            	     3M    btst   r0, CLOCK_BIT
-00:0000109A 7E18            	     4M    beq    waitBCL244
+00:000010A2 4008            	     2M    ld     r0, (r4)
+00:000010A4 F06C            	     3M    btst   r0, CLOCK_BIT
+00:000010A6 7E18            	     4M    beq    waitBCL244
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH245:
-00:0000109C 4008            	     2M    ld     r0, (r4)
-00:0000109E F06C            	     3M    btst   r0, CLOCK_BIT
-00:000010A0 FE18            	     4M    bne    waitBCH245
-00:000010A2 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:000010A4 F04C            	     6M    btst   r0, r15 # DATABIT
-00:000010A6 48C0C140        	     7M    addne  r8, 1  #parity count
+00:000010A8 4008            	     2M    ld     r0, (r4)
+00:000010AA F06C            	     3M    btst   r0, CLOCK_BIT
+00:000010AC FE18            	     4M    bne    waitBCH245
+00:000010AE 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:000010B0 F04C            	     6M    btst   r0, r15 # DATABIT
+00:000010B2 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
-00:000010AA 1366            	    69M    sub    r3, 1
-00:000010AC 036A            	    70M    cmp    r3, 0
-00:000010AE F418            	    71M    bne    firstremain194
+00:000010B6 1366            	    69M    sub    r3, 1
+00:000010B8 036A            	    70M    cmp    r3, 0
+00:000010BA F418            	    71M    bne    firstremain194
                             	    72M 
-00:000010B0 49E990010000    	    73M    cmp    r9, (BUFFER_CHECK_COUNT >> 1) + 0x10
-00:000010B6 8618            	    74M    bne    skip_log194
-00:000010B8 926D            	    75M    btst   r2, LOG_FRAME_ERROR
-00:000010BA 0418            	    76M    beq    skip_log194
-00:000010BC 36A214A0        	    77M    st     r22, SMI_ERROR_COUNT(r20)
-00:000010C0 9273            	    78M    bclr   r2, LOG_FRAME_ERROR
+00:000010BC 49E990010000    	    73M    cmp    r9, (BUFFER_CHECK_COUNT >> 1) + 0x10
+00:000010C2 8618            	    74M    bne    skip_log194
+00:000010C4 926D            	    75M    btst   r2, LOG_FRAME_ERROR
+00:000010C6 0418            	    76M    beq    skip_log194
+00:000010C8 36A214A0        	    77M    st     r22, SMI_ERROR_COUNT(r20)
+00:000010CC 9273            	    78M    bclr   r2, LOG_FRAME_ERROR
                             	    79M skip_log194:
                             	    80M 
                             	    81M    WAIT_FOR_LR_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL247:
-00:000010C2 4008            	     2M    ld     r0, (r4)
-00:000010C4 F06C            	     3M    btst   r0, CLOCK_BIT
-00:000010C6 7E18            	     4M    beq    waitBCL247
-00:000010C8 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:000010CA 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:000010CE 4008            	     2M    ld     r0, (r4)
+00:000010D0 F06C            	     3M    btst   r0, CLOCK_BIT
+00:000010D2 7E18            	     4M    beq    waitBCL247
+00:000010D4 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:000010D6 80C11007        	     6M    btst   r0, r16 # LRBIT
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:000010CE 7F90E8FE        	    82M    beq    bad_sync_LR_low1194
+00:000010DA 7F90E8FE        	    82M    beq    bad_sync_LR_low1194
                             	    83M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
                             	     1M waitBCHO249:
-00:000010D2 4008            	     2M    ld     r0, (r4)
-00:000010D4 F06C            	     3M    btst   r0, CLOCK_BIT
-00:000010D6 FE18            	     4M    bne    waitBCHO249
+00:000010DE 4008            	     2M    ld     r0, (r4)
+00:000010E0 F06C            	     3M    btst   r0, CLOCK_BIT
+00:000010E2 FE18            	     4M    bne    waitBCHO249
                             	     3M .endif
                             	    84M 
                             	    85M    WAIT_FOR_LR_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL251:
-00:000010D8 4008            	     2M    ld     r0, (r4)
-00:000010DA F06C            	     3M    btst   r0, CLOCK_BIT
-00:000010DC 7E18            	     4M    beq    waitBCL251
-00:000010DE 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:000010E0 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:000010E4 4008            	     2M    ld     r0, (r4)
+00:000010E6 F06C            	     3M    btst   r0, CLOCK_BIT
+00:000010E8 7E18            	     4M    beq    waitBCL251
+00:000010EA 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:000010EC 80C11007        	     6M    btst   r0, r16 # LRBIT
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:000010E4 7F91F2FE        	    86M    bne    bad_sync_LR_high1194
-00:000010E8 01C0110F        	    87M    mov    r1, r17
-00:000010EC 1B40            	    88M    mov    r11, r1   #save in case of repeat
+00:000010F0 7F91F2FE        	    86M    bne    bad_sync_LR_high1194
+00:000010F4 01C0110F        	    87M    mov    r1, r17
+00:000010F8 1B40            	    88M    mov    r11, r1   #save in case of repeat
                             	    89M    IEC958_STATUS
                             	     1M 
                             	     2M     #byte 0 = 0x04   - bits 0-7,   bit 2 set   // consumer, PCM, no copyright, no pre-emphasis
@@ -3502,169 +3507,169 @@ Source: "videocore.s"
                             	     5M     #byte 3 = 0x02   - bits 24-31  bit 25 set    // sampling frequency uchFS = 2 = 48000
                             	     6M     #byte 4 = 0xDB   - bits 32-39  0b1011 | (13 << 4) bits 1101 1011   bits 32, 33, 35, 36, 38, 39      // 24 bit sampl
                             	     7M 
-00:000010EE 066A            	     8M     cmp    r6, 0
-00:000010F0 A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
-00:000010F4 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
-00:000010FA 191D            	    11M     bge    no_status_bytes252
-00:000010FC 266A            	    12M     cmp   r6, 2
-00:000010FE 46C1D930        	    13M     cmpne r6, 25
-00:00001102 01C25E08        	    14M     bseteq r1, 30
-00:00001106 C6E820000000    	    15M     sub   r6, 32
-00:0000110C 066A            	    16M     cmp   r6, (32 - 32)
-00:0000110E 46C1C130        	    17M     cmpne r6, (33 - 32)
-00:00001112 46C1C330        	    18M     cmpne r6, (35 - 32)
-00:00001116 46C1C430        	    19M     cmpne r6, (36 - 32)
-00:0000111A 46C1C630        	    20M     cmpne r6, (38 - 32)
-00:0000111E 46C1C730        	    21M     cmpne r6, (39 - 32)
-00:00001122 01C25E08        	    22M     bseteq r1, 30
-00:00001126 46E820000000    	    23M     add   r6, 32
+00:000010FA 066A            	     8M     cmp    r6, 0
+00:000010FC A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
+00:00001100 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
+00:00001106 191D            	    11M     bge    no_status_bytes252
+00:00001108 266A            	    12M     cmp   r6, 2
+00:0000110A 46C1D930        	    13M     cmpne r6, 25
+00:0000110E 01C25E08        	    14M     bseteq r1, 30
+00:00001112 C6E820000000    	    15M     sub   r6, 32
+00:00001118 066A            	    16M     cmp   r6, (32 - 32)
+00:0000111A 46C1C130        	    17M     cmpne r6, (33 - 32)
+00:0000111E 46C1C330        	    18M     cmpne r6, (35 - 32)
+00:00001122 46C1C430        	    19M     cmpne r6, (36 - 32)
+00:00001126 46C1C630        	    20M     cmpne r6, (38 - 32)
+00:0000112A 46C1C730        	    21M     cmpne r6, (39 - 32)
+00:0000112E 01C25E08        	    22M     bseteq r1, 30
+00:00001132 46E820000000    	    23M     add   r6, 32
                             	    24M no_status_bytes252:
-00:0000112C 0860            	    25M     mov    r8, 0
-00:0000112E F16D            	    26M     btst   r1, 31  #test existing parity count
-00:00001130 08C0C140        	    27M     movne  r8, 1
-00:00001134 F173            	    28M     bclr   r1, 31
+00:00001138 0860            	    25M     mov    r8, 0
+00:0000113A F16D            	    26M     btst   r1, 31  #test existing parity count
+00:0000113C 08C0C140        	    27M     movne  r8, 1
+00:00001140 F173            	    28M     bclr   r1, 31
                             	    29M 
-00:00001136 016C            	    30M     btst   r1, 0
-00:00001138 48C0C140        	    31M     addne  r8, 1
-00:0000113C 116C            	    32M     btst   r1, 1
-00:0000113E 48C0C140        	    33M     addne  r8, 1
-00:00001142 216C            	    34M     btst   r1, 2
-00:00001144 48C0C140        	    35M     addne  r8, 1
-00:00001148 316C            	    36M     btst   r1, 3
-00:0000114A 48C0C140        	    37M     addne  r8, 1
-00:0000114E C16D            	    38M     btst   r1, 28
-00:00001150 48C0C140        	    39M     addne  r8, 1
-00:00001154 D16D            	    40M     btst   r1, 29
-00:00001156 48C0C140        	    41M     addne  r8, 1
-00:0000115A E16D            	    42M     btst   r1, 30
-00:0000115C 48C0C140        	    43M     addne  r8, 1
+00:00001142 016C            	    30M     btst   r1, 0
+00:00001144 48C0C140        	    31M     addne  r8, 1
+00:00001148 116C            	    32M     btst   r1, 1
+00:0000114A 48C0C140        	    33M     addne  r8, 1
+00:0000114E 216C            	    34M     btst   r1, 2
+00:00001150 48C0C140        	    35M     addne  r8, 1
+00:00001154 316C            	    36M     btst   r1, 3
+00:00001156 48C0C140        	    37M     addne  r8, 1
+00:0000115A C16D            	    38M     btst   r1, 28
+00:0000115C 48C0C140        	    39M     addne  r8, 1
+00:00001160 D16D            	    40M     btst   r1, 29
+00:00001162 48C0C140        	    41M     addne  r8, 1
+00:00001166 E16D            	    42M     btst   r1, 30
+00:00001168 48C0C140        	    43M     addne  r8, 1
                             	    44M 
-00:00001160 086C            	    45M     btst   r8, 0
-00:00001162 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
+00:0000116C 086C            	    45M     btst   r8, 0
+00:0000116E 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
                             	    47M 
-00:00001166 11C0018F        	    90M    mov    r17, r1
+00:00001172 11C0018F        	    90M    mov    r17, r1
                             	    91M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
                             	     1M waitBCHO254:
-00:0000116A 4008            	     2M    ld     r0, (r4)
-00:0000116C F06C            	     3M    btst   r0, CLOCK_BIT
-00:0000116E FE18            	     4M    bne    waitBCHO254
+00:00001176 4008            	     2M    ld     r0, (r4)
+00:00001178 F06C            	     3M    btst   r0, CLOCK_BIT
+00:0000117A FE18            	     4M    bne    waitBCHO254
                             	     3M .endif
                             	    92M 
                             	    93M    #capture second sample
                             	    94M    #LR clock has just gone low
-00:00001170 8361            	    95M    mov    r3, 24
-00:00001172 0160            	    96M    mov    r1, 0
-00:00001174 0860            	    97M    mov    r8, 0 #parity count
+00:0000117C 8361            	    95M    mov    r3, 24
+00:0000117E 0160            	    96M    mov    r1, 0
+00:00001180 0860            	    97M    mov    r8, 0 #parity count
                             	    98M secondloop194:
-00:00001176 117C            	    99M    lsl    r1, 1
+00:00001182 117C            	    99M    lsl    r1, 1
                             	   100M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL256:
-00:00001178 4008            	     2M    ld     r0, (r4)
-00:0000117A F06C            	     3M    btst   r0, CLOCK_BIT
-00:0000117C 7E18            	     4M    beq    waitBCL256
+00:00001184 4008            	     2M    ld     r0, (r4)
+00:00001186 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00001188 7E18            	     4M    beq    waitBCL256
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH257:
-00:0000117E 4008            	     2M    ld     r0, (r4)
-00:00001180 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001182 FE18            	     4M    bne    waitBCH257
-00:00001184 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:00001186 F04C            	     6M    btst   r0, r15 # DATABIT
-00:00001188 48C0C140        	     7M    addne  r8, 1  #parity count
+00:0000118A 4008            	     2M    ld     r0, (r4)
+00:0000118C F06C            	     3M    btst   r0, CLOCK_BIT
+00:0000118E FE18            	     4M    bne    waitBCH257
+00:00001190 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:00001192 F04C            	     6M    btst   r0, r15 # DATABIT
+00:00001194 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
-00:0000118C A1C1C108        	   101M    orne   r1, 1
-00:00001190 1366            	   102M    sub    r3, 1
-00:00001192 036A            	   103M    cmp    r3, 0
-00:00001194 F118            	   104M    bne    secondloop194
-00:00001196 417C            	   105M    lsl    r1, 4
-00:00001198 086C            	   106M    btst   r8, 0
-00:0000119A 01C2DF08        	   107M    bsetne r1, 31   # temp set parity bit if count is odd
-00:0000119E 18C001C7        	   108M    mov    r24, r1   #temp save
+00:00001198 A1C1C108        	   101M    orne   r1, 1
+00:0000119C 1366            	   102M    sub    r3, 1
+00:0000119E 036A            	   103M    cmp    r3, 0
+00:000011A0 F118            	   104M    bne    secondloop194
+00:000011A2 417C            	   105M    lsl    r1, 4
+00:000011A4 086C            	   106M    btst   r8, 0
+00:000011A6 01C2DF08        	   107M    bsetne r1, 31   # temp set parity bit if count is odd
+00:000011AA 18C001C7        	   108M    mov    r24, r1   #temp save
                             	   109M 
                             	   110M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL259:
-00:000011A2 4008            	     2M    ld     r0, (r4)
-00:000011A4 F06C            	     3M    btst   r0, CLOCK_BIT
-00:000011A6 7E18            	     4M    beq    waitBCL259
+00:000011AE 4008            	     2M    ld     r0, (r4)
+00:000011B0 F06C            	     3M    btst   r0, CLOCK_BIT
+00:000011B2 7E18            	     4M    beq    waitBCL259
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH260:
-00:000011A8 4008            	     2M    ld     r0, (r4)
-00:000011AA F06C            	     3M    btst   r0, CLOCK_BIT
-00:000011AC FE18            	     4M    bne    waitBCH260
-00:000011AE 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:000011B0 F04C            	     6M    btst   r0, r15 # DATABIT
-00:000011B2 48C0C140        	     7M    addne  r8, 1  #parity count
+00:000011B4 4008            	     2M    ld     r0, (r4)
+00:000011B6 F06C            	     3M    btst   r0, CLOCK_BIT
+00:000011B8 FE18            	     4M    bne    waitBCH260
+00:000011BA 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:000011BC F04C            	     6M    btst   r0, r15 # DATABIT
+00:000011BE 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
                             	   111M 
                             	   112M    CHECK_UNDERRUN
                             	     1M    # check for underrun
-00:000011B6 096B            	     2M    cmp    r9,0x10
-00:000011B8 00914A00        	     3M    bne    not_empty261             #only check once per frame
-00:000011BC F26D            	     4M    btst   r2, REPEAT_SAMPLE
-00:000011BE 00914700        	     5M    bne    not_empty261          #repeat pending
+00:000011C2 096B            	     2M    cmp    r9,0x10
+00:000011C4 00914A00        	     3M    bne    not_empty261             #only check once per frame
+00:000011C8 F26D            	     4M    btst   r2, REPEAT_SAMPLE
+00:000011CA 00914700        	     5M    bne    not_empty261          #repeat pending
                             	     6M 
-00:000011C2 95C143AF        	     7M    btst   r21, SMI_CTRL_BIT_DMA
-00:000011C6 1B18            	     8M    beq  not_dma_underrun261
+00:000011CE 95C143AF        	     7M    btst   r21, SMI_CTRL_BIT_DMA
+00:000011D2 1B18            	     8M    beq  not_dma_underrun261
                             	     9M 
-00:000011C8 A008            	    10M    ld     r0, (r10) #get dma pointer
-00:000011CA C3C00D77        	    11M    sub    r3, r14, r13  #buffer size
-00:000011CE 054A            	    12M    cmp    r5, r0
-00:000011D0 C1C0002D        	    13M    subge  r1, r5, r0
-00:000011D4 051D            	    14M    bge    got_offset_under261
-00:000011D6 C1C00507        	    15M    sub    r1, r0, r5
-00:000011DA C1C0011F        	    16M    sub    r1, r3, r1
+00:000011D4 A008            	    10M    ld     r0, (r10) #get dma pointer
+00:000011D6 C3C00D77        	    11M    sub    r3, r14, r13  #buffer size
+00:000011DA 054A            	    12M    cmp    r5, r0
+00:000011DC C1C0002D        	    13M    subge  r1, r5, r0
+00:000011E0 051D            	    14M    bge    got_offset_under261
+00:000011E2 C1C00507        	    15M    sub    r1, r0, r5
+00:000011E6 C1C0011F        	    16M    sub    r1, r3, r1
                             	    17M got_offset_under261:
-00:000011DE 137A            	    18M    lsr    r3, 1
-00:000011E0 3146            	    19M    sub    r1, r3
-00:000011E2 21A21CA0        	    20M    st     r1, SMI_DMA_OFFSET(r20)
-00:000011E6 61C1400F        	    21M    rsb    r1, 0
-00:000011EA 41E990000000    	    22M    cmp    r1, MAX_DMA_DRIFT_ERROR
-00:000011F0 261E            	    23M    bgt    repeat_empty261
-00:000011F2 41E970000000    	    24M    cmp    r1, MAX_DMA_DRIFT
-00:000011F8 071E            	    25M    bgt    empty261
-00:000011FA 291F            	    26M    b      not_empty261
+00:000011EA 137A            	    18M    lsr    r3, 1
+00:000011EC 3146            	    19M    sub    r1, r3
+00:000011EE 21A21CA0        	    20M    st     r1, SMI_DMA_OFFSET(r20)
+00:000011F2 61C1400F        	    21M    rsb    r1, 0
+00:000011F6 41E990000000    	    22M    cmp    r1, MAX_DMA_DRIFT_ERROR
+00:000011FC 261E            	    23M    bgt    repeat_empty261
+00:000011FE 41E970000000    	    24M    cmp    r1, MAX_DMA_DRIFT
+00:00001204 071E            	    25M    bgt    empty261
+00:00001206 291F            	    26M    b      not_empty261
                             	    27M 
                             	    28M not_dma_underrun261:
-00:000011FC 7008            	    29M    ld     r0, (r7)  #read MAI CTL
-00:000011FE 206C            	    30M    btst   r0, HD_MAI_CTL_ERRORE
-00:00001200 9E18            	    31M    bne    repeat_empty261
-00:00001202 A06C            	    32M    btst   r0, HD_MAI_CTL_EMPTY
-00:00001204 2418            	    33M    beq    not_empty261
+00:00001208 7008            	    29M    ld     r0, (r7)  #read MAI CTL
+00:0000120A 206C            	    30M    btst   r0, HD_MAI_CTL_ERRORE
+00:0000120C 9E18            	    31M    bne    repeat_empty261
+00:0000120E A06C            	    32M    btst   r0, HD_MAI_CTL_EMPTY
+00:00001210 2418            	    33M    beq    not_empty261
                             	    34M empty261:
-00:00001206 95C142AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_1
-00:0000120A 1918            	    36M    beq    repeat_empty261
-00:0000120C 95C141AF        	    37M    btst   r21, SMI_CTRL_BIT_PLL_0
-00:00001210 0C18            	    38M    beq    use_slow_pll_empty261
+00:00001212 95C142AF        	    35M    btst   r21, SMI_CTRL_BIT_PLL_1
+00:00001216 1918            	    36M    beq    repeat_empty261
+00:00001218 95C141AF        	    37M    btst   r21, SMI_CTRL_BIT_PLL_0
+00:0000121C 0C18            	    38M    beq    use_slow_pll_empty261
                             	    39M 
                             	    40M #   mov    r0, r19
                             	    41M #   sub    r0, PLL_OFFSET_FAST
-00:00001212 D3E840000000    	    42M    sub    r19, PLL_OFFSET_FAST
-00:00001218 00C01307        	    43M    mov    r0, r19
-00:0000121C A0E90000005A    	    44M    or     r0, CM_PASSWORD
-00:00001222 20A20090        	    45M    st     r0, (r18)
-00:00001226 131F            	    46M    b      not_empty261
+00:0000121E D3E840000000    	    42M    sub    r19, PLL_OFFSET_FAST
+00:00001224 00C01307        	    43M    mov    r0, r19
+00:00001228 A0E90000005A    	    44M    or     r0, CM_PASSWORD
+00:0000122E 20A20090        	    45M    st     r0, (r18)
+00:00001232 131F            	    46M    b      not_empty261
                             	    47M 
                             	    48M use_slow_pll_empty261:
-00:00001228 D3C0449F        	    49M    sub    r19, PLL_OFFSET_SLOW
-00:0000122C 00C01307        	    50M    mov    r0, r19
-00:00001230 A0E90000005A    	    51M    or     r0, CM_PASSWORD
-00:00001236 20A20090        	    52M    st     r0, (r18)
-00:0000123A 091F            	    53M    b      not_empty261
+00:00001234 D3C0449F        	    49M    sub    r19, PLL_OFFSET_SLOW
+00:00001238 00C01307        	    50M    mov    r0, r19
+00:0000123C A0E90000005A    	    51M    or     r0, CM_PASSWORD
+00:00001242 20A20090        	    52M    st     r0, (r18)
+00:00001246 091F            	    53M    b      not_empty261
                             	    54M 
                             	    55M repeat_empty261:
-00:0000123C F271            	    56M    bset   r2, REPEAT_SAMPLE
-00:0000123E 57E800000100    	    57M    add    r23, 0x10000
-00:00001244 57C25FBF        	    58M    bclr   r23, 31   #max 32767
-00:00001248 37A218A0        	    59M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
+00:00001248 F271            	    56M    bset   r2, REPEAT_SAMPLE
+00:0000124A 57E800000100    	    57M    add    r23, 0x10000
+00:00001250 57C25FBF        	    58M    bclr   r23, 31   #max 32767
+00:00001254 37A218A0        	    59M    st     r23, SMI_DROP_REPEAT_COUNT(r20)
                             	    60M not_empty261:
                             	    61M 
                             	   113M 
@@ -3672,52 +3677,52 @@ Source: "videocore.s"
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL263:
-00:0000124C 4008            	     2M    ld     r0, (r4)
-00:0000124E F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001250 7E18            	     4M    beq    waitBCL263
+00:00001258 4008            	     2M    ld     r0, (r4)
+00:0000125A F06C            	     3M    btst   r0, CLOCK_BIT
+00:0000125C 7E18            	     4M    beq    waitBCL263
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH264:
-00:00001252 4008            	     2M    ld     r0, (r4)
-00:00001254 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001256 FE18            	     4M    bne    waitBCH264
-00:00001258 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:0000125A F04C            	     6M    btst   r0, r15 # DATABIT
-00:0000125C 48C0C140        	     7M    addne  r8, 1  #parity count
+00:0000125E 4008            	     2M    ld     r0, (r4)
+00:00001260 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00001262 FE18            	     4M    bne    waitBCH264
+00:00001264 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:00001266 F04C            	     6M    btst   r0, r15 # DATABIT
+00:00001268 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
                             	   115M 
-00:00001260 F26D            	   116M    btst   r2, REPEAT_SAMPLE
-00:00001262 0418            	   117M    beq    no_repeat_main194
-00:00001264 FF9F65FA        	   118M    bl     SINGLE_WRITE_LEFT_RIGHT
-00:00001268 F273            	   119M    bclr   r2, REPEAT_SAMPLE
+00:0000126C F26D            	   116M    btst   r2, REPEAT_SAMPLE
+00:0000126E 0418            	   117M    beq    no_repeat_main194
+00:00001270 FF9F5FFA        	   118M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00001274 F273            	   119M    bclr   r2, REPEAT_SAMPLE
                             	   120M no_repeat_main194:
                             	   121M 
-00:0000126A 4360            	   122M    mov    r3, 4
+00:00001276 4360            	   122M    mov    r3, 4
                             	   123M secondremain194:
                             	   124M    WAIT_FOR_DATA_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK
                             	     1M waitBCL266:
-00:0000126C 4008            	     2M    ld     r0, (r4)
-00:0000126E F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001270 7E18            	     4M    beq    waitBCL266
+00:00001278 4008            	     2M    ld     r0, (r4)
+00:0000127A F06C            	     3M    btst   r0, CLOCK_BIT
+00:0000127C 7E18            	     4M    beq    waitBCL266
                             	     3M    HI_BITCLK_FOR_DATA_BIT
                             	     1M waitBCH267:
-00:00001272 4008            	     2M    ld     r0, (r4)
-00:00001274 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001276 FE18            	     4M    bne    waitBCH267
-00:00001278 4008            	     5M    ld     r0, (r4)          #second read for reliability
-00:0000127A F04C            	     6M    btst   r0, r15 # DATABIT
-00:0000127C 48C0C140        	     7M    addne  r8, 1  #parity count
+00:0000127E 4008            	     2M    ld     r0, (r4)
+00:00001280 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00001282 FE18            	     4M    bne    waitBCH267
+00:00001284 4008            	     5M    ld     r0, (r4)          #second read for reliability
+00:00001286 F04C            	     6M    btst   r0, r15 # DATABIT
+00:00001288 48C0C140        	     7M    addne  r8, 1  #parity count
                             	     4M .else
                             	     5M    WAIT_EDGE_FOR_DATA_BIT
                             	     6M .endif
-00:00001280 1366            	   125M    sub    r3, 1
-00:00001282 036A            	   126M    cmp    r3, 0
-00:00001284 F418            	   127M    bne    secondremain194
+00:0000128C 1366            	   125M    sub    r3, 1
+00:0000128E 036A            	   126M    cmp    r3, 0
+00:00001290 F418            	   127M    bne    secondremain194
                             	   128M 
-00:00001286 01C0180F        	   129M    mov    r1, r24
+00:00001292 01C0180F        	   129M    mov    r1, r24
                             	   130M    IEC958_STATUS
                             	     1M 
                             	     2M     #byte 0 = 0x04   - bits 0-7,   bit 2 set   // consumer, PCM, no copyright, no pre-emphasis
@@ -3726,133 +3731,133 @@ Source: "videocore.s"
                             	     5M     #byte 3 = 0x02   - bits 24-31  bit 25 set    // sampling frequency uchFS = 2 = 48000
                             	     6M     #byte 4 = 0xDB   - bits 32-39  0b1011 | (13 << 4) bits 1101 1011   bits 32, 33, 35, 36, 38, 39      // 24 bit sampl
                             	     7M 
-00:0000128A 066A            	     8M     cmp    r6, 0
-00:0000128C A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
-00:00001290 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
-00:00001296 191D            	    11M     bge    no_status_bytes268
-00:00001298 266A            	    12M     cmp   r6, 2
-00:0000129A 46C1D930        	    13M     cmpne r6, 25
-00:0000129E 01C25E08        	    14M     bseteq r1, 30
-00:000012A2 C6E820000000    	    15M     sub   r6, 32
-00:000012A8 066A            	    16M     cmp   r6, (32 - 32)
-00:000012AA 46C1C130        	    17M     cmpne r6, (33 - 32)
-00:000012AE 46C1C330        	    18M     cmpne r6, (35 - 32)
-00:000012B2 46C1C430        	    19M     cmpne r6, (36 - 32)
-00:000012B6 46C1C630        	    20M     cmpne r6, (38 - 32)
-00:000012BA 46C1C730        	    21M     cmpne r6, (39 - 32)
-00:000012BE 01C25E08        	    22M     bseteq r1, 30
-00:000012C2 46E820000000    	    23M     add   r6, 32
+00:00001296 066A            	     8M     cmp    r6, 0
+00:00001298 A1C14F08        	     9M     oreq   r1, IEC958_B_FRAME_PREAMBLE
+00:0000129C 46E928000000    	    10M     cmp r6, (IEC958_STATUS_BYTES * 8)
+00:000012A2 191D            	    11M     bge    no_status_bytes268
+00:000012A4 266A            	    12M     cmp   r6, 2
+00:000012A6 46C1D930        	    13M     cmpne r6, 25
+00:000012AA 01C25E08        	    14M     bseteq r1, 30
+00:000012AE C6E820000000    	    15M     sub   r6, 32
+00:000012B4 066A            	    16M     cmp   r6, (32 - 32)
+00:000012B6 46C1C130        	    17M     cmpne r6, (33 - 32)
+00:000012BA 46C1C330        	    18M     cmpne r6, (35 - 32)
+00:000012BE 46C1C430        	    19M     cmpne r6, (36 - 32)
+00:000012C2 46C1C630        	    20M     cmpne r6, (38 - 32)
+00:000012C6 46C1C730        	    21M     cmpne r6, (39 - 32)
+00:000012CA 01C25E08        	    22M     bseteq r1, 30
+00:000012CE 46E820000000    	    23M     add   r6, 32
                             	    24M no_status_bytes268:
-00:000012C8 0860            	    25M     mov    r8, 0
-00:000012CA F16D            	    26M     btst   r1, 31  #test existing parity count
-00:000012CC 08C0C140        	    27M     movne  r8, 1
-00:000012D0 F173            	    28M     bclr   r1, 31
+00:000012D4 0860            	    25M     mov    r8, 0
+00:000012D6 F16D            	    26M     btst   r1, 31  #test existing parity count
+00:000012D8 08C0C140        	    27M     movne  r8, 1
+00:000012DC F173            	    28M     bclr   r1, 31
                             	    29M 
-00:000012D2 016C            	    30M     btst   r1, 0
-00:000012D4 48C0C140        	    31M     addne  r8, 1
-00:000012D8 116C            	    32M     btst   r1, 1
-00:000012DA 48C0C140        	    33M     addne  r8, 1
-00:000012DE 216C            	    34M     btst   r1, 2
-00:000012E0 48C0C140        	    35M     addne  r8, 1
-00:000012E4 316C            	    36M     btst   r1, 3
-00:000012E6 48C0C140        	    37M     addne  r8, 1
-00:000012EA C16D            	    38M     btst   r1, 28
-00:000012EC 48C0C140        	    39M     addne  r8, 1
-00:000012F0 D16D            	    40M     btst   r1, 29
-00:000012F2 48C0C140        	    41M     addne  r8, 1
-00:000012F6 E16D            	    42M     btst   r1, 30
-00:000012F8 48C0C140        	    43M     addne  r8, 1
+00:000012DE 016C            	    30M     btst   r1, 0
+00:000012E0 48C0C140        	    31M     addne  r8, 1
+00:000012E4 116C            	    32M     btst   r1, 1
+00:000012E6 48C0C140        	    33M     addne  r8, 1
+00:000012EA 216C            	    34M     btst   r1, 2
+00:000012EC 48C0C140        	    35M     addne  r8, 1
+00:000012F0 316C            	    36M     btst   r1, 3
+00:000012F2 48C0C140        	    37M     addne  r8, 1
+00:000012F6 C16D            	    38M     btst   r1, 28
+00:000012F8 48C0C140        	    39M     addne  r8, 1
+00:000012FC D16D            	    40M     btst   r1, 29
+00:000012FE 48C0C140        	    41M     addne  r8, 1
+00:00001302 E16D            	    42M     btst   r1, 30
+00:00001304 48C0C140        	    43M     addne  r8, 1
                             	    44M 
-00:000012FC 086C            	    45M     btst   r8, 0
-00:000012FE 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
+00:00001308 086C            	    45M     btst   r8, 0
+00:0000130A 01C2DF08        	    46M     bsetne r1, 31   # set parity bit count is odd
                             	    47M 
-00:00001302 00C01807        	   131M    mov    r0, r24
-00:00001306 18C001C7        	   132M    mov    r24, r1   #temp save
-00:0000130A 0140            	   133M    mov    r1, r0
+00:0000130E 00C01807        	   131M    mov    r0, r24
+00:00001312 18C001C7        	   132M    mov    r24, r1   #temp save
+00:00001316 0140            	   133M    mov    r1, r0
                             	   134M 
                             	   135M    WAIT_FOR_LR_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL270:
-00:0000130C 4008            	     2M    ld     r0, (r4)
-00:0000130E F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001310 7E18            	     4M    beq    waitBCL270
-00:00001312 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:00001314 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:00001318 4008            	     2M    ld     r0, (r4)
+00:0000131A F06C            	     3M    btst   r0, CLOCK_BIT
+00:0000131C 7E18            	     4M    beq    waitBCL270
+00:0000131E 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00001320 80C11007        	     6M    btst   r0, r16 # LRBIT
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:00001318 7F91FAFD        	   136M    bne    bad_sync_LR_high2194
+00:00001324 7F91FAFD        	   136M    bne    bad_sync_LR_high2194
                             	   137M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
                             	     1M waitBCHO272:
-00:0000131C 4008            	     2M    ld     r0, (r4)
-00:0000131E F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001320 FE18            	     4M    bne    waitBCHO272
+00:00001328 4008            	     2M    ld     r0, (r4)
+00:0000132A F06C            	     3M    btst   r0, CLOCK_BIT
+00:0000132C FE18            	     4M    bne    waitBCHO272
                             	     3M .endif
                             	   138M 
                             	   139M    WAIT_FOR_LR_BIT
                             	     1M .if TWOGPIO == 1
                             	     2M    LO_BITCLK_FOR_LR_BIT
                             	     1M waitBCL274:
-00:00001322 4008            	     2M    ld     r0, (r4)
-00:00001324 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001326 7E18            	     4M    beq    waitBCL274
-00:00001328 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
-00:0000132A 80C11007        	     6M    btst   r0, r16 # LRBIT
+00:0000132E 4008            	     2M    ld     r0, (r4)
+00:00001330 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00001332 7E18            	     4M    beq    waitBCL274
+00:00001334 4008            	     5M    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+00:00001336 80C11007        	     6M    btst   r0, r16 # LRBIT
                             	     3M .else
                             	     4M    WAIT_EDGE_FOR_LR_BIT
                             	     5M .endif
-00:0000132E 7F9016FE        	   140M    beq    bad_sync_LR_low2194
-00:00001332 1C40            	   141M    mov    r12, r1   #save in case of repeat
+00:0000133A 7F9016FE        	   140M    beq    bad_sync_LR_low2194
+00:0000133E 1C40            	   141M    mov    r12, r1   #save in case of repeat
                             	   142M    WAIT_HI_TWOGPIO_ONLY
                             	     1M .if TWOGPIO == 1
                             	     2M    HI_BITCLK
                             	     1M waitBCHO276:
-00:00001334 4008            	     2M    ld     r0, (r4)
-00:00001336 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001338 FE18            	     4M    bne    waitBCHO276
+00:00001340 4008            	     2M    ld     r0, (r4)
+00:00001342 F06C            	     3M    btst   r0, CLOCK_BIT
+00:00001344 FE18            	     4M    bne    waitBCHO276
                             	     3M .endif
                             	   143M 
-00:0000133A E26D            	   144M    btst   r2, DROP_SAMPLE
-00:0000133C 42C2DE10        	   145M    bclrne r2, DROP_SAMPLE
-00:00001340 9518            	   146M    bne    drop_main194
+00:00001346 E26D            	   144M    btst   r2, DROP_SAMPLE
+00:00001348 42C2DE10        	   145M    bclrne r2, DROP_SAMPLE
+00:0000134C 9518            	   146M    bne    drop_main194
                             	   147M 
-00:00001342 01C0110F        	   148M    mov    r1, r17
+00:0000134E 01C0110F        	   148M    mov    r1, r17
                             	   149M    WRITE
-00:00001346 5109            	     1M     st     r1, (r5)
+00:00001352 5109            	     1M     st     r1, (r5)
                             	     2M #increment buffer pointer
-00:00001348 4562            	     3M     add    r5, 4
-00:0000134A E54A            	     4M     cmp    r5, r14
-00:0000134C 05C00D2D        	     5M     movge  r5, r13
-00:00001350 01C0180F        	   150M    mov    r1, r24
+00:00001354 4562            	     3M     add    r5, 4
+00:00001356 E54A            	     4M     cmp    r5, r14
+00:00001358 05C00D2D        	     5M     movge  r5, r13
+00:0000135C 01C0180F        	   150M    mov    r1, r24
                             	   151M    WRITE
-00:00001354 5109            	     1M     st     r1, (r5)
+00:00001360 5109            	     1M     st     r1, (r5)
                             	     2M #increment buffer pointer
-00:00001356 4562            	     3M     add    r5, 4
-00:00001358 E54A            	     4M     cmp    r5, r14
-00:0000135A 05C00D2D        	     5M     movge  r5, r13
-00:0000135E 1662            	   152M    add    r6, 1
-00:00001360 46E9C0000000    	   153M    cmp    r6, IEC958_FRAMES_PER_BLOCK
-00:00001366 06C04035        	   154M    movge  r6, 0
+00:00001362 4562            	     3M     add    r5, 4
+00:00001364 E54A            	     4M     cmp    r5, r14
+00:00001366 05C00D2D        	     5M     movge  r5, r13
+00:0000136A 1662            	   152M    add    r6, 1
+00:0000136C 46E9C0000000    	   153M    cmp    r6, IEC958_FRAMES_PER_BLOCK
+00:00001372 06C04035        	   154M    movge  r6, 0
                             	   155M drop_main194:
-00:0000136A 026C            	   156M    btst   r2, REPEAT_22Khz
-00:0000136C 0318            	   157M    beq    no_repeat_sample_main194
-00:0000136E FF9FE0F9        	   158M    bl     SINGLE_WRITE_LEFT_RIGHT
+00:00001376 026C            	   156M    btst   r2, REPEAT_22Khz
+00:00001378 0318            	   157M    beq    no_repeat_sample_main194
+00:0000137A FF9FDAF9        	   158M    bl     SINGLE_WRITE_LEFT_RIGHT
                             	   159M no_repeat_sample_main194:
                             	   160M 
-00:00001372 1962            	   161M    add    r9, 1
-00:00001374 49E900030000    	   162M    cmp    r9, BUFFER_CHECK_COUNT
-00:0000137A 09C0404D        	   163M    movge  r9, 0
+00:0000137E 1962            	   161M    add    r9, 1
+00:00001380 49E900030000    	   162M    cmp    r9, BUFFER_CHECK_COUNT
+00:00001386 09C0404D        	   163M    movge  r9, 0
                             	   164M 
-00:0000137E 7F9E0AFE        	   165M    b      audio_main_loop194
+00:0000138A 7F9E0AFE        	   165M    b      audio_main_loop194
                             	   166M 
                             	   167M 
-                            	  1275: 
-                            	  1276: 
-                            	  1277: #   ei
-                            	  1278: #   pop   r0-r18,pc
+                            	  1280: 
+                            	  1281: 
+                            	  1282: #   ei
+                            	  1283: #   pop   r0-r18,pc
 
 
 Symbols by name:
@@ -3920,25 +3925,25 @@ TWOGPIO                          S:00000001
 VIDEO_MASK                       S:00003FFC
 abort_audio                     00:0000086E
 audio_capture                   00:00000846
-audio_main_loop117              00:00000A2E
-audio_main_loop194              00:00000F92
-bad_sync_LR_high1117            00:00000964
-bad_sync_LR_high1194            00:00000EC8
-bad_sync_LR_high2117            00:000009A8
-bad_sync_LR_high2194            00:00000F0C
-bad_sync_LR_low1117             00:0000093A
-bad_sync_LR_low1194             00:00000E9E
-bad_sync_LR_low2117             00:000009F6
-bad_sync_LR_low2194             00:00000F5A
+audio_main_loop117              00:00000A3A
+audio_main_loop194              00:00000F9E
+bad_sync_LR_high1117            00:00000970
+bad_sync_LR_high1194            00:00000ED4
+bad_sync_LR_high2117            00:000009B4
+bad_sync_LR_high2194            00:00000F18
+bad_sync_LR_low1117             00:00000946
+bad_sync_LR_low1194             00:00000EAA
+bad_sync_LR_low2117             00:00000A02
+bad_sync_LR_low2194             00:00000F66
 capture_loop                    00:0000020C
 capture_rest                    00:00000200
 command_loop                    00:0000088E
 do_capture                      00:000001D2
 done_simple_sync                00:000001B8
-drop_full154                    00:00000B0E
-drop_full239                    00:00001066
-drop_main117                    00:00000E4E
-drop_main194                    00:0000136A
+drop_full154                    00:00000B1A
+drop_full239                    00:00001072
+drop_main117                    00:00000E5A
+drop_main194                    00:00001376
 edge_lead_both                  00:000000EC
 edge_lead_neg                   00:0000013A
 edge_lead_pos                   00:0000013A
@@ -3946,56 +3951,56 @@ edge_trail_both                 00:00000108
 edge_trail_both_hi              00:00000120
 edge_trail_neg                  00:00000166
 edge_trail_pos                  00:00000166
-empty176                        00:00000CD2
-empty261                        00:00001206
+empty176                        00:00000CDE
+empty261                        00:00001212
 exit                            00:00000048
-fill                            00:000008EC
-firstloop117                    00:00000A3C
-firstloop194                    00:00000FA0
-firstremain117                  00:00000B44
-firstremain194                  00:00001096
-full154                         00:00000AD8
-full239                         00:00001030
-got_offset_over154              00:00000AB4
-got_offset_over239              00:0000100C
-got_offset_under176             00:00000CAA
-got_offset_under261             00:000011DE
+fill                            00:000008F8
+firstloop117                    00:00000A48
+firstloop194                    00:00000FAC
+firstremain117                  00:00000B50
+firstremain194                  00:000010A2
+full154                         00:00000AE4
+full239                         00:0000103C
+got_offset_over154              00:00000AC0
+got_offset_over239              00:00001018
+got_offset_under176             00:00000CB6
+got_offset_under261             00:000011EA
 high_latency_capture_loop       00:000005C2
 hl_capture                      00:000005B4
-increment_error117              00:00000A28
-increment_error194              00:00000F8C
+increment_error117              00:00000A34
+increment_error194              00:00000F98
 no_compensate_psync             00:000001CE
-no_dma                          00:000008E8
-no_repeat_main117               00:00000D3C
-no_repeat_main194               00:0000126A
-no_repeat_sample127             00:00000960
-no_repeat_sample134             00:000009A4
-no_repeat_sample135             00:000009B4
-no_repeat_sample142             00:000009F4
-no_repeat_sample143             00:00000A02
-no_repeat_sample147             00:00000A28
-no_repeat_sample207             00:00000EC4
-no_repeat_sample216             00:00000F08
-no_repeat_sample217             00:00000F18
-no_repeat_sample226             00:00000F58
-no_repeat_sample227             00:00000F66
-no_repeat_sample232             00:00000F8C
-no_repeat_sample_main117        00:00000E56
-no_repeat_sample_main194        00:00001372
+no_dma                          00:000008F4
+no_repeat_main117               00:00000D48
+no_repeat_main194               00:00001276
+no_repeat_sample127             00:0000096C
+no_repeat_sample134             00:000009B0
+no_repeat_sample135             00:000009C0
+no_repeat_sample142             00:00000A00
+no_repeat_sample143             00:00000A0E
+no_repeat_sample147             00:00000A34
+no_repeat_sample207             00:00000ED0
+no_repeat_sample216             00:00000F14
+no_repeat_sample217             00:00000F24
+no_repeat_sample226             00:00000F64
+no_repeat_sample227             00:00000F72
+no_repeat_sample232             00:00000F98
+no_repeat_sample_main117        00:00000E62
+no_repeat_sample_main194        00:0000137E
 no_status_bytes112              00:0000076E
 no_status_bytes114              00:000007F2
-no_status_bytes168              00:00000BF2
-no_status_bytes183              00:00000DA0
-no_status_bytes252              00:0000112C
-no_status_bytes268              00:000012C8
-not_dma_overrun154              00:00000ACE
-not_dma_overrun239              00:00001026
-not_dma_underrun176             00:00000CC8
-not_dma_underrun261             00:000011FC
-not_empty176                    00:00000D18
-not_empty261                    00:0000124C
-not_full154                     00:00000B1C
-not_full239                     00:00001074
+no_status_bytes168              00:00000BFE
+no_status_bytes183              00:00000DAC
+no_status_bytes252              00:00001138
+no_status_bytes268              00:000012D4
+not_dma_overrun154              00:00000ADA
+not_dma_overrun239              00:00001032
+not_dma_underrun176             00:00000CD4
+not_dma_underrun261             00:00001208
+not_empty176                    00:00000D24
+not_empty261                    00:00001258
+not_full154                     00:00000B28
+not_full239                     00:00001080
 not_gpio_read_benchmark         00:0000002A
 not_mbox_write_benchmark        00:0000004C
 ofw_capture                     00:0000039A
@@ -4004,109 +4009,110 @@ ofw_wait_csync_hi_cpld          00:000003E0
 ofw_wait_csync_lo_cpld          00:0000039A
 old_firmware_capture_loop       00:0000040A
 read_bench_loop                 00:0000001E
-repeat_empty176                 00:00000D08
-repeat_empty261                 00:0000123C
-secondloop117                   00:00000C36
-secondloop194                   00:00001176
-secondremain117                 00:00000D3E
-secondremain194                 00:0000126C
-skip_log117                     00:00000B76
-skip_log194                     00:000010C2
-skip_update117                  00:00000B42
-skip_update194                  00:00001094
-two_gpio_capture                00:00000E66
-use_dma                         00:000008FA
-use_slow_pll_empty176           00:00000CF4
-use_slow_pll_empty261           00:00001228
-use_slow_pll_full154            00:00000AFA
-use_slow_pll_full239            00:00001052
+repeat_empty176                 00:00000D14
+repeat_empty261                 00:00001248
+secondloop117                   00:00000C42
+secondloop194                   00:00001182
+secondremain117                 00:00000D4A
+secondremain194                 00:00001278
+skip_log117                     00:00000B82
+skip_log194                     00:000010CE
+skip_update117                  00:00000B4E
+skip_update194                  00:000010A0
+sleep                           00:0000089A
+two_gpio_capture                00:00000E72
+use_dma                         00:00000906
+use_slow_pll_empty176           00:00000D00
+use_slow_pll_empty261           00:00001234
+use_slow_pll_full154            00:00000B06
+use_slow_pll_full239            00:0000105E
 vpu0                            00:0000000E
 vpu1                            00:00000846
 vpu1_interrupt                  00:00000844
-waitBCH119                      00:00000902
-waitBCH122                      00:0000091C
-waitBCH125                      00:0000093A
-waitBCH129                      00:00000964
-waitBCH132                      00:0000097E
-waitBCH137                      00:000009B4
-waitBCH140                      00:000009CE
-waitBCH145                      00:00000A02
-waitBCH149                      00:00000A3E
-waitBCH152                      00:00000A6E
-waitBCH156                      00:00000B1C
-waitBCH159                      00:00000B44
-waitBCH162                      00:00000B76
-waitBCH166                      00:00000B92
-waitBCH171                      00:00000C38
-waitBCH174                      00:00000C68
-waitBCH178                      00:00000D18
-waitBCH181                      00:00000D3E
-waitBCH185                      00:00000DE4
-waitBCH189                      00:00000E00
-waitBCH235                      00:00000FA8
-waitBCH238                      00:00000FD2
-waitBCH242                      00:0000107A
-waitBCH245                      00:0000109C
-waitBCH257                      00:0000117E
-waitBCH260                      00:000011A8
-waitBCH264                      00:00001252
-waitBCH267                      00:00001272
-waitBCHO196                     00:00000E66
-waitBCHO198                     00:00000E7A
-waitBCHO200                     00:00000E80
-waitBCHO202                     00:00000E94
-waitBCHO204                     00:00000E9E
-waitBCHO206                     00:00000EB2
-waitBCHO209                     00:00000EC8
-waitBCHO211                     00:00000EDC
-waitBCHO213                     00:00000EE2
-waitBCHO215                     00:00000EF6
-waitBCHO219                     00:00000F18
-waitBCHO221                     00:00000F2C
-waitBCHO223                     00:00000F32
-waitBCHO225                     00:00000F46
-waitBCHO229                     00:00000F66
-waitBCHO231                     00:00000F7A
-waitBCHO249                     00:000010D2
-waitBCHO254                     00:0000116A
-waitBCHO272                     00:0000131C
-waitBCHO276                     00:00001334
-waitBCL197                      00:00000E6C
-waitBCL201                      00:00000E86
-waitBCL205                      00:00000EA4
-waitBCL210                      00:00000ECE
-waitBCL214                      00:00000EE8
-waitBCL220                      00:00000F1E
-waitBCL224                      00:00000F38
-waitBCL230                      00:00000F6C
-waitBCL234                      00:00000FA2
-waitBCL237                      00:00000FCC
-waitBCL241                      00:00001074
-waitBCL244                      00:00001096
-waitBCL247                      00:000010C2
-waitBCL251                      00:000010D8
-waitBCL256                      00:00001178
-waitBCL259                      00:000011A2
-waitBCL263                      00:0000124C
-waitBCL266                      00:0000126C
-waitBCL270                      00:0000130C
-waitBCL274                      00:00001322
-waitLRCH121                     00:0000091C
-waitLRCH124                     00:0000093A
-waitLRCH131                     00:0000097E
-waitLRCH139                     00:000009CE
-waitLRCH144                     00:00000A02
-waitLRCH2199                    00:00000E80
-waitLRCH2203                    00:00000E9E
-waitLRCH2212                    00:00000EE2
-waitLRCH2222                    00:00000F32
-waitLRCH2228                    00:00000F66
-waitLRCL118                     00:00000902
-waitLRCL128                     00:00000964
-waitLRCL136                     00:000009B4
-waitLRCL2195                    00:00000E66
-waitLRCL2208                    00:00000EC8
-waitLRCL2218                    00:00000F18
+waitBCH119                      00:0000090E
+waitBCH122                      00:00000928
+waitBCH125                      00:00000946
+waitBCH129                      00:00000970
+waitBCH132                      00:0000098A
+waitBCH137                      00:000009C0
+waitBCH140                      00:000009DA
+waitBCH145                      00:00000A0E
+waitBCH149                      00:00000A4A
+waitBCH152                      00:00000A7A
+waitBCH156                      00:00000B28
+waitBCH159                      00:00000B50
+waitBCH162                      00:00000B82
+waitBCH166                      00:00000B9E
+waitBCH171                      00:00000C44
+waitBCH174                      00:00000C74
+waitBCH178                      00:00000D24
+waitBCH181                      00:00000D4A
+waitBCH185                      00:00000DF0
+waitBCH189                      00:00000E0C
+waitBCH235                      00:00000FB4
+waitBCH238                      00:00000FDE
+waitBCH242                      00:00001086
+waitBCH245                      00:000010A8
+waitBCH257                      00:0000118A
+waitBCH260                      00:000011B4
+waitBCH264                      00:0000125E
+waitBCH267                      00:0000127E
+waitBCHO196                     00:00000E72
+waitBCHO198                     00:00000E86
+waitBCHO200                     00:00000E8C
+waitBCHO202                     00:00000EA0
+waitBCHO204                     00:00000EAA
+waitBCHO206                     00:00000EBE
+waitBCHO209                     00:00000ED4
+waitBCHO211                     00:00000EE8
+waitBCHO213                     00:00000EEE
+waitBCHO215                     00:00000F02
+waitBCHO219                     00:00000F24
+waitBCHO221                     00:00000F38
+waitBCHO223                     00:00000F3E
+waitBCHO225                     00:00000F52
+waitBCHO229                     00:00000F72
+waitBCHO231                     00:00000F86
+waitBCHO249                     00:000010DE
+waitBCHO254                     00:00001176
+waitBCHO272                     00:00001328
+waitBCHO276                     00:00001340
+waitBCL197                      00:00000E78
+waitBCL201                      00:00000E92
+waitBCL205                      00:00000EB0
+waitBCL210                      00:00000EDA
+waitBCL214                      00:00000EF4
+waitBCL220                      00:00000F2A
+waitBCL224                      00:00000F44
+waitBCL230                      00:00000F78
+waitBCL234                      00:00000FAE
+waitBCL237                      00:00000FD8
+waitBCL241                      00:00001080
+waitBCL244                      00:000010A2
+waitBCL247                      00:000010CE
+waitBCL251                      00:000010E4
+waitBCL256                      00:00001184
+waitBCL259                      00:000011AE
+waitBCL263                      00:00001258
+waitBCL266                      00:00001278
+waitBCL270                      00:00001318
+waitBCL274                      00:0000132E
+waitLRCH121                     00:00000928
+waitLRCH124                     00:00000946
+waitLRCH131                     00:0000098A
+waitLRCH139                     00:000009DA
+waitLRCH144                     00:00000A0E
+waitLRCH2199                    00:00000E8C
+waitLRCH2203                    00:00000EAA
+waitLRCH2212                    00:00000EEE
+waitLRCH2222                    00:00000F3E
+waitLRCH2228                    00:00000F72
+waitLRCL118                     00:0000090E
+waitLRCL128                     00:00000970
+waitLRCL136                     00:000009C0
+waitLRCL2195                    00:00000E72
+waitLRCL2208                    00:00000ED4
+waitLRCL2218                    00:00000F24
 waitPSE1                        00:000000EC
 waitPSE11                       00:00000166
 waitPSE13                       00:00000178
@@ -4311,165 +4317,166 @@ Symbols by value:
 00000846 vpu1
 0000086E abort_audio
 0000088E command_loop
-000008E8 no_dma
-000008EC fill
-000008FA use_dma
-00000902 waitBCH119
-00000902 waitLRCL118
-0000091C waitBCH122
-0000091C waitLRCH121
-0000093A bad_sync_LR_low1117
-0000093A waitBCH125
-0000093A waitLRCH124
-00000960 no_repeat_sample127
-00000964 bad_sync_LR_high1117
-00000964 waitBCH129
-00000964 waitLRCL128
-0000097E waitBCH132
-0000097E waitLRCH131
-000009A4 no_repeat_sample134
-000009A8 bad_sync_LR_high2117
-000009B4 no_repeat_sample135
-000009B4 waitBCH137
-000009B4 waitLRCL136
-000009CE waitBCH140
-000009CE waitLRCH139
-000009F4 no_repeat_sample142
-000009F6 bad_sync_LR_low2117
-00000A02 no_repeat_sample143
-00000A02 waitBCH145
-00000A02 waitLRCH144
-00000A28 increment_error117
-00000A28 no_repeat_sample147
-00000A2E audio_main_loop117
-00000A3C firstloop117
-00000A3E waitBCH149
-00000A6E waitBCH152
-00000AB4 got_offset_over154
-00000ACE not_dma_overrun154
-00000AD8 full154
-00000AFA use_slow_pll_full154
-00000B0E drop_full154
-00000B1C not_full154
-00000B1C waitBCH156
-00000B42 skip_update117
-00000B44 firstremain117
-00000B44 waitBCH159
-00000B76 skip_log117
-00000B76 waitBCH162
-00000B92 waitBCH166
-00000BF2 no_status_bytes168
-00000C36 secondloop117
-00000C38 waitBCH171
-00000C68 waitBCH174
-00000CAA got_offset_under176
-00000CC8 not_dma_underrun176
-00000CD2 empty176
-00000CF4 use_slow_pll_empty176
-00000D08 repeat_empty176
-00000D18 not_empty176
-00000D18 waitBCH178
-00000D3C no_repeat_main117
-00000D3E secondremain117
-00000D3E waitBCH181
-00000DA0 no_status_bytes183
-00000DE4 waitBCH185
-00000E00 waitBCH189
-00000E4E drop_main117
-00000E56 no_repeat_sample_main117
-00000E66 two_gpio_capture
-00000E66 waitBCHO196
-00000E66 waitLRCL2195
-00000E6C waitBCL197
-00000E7A waitBCHO198
-00000E80 waitBCHO200
-00000E80 waitLRCH2199
-00000E86 waitBCL201
-00000E94 waitBCHO202
-00000E9E bad_sync_LR_low1194
-00000E9E waitBCHO204
-00000E9E waitLRCH2203
-00000EA4 waitBCL205
-00000EB2 waitBCHO206
-00000EC4 no_repeat_sample207
-00000EC8 bad_sync_LR_high1194
-00000EC8 waitBCHO209
-00000EC8 waitLRCL2208
-00000ECE waitBCL210
-00000EDC waitBCHO211
-00000EE2 waitBCHO213
-00000EE2 waitLRCH2212
-00000EE8 waitBCL214
-00000EF6 waitBCHO215
-00000F08 no_repeat_sample216
-00000F0C bad_sync_LR_high2194
-00000F18 no_repeat_sample217
-00000F18 waitBCHO219
-00000F18 waitLRCL2218
-00000F1E waitBCL220
-00000F2C waitBCHO221
-00000F32 waitBCHO223
-00000F32 waitLRCH2222
-00000F38 waitBCL224
-00000F46 waitBCHO225
-00000F58 no_repeat_sample226
-00000F5A bad_sync_LR_low2194
-00000F66 no_repeat_sample227
-00000F66 waitBCHO229
-00000F66 waitLRCH2228
-00000F6C waitBCL230
-00000F7A waitBCHO231
-00000F8C increment_error194
-00000F8C no_repeat_sample232
-00000F92 audio_main_loop194
-00000FA0 firstloop194
-00000FA2 waitBCL234
-00000FA8 waitBCH235
-00000FCC waitBCL237
-00000FD2 waitBCH238
+0000089A sleep
+000008F4 no_dma
+000008F8 fill
+00000906 use_dma
+0000090E waitBCH119
+0000090E waitLRCL118
+00000928 waitBCH122
+00000928 waitLRCH121
+00000946 bad_sync_LR_low1117
+00000946 waitBCH125
+00000946 waitLRCH124
+0000096C no_repeat_sample127
+00000970 bad_sync_LR_high1117
+00000970 waitBCH129
+00000970 waitLRCL128
+0000098A waitBCH132
+0000098A waitLRCH131
+000009B0 no_repeat_sample134
+000009B4 bad_sync_LR_high2117
+000009C0 no_repeat_sample135
+000009C0 waitBCH137
+000009C0 waitLRCL136
+000009DA waitBCH140
+000009DA waitLRCH139
+00000A00 no_repeat_sample142
+00000A02 bad_sync_LR_low2117
+00000A0E no_repeat_sample143
+00000A0E waitBCH145
+00000A0E waitLRCH144
+00000A34 increment_error117
+00000A34 no_repeat_sample147
+00000A3A audio_main_loop117
+00000A48 firstloop117
+00000A4A waitBCH149
+00000A7A waitBCH152
+00000AC0 got_offset_over154
+00000ADA not_dma_overrun154
+00000AE4 full154
+00000B06 use_slow_pll_full154
+00000B1A drop_full154
+00000B28 not_full154
+00000B28 waitBCH156
+00000B4E skip_update117
+00000B50 firstremain117
+00000B50 waitBCH159
+00000B82 skip_log117
+00000B82 waitBCH162
+00000B9E waitBCH166
+00000BFE no_status_bytes168
+00000C42 secondloop117
+00000C44 waitBCH171
+00000C74 waitBCH174
+00000CB6 got_offset_under176
+00000CD4 not_dma_underrun176
+00000CDE empty176
+00000D00 use_slow_pll_empty176
+00000D14 repeat_empty176
+00000D24 not_empty176
+00000D24 waitBCH178
+00000D48 no_repeat_main117
+00000D4A secondremain117
+00000D4A waitBCH181
+00000DAC no_status_bytes183
+00000DF0 waitBCH185
+00000E0C waitBCH189
+00000E5A drop_main117
+00000E62 no_repeat_sample_main117
+00000E72 two_gpio_capture
+00000E72 waitBCHO196
+00000E72 waitLRCL2195
+00000E78 waitBCL197
+00000E86 waitBCHO198
+00000E8C waitBCHO200
+00000E8C waitLRCH2199
+00000E92 waitBCL201
+00000EA0 waitBCHO202
+00000EAA bad_sync_LR_low1194
+00000EAA waitBCHO204
+00000EAA waitLRCH2203
+00000EB0 waitBCL205
+00000EBE waitBCHO206
+00000ED0 no_repeat_sample207
+00000ED4 bad_sync_LR_high1194
+00000ED4 waitBCHO209
+00000ED4 waitLRCL2208
+00000EDA waitBCL210
+00000EE8 waitBCHO211
+00000EEE waitBCHO213
+00000EEE waitLRCH2212
+00000EF4 waitBCL214
+00000F02 waitBCHO215
+00000F14 no_repeat_sample216
+00000F18 bad_sync_LR_high2194
+00000F24 no_repeat_sample217
+00000F24 waitBCHO219
+00000F24 waitLRCL2218
+00000F2A waitBCL220
+00000F38 waitBCHO221
+00000F3E waitBCHO223
+00000F3E waitLRCH2222
+00000F44 waitBCL224
+00000F52 waitBCHO225
+00000F64 no_repeat_sample226
+00000F66 bad_sync_LR_low2194
+00000F72 no_repeat_sample227
+00000F72 waitBCHO229
+00000F72 waitLRCH2228
+00000F78 waitBCL230
+00000F86 waitBCHO231
+00000F98 increment_error194
+00000F98 no_repeat_sample232
+00000F9E audio_main_loop194
+00000FAC firstloop194
+00000FAE waitBCL234
+00000FB4 waitBCH235
+00000FD8 waitBCL237
+00000FDE waitBCH238
 00000FFF COMMAND_MASK
-0000100C got_offset_over239
-00001026 not_dma_overrun239
-00001030 full239
-00001052 use_slow_pll_full239
-00001066 drop_full239
-00001074 not_full239
-00001074 waitBCL241
-0000107A waitBCH242
-00001094 skip_update194
-00001096 firstremain194
-00001096 waitBCL244
-0000109C waitBCH245
-000010C2 skip_log194
-000010C2 waitBCL247
-000010D2 waitBCHO249
-000010D8 waitBCL251
-0000112C no_status_bytes252
-0000116A waitBCHO254
-00001176 secondloop194
-00001178 waitBCL256
-0000117E waitBCH257
-000011A2 waitBCL259
-000011A8 waitBCH260
-000011DE got_offset_under261
-000011FC not_dma_underrun261
-00001206 empty261
-00001228 use_slow_pll_empty261
-0000123C repeat_empty261
-0000124C not_empty261
-0000124C waitBCL263
-00001252 waitBCH264
-0000126A no_repeat_main194
-0000126C secondremain194
-0000126C waitBCL266
-00001272 waitBCH267
-000012C8 no_status_bytes268
-0000130C waitBCL270
-0000131C waitBCHO272
-00001322 waitBCL274
-00001334 waitBCHO276
-0000136A drop_main194
-00001372 no_repeat_sample_main194
+00001018 got_offset_over239
+00001032 not_dma_overrun239
+0000103C full239
+0000105E use_slow_pll_full239
+00001072 drop_full239
+00001080 not_full239
+00001080 waitBCL241
+00001086 waitBCH242
+000010A0 skip_update194
+000010A2 firstremain194
+000010A2 waitBCL244
+000010A8 waitBCH245
+000010CE skip_log194
+000010CE waitBCL247
+000010DE waitBCHO249
+000010E4 waitBCL251
+00001138 no_status_bytes252
+00001176 waitBCHO254
+00001182 secondloop194
+00001184 waitBCL256
+0000118A waitBCH257
+000011AE waitBCL259
+000011B4 waitBCH260
+000011EA got_offset_under261
+00001208 not_dma_underrun261
+00001212 empty261
+00001234 use_slow_pll_empty261
+00001248 repeat_empty261
+00001258 not_empty261
+00001258 waitBCL263
+0000125E waitBCH264
+00001276 no_repeat_main194
+00001278 secondremain194
+00001278 waitBCL266
+0000127E waitBCH267
+000012D4 no_status_bytes268
+00001318 waitBCL270
+00001328 waitBCHO272
+0000132E waitBCL274
+00001340 waitBCHO276
+00001376 drop_main194
+0000137E no_repeat_sample_main194
 00003FFC VIDEO_MASK
 00020001 DEFAULT_BIT_STATE
 5A000000 CM_PASSWORD
