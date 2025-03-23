@@ -408,8 +408,8 @@ static const char *dma_names[] = {
 
 static const char *clock_sync_names[] = {
    "Samples Only",
-   "PLL + Samples",
-   "Variable PLL (Slow)",
+   "Fixed PLL + Samples",
+   "Variable PLL",
    "Variable PLL (Fast)"
 };
 
@@ -1598,6 +1598,9 @@ void set_feature(int num, int value) {
           value = 0;
       }
       set_parameter(num, value);
+      if (get_audio_hardware_type() !=0 && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE) && value > 0) {
+          value += 30;
+      }
 #ifdef RPI4
       if (value > 100) {  //pi 4 core is already 500 Mhz (all others 400Mhz) so don't overclock unless overclock >100Mhz
           set_clock_rate_core((core_clock + value - 100) * 1000000);
@@ -1684,6 +1687,7 @@ void set_feature(int num, int value) {
    case F_AUDIO_CAP:
       set_parameter(num, value);
       if (get_system_stable()) {
+          set_feature(F_OVERCLOCK_CORE, get_feature(F_OVERCLOCK_CORE));
           set_audio_capture(value);
       }
       break;
@@ -1696,6 +1700,10 @@ void set_feature(int num, int value) {
       set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
       break;
    case F_CLOCK_SYNC:
+      set_parameter(num, value);
+      set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
+      break;
+   case F_OPTIMISE:
       set_parameter(num, value);
       set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
       break;
@@ -2462,6 +2470,10 @@ static int audio_msg1(int line){
    osd_set(line++, 0, "with your monitor.");
    line++;
    osd_set(line++, 0, "Audio capture requires an addon board.");
+   osd_set(line++, 0, "(Details TBA)");
+//   osd_set(line++, 0, "(Available from the official sellers");
+//   osd_set(line++, 0, "listed in the github wiki).");
+
    line++;
    return line;
 }
@@ -8386,6 +8398,7 @@ static int count = 0;
         }
 
         sprintf(buffer + 1 * LINELEN, "%02dK%d%c:F=%04d,D=%04d,R=%04d,P=%05X,%c=%04X",clk,pins,swapped,error,drop,repeat,pll, type, membuf);
+        /*
         if (pll != last_pll && count > 100) {
             log_info("%03X", pll & 0xFFF);
             last_pll = pll;
@@ -8393,6 +8406,7 @@ static int count = 0;
         } else {
             count++;
         }
+        */
     }
 }
 
