@@ -53,6 +53,7 @@ audio_capture=0
 capture_type=0
 dma_delay=4
 clock_sync=2
+cts=1
 optimise=1
 debug_info=0
 debug_info_menu=0

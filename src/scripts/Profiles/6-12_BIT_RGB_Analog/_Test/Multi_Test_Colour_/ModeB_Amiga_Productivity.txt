@@ -3,3 +3,4 @@ geometry=144,18,640,480,680,500,1,1,0,2,28625000,912,5000,526,4,6,0
 palette=RrGgBb_(EGA)
 scanline_level=0
 audio_capture=1
+overclock_core=20
