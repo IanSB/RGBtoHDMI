@@ -1373,7 +1373,7 @@ static void recalculate_hdmi_clock(int genlock_mode, int genlock_adjust) {
                   genlock_speed = 2000;
               break;
           }
-          if (get_audio_hardware_type() !=0 && parameters[F_AUDIO_CAP] && parameters[F_OPTIMISE]) {
+          if (get_audio_hardware_type() != AUDIO_NO_HARDWARE && parameters[F_AUDIO_CAP] && parameters[F_OPTIMISE]) {
               genlock_speed = 200;
           }
 */
@@ -3632,7 +3632,7 @@ void rgb_to_hdmi_main() {
 
          int flags =  extra_flags() | clear;
 
-         if (parameters[F_VSYNC_INDICATOR] || (get_audio_hardware_type() !=0 && parameters[F_LIVE_DEBUG])) {
+         if (parameters[F_VSYNC_INDICATOR] || (get_audio_hardware_type() != AUDIO_NO_HARDWARE && parameters[F_LIVE_DEBUG])) {
             flags |= BIT_VSYNC;
          }
          if (parameters[F_DEBUG]) {
@@ -3780,7 +3780,7 @@ void rgb_to_hdmi_main() {
 
          if (system_stable == 0) {
              system_stable = 1;
-             if (get_audio_hardware_type() != 0 && get_parameter(F_AUDIO_CAP) != 0) {
+             if (get_audio_hardware_type() != AUDIO_NO_HARDWARE && get_parameter(F_AUDIO_CAP)) {
                 log_info("System stable: Starting audio");
                 set_feature(F_AUDIO_CAP, get_parameter(F_AUDIO_CAP));
              }

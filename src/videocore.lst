@@ -1406,7 +1406,7 @@ Source: "videocore.s"
                             	   644:    eor    r0, r2
                             	   645:    btst   r0, CLOCK_BIT
                             	   646:    beq    waitBCH\@
-                            	   647:   ld     r0, (r4)          #second read for reliability
+                            	   647:    ld     r0, (r4)          #second read for reliability
                             	   648:    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
                             	   649:    btst   r0, r15 # DATABIT
                             	   650:    addne  r8, 1  #parity count
@@ -1419,7 +1419,7 @@ Source: "videocore.s"
                             	   657:    eor    r0, r2
                             	   658:    btst   r0, CLOCK_BIT
                             	   659:    beq    waitBCH\@
-                            	   660:   ld     r0, (r4)          #second read for reliability
+                            	   660:    ld     r0, (r4)          #second read for reliability
                             	   661:    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
                             	   662:    btst   r0, r16 # LRBIT
                             	   663: .endm
@@ -1436,7 +1436,7 @@ Source: "videocore.s"
                             	   674: waitBCH\@:
                             	   675:    ld     r0, (r4)
                             	   676:    btst   r0, CLOCK_BIT
-                            	   677:    bne    waitBCH\@
+                            	   677:    bne    waitBCH\@ 
                             	   678:    ld     r0, (r4)          #second read for reliability
                             	   679:    btst   r0, r15 # DATABIT
                             	   680:    addne  r8, 1  #parity count
@@ -2165,7 +2165,7 @@ Source: "videocore.s"
 00:00000918 2045            	     4M    eor    r0, r2
 00:0000091A F06C            	     5M    btst   r0, CLOCK_BIT
 00:0000091C 7918            	     6M    beq    waitBCH119
-00:0000091E 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:0000091E 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000920 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000922 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:00000926 7418            	    10M    beq    waitLRCH118
@@ -2191,7 +2191,7 @@ Source: "videocore.s"
 00:00000932 2045            	     4M    eor    r0, r2
 00:00000934 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000936 7918            	     6M    beq    waitBCH122
-00:00000938 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000938 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:0000093A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:0000093C 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:00000940 F418            	    10M    bne    waitLRCL121
@@ -2220,7 +2220,7 @@ Source: "videocore.s"
 00:00000950 2045            	     4M    eor    r0, r2
 00:00000952 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000954 7918            	     6M    beq    waitBCH125
-00:00000956 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000956 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000958 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:0000095A 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:0000095E F418            	    10M    bne    waitLRCL124
@@ -2256,7 +2256,7 @@ Source: "videocore.s"
 00:0000097A 2045            	     4M    eor    r0, r2
 00:0000097C F06C            	     5M    btst   r0, CLOCK_BIT
 00:0000097E 7918            	     6M    beq    waitBCH129
-00:00000980 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000980 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000982 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000984 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:00000988 7418            	    10M    beq    waitLRCH128
@@ -2282,7 +2282,7 @@ Source: "videocore.s"
 00:00000994 2045            	     4M    eor    r0, r2
 00:00000996 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000998 7918            	     6M    beq    waitBCH132
-00:0000099A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:0000099A 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:0000099C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:0000099E 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:000009A2 F418            	    10M    bne    waitLRCL131
@@ -2323,7 +2323,7 @@ Source: "videocore.s"
 00:000009CA 2045            	     4M    eor    r0, r2
 00:000009CC F06C            	     5M    btst   r0, CLOCK_BIT
 00:000009CE 7918            	     6M    beq    waitBCH137
-00:000009D0 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:000009D0 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:000009D2 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:000009D4 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:000009D8 7418            	    10M    beq    waitLRCH136
@@ -2349,7 +2349,7 @@ Source: "videocore.s"
 00:000009E4 2045            	     4M    eor    r0, r2
 00:000009E6 F06C            	     5M    btst   r0, CLOCK_BIT
 00:000009E8 7918            	     6M    beq    waitBCH140
-00:000009EA 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:000009EA 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:000009EC F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:000009EE 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:000009F2 F418            	    10M    bne    waitLRCL139
@@ -2390,7 +2390,7 @@ Source: "videocore.s"
 00:00000A18 2045            	     4M    eor    r0, r2
 00:00000A1A F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000A1C 7918            	     6M    beq    waitBCH145
-00:00000A1E 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000A1E 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000A20 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000A22 80C11007        	     9M    btst   r0, r16 # LRBIT
 00:00000A26 F418            	    10M    bne    waitLRCL144
@@ -2434,7 +2434,7 @@ Source: "videocore.s"
 00:00000A54 2045            	     4M    eor    r0, r2
 00:00000A56 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000A58 7918            	     6M    beq    waitBCH149
-00:00000A5A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000A5A 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000A5C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000A5E F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000A60 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2466,7 +2466,7 @@ Source: "videocore.s"
 00:00000A84 2045            	     4M    eor    r0, r2
 00:00000A86 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000A88 7918            	     6M    beq    waitBCH152
-00:00000A8A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000A8A 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000A8C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000A8E F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000A90 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2550,7 +2550,7 @@ Source: "videocore.s"
 00:00000B32 2045            	     4M    eor    r0, r2
 00:00000B34 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000B36 7918            	     6M    beq    waitBCH156
-00:00000B38 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000B38 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000B3A F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000B3C F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000B3E 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2580,7 +2580,7 @@ Source: "videocore.s"
 00:00000B5A 2045            	     4M    eor    r0, r2
 00:00000B5C F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000B5E 7918            	     6M    beq    waitBCH159
-00:00000B60 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000B60 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000B62 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000B64 F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000B66 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2613,7 +2613,7 @@ Source: "videocore.s"
 00:00000B8C 2045            	     4M    eor    r0, r2
 00:00000B8E F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000B90 7918            	     6M    beq    waitBCH162
-00:00000B92 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000B92 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000B94 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000B96 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
@@ -2639,7 +2639,7 @@ Source: "videocore.s"
 00:00000BA8 2045            	     4M    eor    r0, r2
 00:00000BAA F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000BAC 7918            	     6M    beq    waitBCH166
-00:00000BAE 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000BAE 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000BB0 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000BB2 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
@@ -2724,7 +2724,7 @@ Source: "videocore.s"
 00:00000C4E 2045            	     4M    eor    r0, r2
 00:00000C50 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000C52 7918            	     6M    beq    waitBCH171
-00:00000C54 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000C54 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000C56 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000C58 F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000C5A 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2755,7 +2755,7 @@ Source: "videocore.s"
 00:00000C7E 2045            	     4M    eor    r0, r2
 00:00000C80 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000C82 7918            	     6M    beq    waitBCH174
-00:00000C84 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000C84 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000C86 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000C88 F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000C8A 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2841,7 +2841,7 @@ Source: "videocore.s"
 00:00000D2E 2045            	     4M    eor    r0, r2
 00:00000D30 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000D32 7918            	     6M    beq    waitBCH178
-00:00000D34 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000D34 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000D36 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000D38 F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000D3A 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2872,7 +2872,7 @@ Source: "videocore.s"
 00:00000D54 2045            	     4M    eor    r0, r2
 00:00000D56 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000D58 7918            	     6M    beq    waitBCH181
-00:00000D5A 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000D5A 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000D5C F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000D5E F04C            	     9M    btst   r0, r15 # DATABIT
 00:00000D60 48C0C140        	    10M    addne  r8, 1  #parity count
@@ -2950,7 +2950,7 @@ Source: "videocore.s"
 00:00000DFA 2045            	     4M    eor    r0, r2
 00:00000DFC F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000DFE 7918            	     6M    beq    waitBCH185
-00:00000E00 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000E00 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000E02 F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000E04 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
@@ -2976,7 +2976,7 @@ Source: "videocore.s"
 00:00000E16 2045            	     4M    eor    r0, r2
 00:00000E18 F06C            	     5M    btst   r0, CLOCK_BIT
 00:00000E1A 7918            	     6M    beq    waitBCH189
-00:00000E1C 4008            	     7M   ld     r0, (r4)          #second read for reliability
+00:00000E1C 4008            	     7M    ld     r0, (r4)          #second read for reliability
 00:00000E1E F274            	     8M    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
 00:00000E20 80C11007        	     9M    btst   r0, r16 # LRBIT
                             	     5M .endif
@@ -3309,7 +3309,7 @@ Source: "videocore.s"
                             	     1M waitBCH235:
 00:00000FB4 4008            	     2M    ld     r0, (r4)
 00:00000FB6 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000FB8 FE18            	     4M    bne    waitBCH235
+00:00000FB8 FE18            	     4M    bne    waitBCH235 
 00:00000FBA 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:00000FBC F04C            	     6M    btst   r0, r15 # DATABIT
 00:00000FBE 48C0C140        	     7M    addne  r8, 1  #parity count
@@ -3337,7 +3337,7 @@ Source: "videocore.s"
                             	     1M waitBCH238:
 00:00000FDE 4008            	     2M    ld     r0, (r4)
 00:00000FE0 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00000FE2 FE18            	     4M    bne    waitBCH238
+00:00000FE2 FE18            	     4M    bne    waitBCH238 
 00:00000FE4 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:00000FE6 F04C            	     6M    btst   r0, r15 # DATABIT
 00:00000FE8 48C0C140        	     7M    addne  r8, 1  #parity count
@@ -3417,7 +3417,7 @@ Source: "videocore.s"
                             	     1M waitBCH242:
 00:00001086 4008            	     2M    ld     r0, (r4)
 00:00001088 F06C            	     3M    btst   r0, CLOCK_BIT
-00:0000108A FE18            	     4M    bne    waitBCH242
+00:0000108A FE18            	     4M    bne    waitBCH242 
 00:0000108C 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:0000108E F04C            	     6M    btst   r0, r15 # DATABIT
 00:00001090 48C0C140        	     7M    addne  r8, 1  #parity count
@@ -3443,7 +3443,7 @@ Source: "videocore.s"
                             	     1M waitBCH245:
 00:000010A8 4008            	     2M    ld     r0, (r4)
 00:000010AA F06C            	     3M    btst   r0, CLOCK_BIT
-00:000010AC FE18            	     4M    bne    waitBCH245
+00:000010AC FE18            	     4M    bne    waitBCH245 
 00:000010AE 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:000010B0 F04C            	     6M    btst   r0, r15 # DATABIT
 00:000010B2 48C0C140        	     7M    addne  r8, 1  #parity count
@@ -3575,7 +3575,7 @@ Source: "videocore.s"
                             	     1M waitBCH257:
 00:0000118A 4008            	     2M    ld     r0, (r4)
 00:0000118C F06C            	     3M    btst   r0, CLOCK_BIT
-00:0000118E FE18            	     4M    bne    waitBCH257
+00:0000118E FE18            	     4M    bne    waitBCH257 
 00:00001190 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:00001192 F04C            	     6M    btst   r0, r15 # DATABIT
 00:00001194 48C0C140        	     7M    addne  r8, 1  #parity count
@@ -3602,7 +3602,7 @@ Source: "videocore.s"
                             	     1M waitBCH260:
 00:000011B4 4008            	     2M    ld     r0, (r4)
 00:000011B6 F06C            	     3M    btst   r0, CLOCK_BIT
-00:000011B8 FE18            	     4M    bne    waitBCH260
+00:000011B8 FE18            	     4M    bne    waitBCH260 
 00:000011BA 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:000011BC F04C            	     6M    btst   r0, r15 # DATABIT
 00:000011BE 48C0C140        	     7M    addne  r8, 1  #parity count
@@ -3684,7 +3684,7 @@ Source: "videocore.s"
                             	     1M waitBCH264:
 00:0000125E 4008            	     2M    ld     r0, (r4)
 00:00001260 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001262 FE18            	     4M    bne    waitBCH264
+00:00001262 FE18            	     4M    bne    waitBCH264 
 00:00001264 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:00001266 F04C            	     6M    btst   r0, r15 # DATABIT
 00:00001268 48C0C140        	     7M    addne  r8, 1  #parity count
@@ -3711,7 +3711,7 @@ Source: "videocore.s"
                             	     1M waitBCH267:
 00:0000127E 4008            	     2M    ld     r0, (r4)
 00:00001280 F06C            	     3M    btst   r0, CLOCK_BIT
-00:00001282 FE18            	     4M    bne    waitBCH267
+00:00001282 FE18            	     4M    bne    waitBCH267 
 00:00001284 4008            	     5M    ld     r0, (r4)          #second read for reliability
 00:00001286 F04C            	     6M    btst   r0, r15 # DATABIT
 00:00001288 48C0C140        	     7M    addne  r8, 1  #parity count

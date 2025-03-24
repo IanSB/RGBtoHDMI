@@ -274,8 +274,10 @@ enum {
     CLOCK_SAMPLES,
     CLOCK_PLL_SAMPLES,
     CLOCK_PLL,
+    CLOCK_PLL_FAST,
     NUM_CLOCK
 };
+
 
 enum {
    F_AUTO_SWITCH,

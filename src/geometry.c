@@ -408,7 +408,7 @@ void geometry_get_fb_params(capture_info_t *capinfo) {
         capinfo->video_type = VIDEO_PROGRESSIVE;
     }
 
-    if (get_audio_hardware_type() !=0 && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE)) {
+    if (get_audio_hardware_type() != AUDIO_NO_HARDWARE && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE)) {
         if (capinfo->bpp < 16) {
             capinfo->bpp = 16;         //force 16bpp if audio switched on and optimise set (some will be forced back below)
         }

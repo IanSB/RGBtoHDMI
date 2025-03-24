@@ -1598,8 +1598,13 @@ void set_feature(int num, int value) {
           value = 0;
       }
       set_parameter(num, value);
-      if (get_audio_hardware_type() !=0 && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE) && value > 0) {
-          value += 30;
+      int hardware = get_audio_hardware_type();
+      if (hardware != AUDIO_NO_HARDWARE && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE) && value > 0) {
+          if (hardware >= AUDIO_2GPIO) {
+             value += 40;
+          } else {
+             value += 30;
+          }
       }
 #ifdef RPI4
       if (value > 100) {  //pi 4 core is already 500 Mhz (all others 400Mhz) so don't overclock unless overclock >100Mhz
@@ -1911,40 +1916,57 @@ static const char *get_param_string(param_menu_item_t *param_item) {
 static volatile uint32_t *gpioreg;
 
 char* get_audio_hardware_string() {
-static char msg[MAX_STRING_SIZE];
+    static char msg[MAX_STRING_SIZE];
     int hardware = get_audio_hardware_type();
-    int clk = 0;
-    int pins = 0;
-    switch (hardware) {
-        case 2:
-            clk = 24;
-            pins = 3;
-            break;
-        case 3:
-            clk = 24;
-            pins = 3;
-            break;
-        case 4:
-            clk = 48;
-            pins = 3;
-            break;
-        case 5:
-            clk = 48;
-            pins = 3;
-            break;
-        case 8:
-            clk = 24;
-            pins = 2;
-            break;
-        case 16:
-            clk = 48;
-            pins = 2;
-            break;
-    }
-    if (clk == 0) {
+    if (hardware == AUDIO_NO_HARDWARE) {
         sprintf(msg, "No Capture Hardware");
     } else {
-        sprintf(msg, "%dKhz Capture (%d GPIO)", clk, pins);
+        int clk = 0;
+        int pins = 0;
+        char swapped = '?';
+        switch (hardware) {
+            case AUDIO_3GPIO_24KHZ_N:
+                clk = 24;
+                pins = 3;
+                swapped = 'N';
+                break;
+            case AUDIO_3GPIO_24KHZ_R:
+                clk = 24;
+                pins = 3;
+                swapped = 'R';
+                break;
+            case AUDIO_3GPIO_48KHZ_N:
+                clk = 48;
+                pins = 3;
+                swapped = 'N';
+                break;
+            case AUDIO_3GPIO_48KHZ_R:
+                clk = 48;
+                pins = 3;
+                swapped = 'R';
+                break;
+            case AUDIO_2GPIO_24KHZ_N:
+                clk = 24;
+                pins = 2;
+                swapped = 'N';
+                break;
+            case AUDIO_2GPIO_24KHZ_R:
+                clk = 24;
+                pins = 2;
+                swapped = 'R';
+                break;
+            case AUDIO_2GPIO_48KHZ_N:
+                clk = 48;
+                pins = 2;
+                swapped = 'N';
+                break;
+            case AUDIO_2GPIO_48KHZ_R:
+                clk = 48;
+                pins = 2;
+                swapped = 'R';
+                break;
+        }
+        sprintf(msg, "%dKhz Capture (%d GPIO-%c)", clk, pins, swapped);
     }
     return msg;
 }
@@ -8342,7 +8364,7 @@ void osd_init() {
 void live_debug_info() {
 //static int last_pll = -1;
 //static int count = 0;
-    if (get_audio_hardware_type() !=0 && get_system_stable() && get_parameter(F_AUDIO_CAP) && get_parameter(F_LIVE_DEBUG)) {
+    if (get_audio_hardware_type() != AUDIO_NO_HARDWARE && get_system_stable() && get_parameter(F_AUDIO_CAP) && get_parameter(F_LIVE_DEBUG)) {
         memset(buffer + 1 * LINELEN, 0, LINELEN);
         gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
         int pll = gpioreg[PLLD_FRAC]& 0xFFFFF;
@@ -8362,35 +8384,45 @@ void live_debug_info() {
         int hardware = get_audio_hardware_type();
         int clk = 0;
         int pins = 0;
-        char swapped = ' ';
+        char swapped = '?';
 
         switch (hardware) {
-            case 2:
+            case AUDIO_3GPIO_24KHZ_N:
                 clk = 24;
                 pins = 3;
                 swapped = 'N';
                 break;
-            case 3:
+            case AUDIO_3GPIO_24KHZ_R:
                 clk = 24;
                 pins = 3;
                 swapped = 'R';
                 break;
-            case 4:
+            case AUDIO_3GPIO_48KHZ_N:
                 clk = 48;
                 pins = 3;
                 swapped = 'N';
                 break;
-            case 5:
+            case AUDIO_3GPIO_48KHZ_R:
                 clk = 48;
                 pins = 3;
                 swapped = 'R';
                 break;
-            case 8:
+            case AUDIO_2GPIO_24KHZ_N:
                 clk = 24;
                 pins = 2;
                 swapped = 'N';
                 break;
-            case 16:
+            case AUDIO_2GPIO_24KHZ_R:
+                clk = 24;
+                pins = 2;
+                swapped = 'R';
+                break;
+            case AUDIO_2GPIO_48KHZ_N:
+                clk = 48;
+                pins = 2;
+                swapped = 'N';
+                break;
+            case AUDIO_2GPIO_48KHZ_R:
                 clk = 48;
                 pins = 2;
                 swapped = 'R';

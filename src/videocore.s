@@ -644,7 +644,7 @@ waitBCH\@:
    eor    r0, r2
    btst   r0, CLOCK_BIT
    beq    waitBCH\@
-  ld     r0, (r4)          #second read for reliability
+   ld     r0, (r4)          #second read for reliability
    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
    btst   r0, r15 # DATABIT
    addne  r8, 1  #parity count
@@ -657,7 +657,7 @@ waitBCH\@:
    eor    r0, r2
    btst   r0, CLOCK_BIT
    beq    waitBCH\@
-  ld     r0, (r4)          #second read for reliability
+   ld     r0, (r4)          #second read for reliability
    bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
    btst   r0, r16 # LRBIT
 .endm
@@ -674,7 +674,7 @@ waitBCL\@:
 waitBCH\@:
    ld     r0, (r4)
    btst   r0, CLOCK_BIT
-   bne    waitBCH\@
+   bne    waitBCH\@ 
    ld     r0, (r4)          #second read for reliability
    btst   r0, r15 # DATABIT
    addne  r8, 1  #parity count
