@@ -1974,7 +1974,8 @@ char* get_audio_hardware_string() {
 void osd_display_interface(int line) {
     gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
     char osdline[256];
-    sprintf(osdline, "Interface: %s, ", get_interface_name());
+    sprintf(osdline, "Interface: %s", get_interface_name());
+    osd_set(line++, 0, osdline);
     sprintf(osdline, "Audio: %s", get_audio_hardware_string());
     osd_set(line++, 0, osdline);
     sprintf(osdline, "Scaling: %s", scaling_names[get_parameter(F_SCALING)]);
