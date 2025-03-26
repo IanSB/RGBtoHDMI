@@ -5801,8 +5801,8 @@ void osd_update_palette(int hardware_direct) {
                 b = 0;
                 break;
              case COLOUR_AMBER:
-                r = m*0xdf/0xff;
-                g = m;
+                r = m*255/255;
+                g = m*191/255;
                 b = 0;
                 break;
              }
