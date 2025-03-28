@@ -3,3 +3,4 @@ geometry=132,39,480,256,576,288,3,4,1,1,12000000,768,5000,318,4,6,0
 palette=RrGgBb_(EGA)
 powerup_message=0
 audio_capture=1
+audio_mode=0

@@ -3,3 +3,4 @@ geometry=180,35,640,256,720,280,1,2,1,1,16000000,1024,5000,314,4,6,0
 palette=Mono_(3_level)
 powerup_message=0
 audio_capture=1
+audio_mode=0

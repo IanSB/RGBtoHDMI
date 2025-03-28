@@ -3,3 +3,4 @@ geometry=140,34,640,402,672,480,2,2,0,1,32150436,896,15000,501,4,0,0
 scanline_level=0
 overclock_core=50
 audio_capture=1
+audio_mode=0

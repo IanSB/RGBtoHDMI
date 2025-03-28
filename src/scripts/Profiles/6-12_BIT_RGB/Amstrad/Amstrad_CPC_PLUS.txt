@@ -3,3 +3,4 @@ geometry=240,65,640,200,768,286,1,2,1,2,16000000,1024,5000,312,4,0,0
 output_invert=1
 overclock_core=50
 audio_capture=1
+audio_mode=0

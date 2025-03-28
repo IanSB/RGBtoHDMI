@@ -4,4 +4,6 @@ palette=RrGgBb_(EGA)
 powerup_message=0
 scanline_level=0
 audio_capture=1
+audio_mode=0
 overclock_core=20
+audio_mode=0

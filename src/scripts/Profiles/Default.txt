@@ -50,6 +50,7 @@ overclock_sdram=0
 button_reverse=0
 debug=0
 audio_capture=0
+audio_mode=1
 capture_type=0
 dma_delay=3
 clock_sync=2

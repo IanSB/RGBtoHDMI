@@ -3,3 +3,4 @@ geometry=176,61,640,202,720,270,1,2,1,2,16042494,1024,15000,313,4,0,0
 palette=RrGgBb_(EGA)
 overclock_core=50
 audio_capture=1
+audio_mode=0

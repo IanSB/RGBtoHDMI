@@ -5,3 +5,4 @@ teletext_deinterlace=2
 teletext_scaling=0
 powerup_message=0
 audio_capture=1
+audio_mode=0
