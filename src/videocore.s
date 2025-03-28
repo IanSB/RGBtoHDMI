@@ -42,8 +42,8 @@
 .equ SMI_CTRL_BIT_PLL_0, 1
 .equ SMI_CTRL_BIT_PLL_1, 2
 .equ SMI_CTRL_BIT_DMA,  3
-
-
+.equ SMI_CTRL_BIT_MONO_LEFT,  4
+.equ SMI_CTRL_BIT_MONO_RIGHT, 5
 
 .equ SMI_STATUS,      	0x04
 .equ SMI_STATUS_BIT_RUNNING,   0
@@ -674,7 +674,7 @@ waitBCL\@:
 waitBCH\@:
    ld     r0, (r4)
    btst   r0, CLOCK_BIT
-   bne    waitBCH\@ 
+   bne    waitBCH\@
    ld     r0, (r4)          #second read for reliability
    btst   r0, r15 # DATABIT
    addne  r8, 1  #parity count
@@ -812,10 +812,14 @@ no_status_bytes\@:
 .endm
 
 SINGLE_WRITE_LEFT_RIGHT:
-   mov    r1, r11
+   btst   r21, SMI_CTRL_BIT_MONO_RIGHT
+   movne  r1, r12
+   moveq  r1, r11
    IEC958_STATUS
    WRITE
-   mov    r1, r12
+   btst   r21, SMI_CTRL_BIT_MONO_LEFT
+   movne  r1, r11
+   moveq  r1, r12
    IEC958_STATUS
    WRITE
    add    r6, 1
@@ -1107,9 +1111,13 @@ secondremain\@:
    bclrne r2, DROP_SAMPLE
    bne    drop_main\@
 
-   mov    r1, r17
+   btst   r21, SMI_CTRL_BIT_MONO_RIGHT
+   movne  r1, r24
+   moveq  r1, r17
    WRITE
-   mov    r1, r24
+   btst   r21, SMI_CTRL_BIT_MONO_LEFT
+   movne  r1, r17
+   moveq  r1, r24
    WRITE
    add    r6, 1
    cmp    r6, IEC958_FRAMES_PER_BLOCK

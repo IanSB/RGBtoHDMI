@@ -413,6 +413,13 @@ static const char *clock_sync_names[] = {
    "Variable PLL (Fast)"
 };
 
+static const char *audio_mode_names[] = {
+   "Stereo",
+   "Mono",
+   "Mono (Right)",
+   "Stereo (LR Swapped)",
+};
+
 // =============================================================
 // Feature definitions
 // =============================================================
@@ -493,6 +500,7 @@ static param_t features[] = {
    {                F_WAVS,     "Test WAV File",          "wav_file", 0,                 0, 1, 0 },
 
    {           F_AUDIO_CAP,     "Audio Capture",     "audio_capture", 0,                 1, 1, 1 },
+   {          F_AUDIO_MODE,        "Audio Type",        "audio_mode", 0,                 3, 1, 1 },
    {                 F_DMA,      "Capture Type",      "capture_type", 0,                 1, 1, 1 },
    {           F_DMA_DELAY,      "DMA Delay ms",         "dma_delay", 3,               500, 1, 1 },
    {          F_CLOCK_SYNC,        "Clock Sync",        "clock_sync", 0,                 3, 1, 1 },
@@ -825,6 +833,7 @@ static param_menu_item_t border_height_ref   = { I_FEATURE, &features[F_BORDER_H
 
 static param_menu_item_t wavs_ref            = { I_FEATURE, &features[F_WAVS]          };
 static param_menu_item_t audio_cap_ref       = { I_FEATURE, &features[F_AUDIO_CAP]          };
+static param_menu_item_t audio_mode_ref      = { I_FEATURE, &features[F_AUDIO_MODE]         };
 static param_menu_item_t dma_ref             = { I_FEATURE, &features[F_DMA]          };
 static param_menu_item_t dma_delay_ref       = { I_FEATURE, &features[F_DMA_DELAY]          };
 static param_menu_item_t clock_sync_ref      = { I_FEATURE, &features[F_CLOCK_SYNC]          };
@@ -861,14 +870,13 @@ static menu_t custom_profile_menu = {
    }
 };
 
-#define LIVE_DEBUG_POSITION 11
-
 static menu_t audio_test_menu = {
    "HDMI Audio Menu",
    NULL,
    {
       (base_menu_item_t *) &back_ref,
       (base_menu_item_t *) &audio_cap_ref,
+      (base_menu_item_t *) &audio_mode_ref,
       (base_menu_item_t *) &dma_ref,
       (base_menu_item_t *) &dma_delay_ref,
       (base_menu_item_t *) &clock_sync_ref,
@@ -1371,11 +1379,19 @@ void set_menu_table() {
           break;
       }
 
-    if (get_parameter(F_DEBUG_MENU) == 0) {
-        audio_test_menu.items[LIVE_DEBUG_POSITION] = NULL;
-    } else {
-        audio_test_menu.items[LIVE_DEBUG_POSITION] = (base_menu_item_t *) &live_debug_ref;
-    }
+
+      index = 0;
+      do {
+          if (audio_test_menu.items[index] == NULL || audio_test_menu.items[index] == (base_menu_item_t *) &live_debug_ref) {
+              if (get_parameter(F_DEBUG_MENU)) {
+                 audio_test_menu.items[index] = (base_menu_item_t *) &live_debug_ref;
+              } else {
+                 audio_test_menu.items[index] = NULL;
+              }
+              break;
+          }
+      }  while (audio_test_menu.items[index++] != NULL);
+
 }
 
 static void cycle_menu(menu_t *menu) {
@@ -1696,6 +1712,10 @@ void set_feature(int num, int value) {
           set_audio_capture(value);
       }
       break;
+   case F_AUDIO_MODE:
+      set_parameter(num, value);
+      set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
+      break;
    case F_DMA:
       set_parameter(num, value);
       set_feature(F_AUDIO_CAP, get_feature(F_AUDIO_CAP));
@@ -1889,6 +1909,8 @@ static const char *get_param_string(param_menu_item_t *param_item) {
          return integer_aspect_names[value];
       case F_INTEGER_SCALING:
          return integer_scaling_names[value];
+      case F_AUDIO_MODE:
+         return audio_mode_names[value];
       case F_DMA:
          return dma_names[value];
       case F_CLOCK_SYNC:

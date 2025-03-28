@@ -255,7 +255,6 @@ enum {
     NUM_MONO_PAL
 };
 
-
 enum {
     INTEGER_SCALING_NORMAL_4_3,
     INTEGER_SCALING_ENHANCED_4_3,
@@ -351,6 +350,7 @@ enum {
 
    F_WAVS,
    F_AUDIO_CAP,
+   F_AUDIO_MODE,
    F_DMA,
    F_DMA_DELAY,
    F_CLOCK_SYNC,
@@ -363,7 +363,6 @@ enum {
    MAX_PARAMETERS
 
 };
-
 
 void osd_init();
 void osd_clear();

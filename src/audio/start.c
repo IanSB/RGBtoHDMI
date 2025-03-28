@@ -286,7 +286,7 @@ void start_audio_capture() {
         }
 
 
-        SMI_DSR0[0] = 1 | ((get_parameter(F_CLOCK_SYNC)) << 1) | ((get_parameter(F_DMA)) << 3); //set run bit in command register
+        SMI_DSR0[0] = 1 | ((get_parameter(F_CLOCK_SYNC)) << 1) | ((get_parameter(F_DMA)) << 3) | ((get_parameter(F_AUDIO_MODE)) << 4); //set run bit in command register
 
         do {  //wait until running
         } while ((SMI_DSR0[1] & 1) == 0);
