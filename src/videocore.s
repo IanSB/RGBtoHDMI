@@ -3,6 +3,8 @@
 # (c) IanB Nov 2021
 #-------------------------------------------------------------------------
 
+.equ INVERTED_CLOCK, 0
+
 # GPIO registers
 
 .equ GPU_COMMAND,          0x7e0000a0  #use MBOX0-MBOX7 for ARM communications
@@ -59,11 +61,20 @@
 
 .equ HDMI_MAI_DATA_BUS, 0x7E808020        # pi 4 = 0x7EF2001C
 .equ HD_MAI_CTL,        0x7e808014
-.equ HD_MAI_CTL_EMPTY,	10
-.equ HD_MAI_CTL_FULL,   11
-.equ HD_MAI_CTL_ERRORF, 1
-.equ HD_MAI_CTL_ERRORE, 2
 
+.equ HD_MAI_CTL_RST_MAI,  0
+.equ HD_MAI_CTL_ERRORF,   1
+.equ HD_MAI_CTL_ERRORE,   2
+.equ HD_MAI_CTL_ENABLE,   3
+.equ HD_MAI_CTL_CHNUM,    4
+.equ HD_MAI_CTL_PAREN,    8
+.equ HD_MAI_CTL_FLUSH,    9
+.equ HD_MAI_CTL_EMPTY,	 10
+.equ HD_MAI_CTL_FULL,    11
+.equ HD_MAI_CTL_WHOLSMP, 12
+.equ HD_MAI_CTL_CHALIGN, 13
+.equ HD_MAI_CTL_BUSY,    14
+.equ HD_MAI_CTL_DLATE,   15
 
 .equ PLL_OFFSET_SLOW, 0x04
 .equ PLL_OFFSET_FAST, 0x40
@@ -639,8 +650,8 @@ high_latency_capture_loop:
 
 .macro WAIT_EDGE_FOR_DATA_BIT
 waitBCH\@:
-   DELAY_NOP
    ld     r0, (r4)
+   DELAY_NOP
    eor    r0, r2
    btst   r0, CLOCK_BIT
    beq    waitBCH\@
@@ -652,8 +663,8 @@ waitBCH\@:
 
 .macro WAIT_EDGE_FOR_LR_BIT
 waitBCH\@:
-   DELAY_NOP
    ld     r0, (r4)
+   DELAY_NOP
    eor    r0, r2
    btst   r0, CLOCK_BIT
    beq    waitBCH\@
@@ -662,20 +673,18 @@ waitBCH\@:
    btst   r0, r16 # LRBIT
 .endm
 
-
-.macro LO_BITCLK
-waitBCL\@:
-   ld     r0, (r4)
-   btst   r0, CLOCK_BIT
-   beq    waitBCL\@
-.endm
-
 .macro HI_BITCLK_FOR_DATA_BIT
 waitBCH\@:
    ld     r0, (r4)
+#   DELAY_NOP
    btst   r0, CLOCK_BIT
+.if INVERTED_CLOCK == 1
    bne    waitBCH\@
-   ld     r0, (r4)          #second read for reliability
+.else
+   beq    waitBCH\@
+.endif
+#   DELAY_NOP
+   ld     r0, (r4)
    btst   r0, r15 # DATABIT
    addne  r8, 1  #parity count
 .endm
@@ -683,19 +692,40 @@ waitBCH\@:
 .macro LO_BITCLK_FOR_LR_BIT
 waitBCL\@:
    ld     r0, (r4)
+#   DELAY_NOP
    btst   r0, CLOCK_BIT
+.if INVERTED_CLOCK == 1
    beq    waitBCL\@
+.else
+   bne    waitBCL\@
+.endif
+#   DELAY_NOP
    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
    btst   r0, r16 # LRBIT
 .endm
 
-
-
 .macro HI_BITCLK
 waitBCHO\@:
    ld     r0, (r4)
+#   DELAY_NOP
    btst   r0, CLOCK_BIT
+.if INVERTED_CLOCK == 1
    bne    waitBCHO\@
+.else
+   beq    waitBCHO\@
+.endif
+.endm
+
+.macro LO_BITCLK
+waitBCLO\@:
+   ld     r0, (r4)
+#   DELAY_NOP
+   btst   r0, CLOCK_BIT
+.if INVERTED_CLOCK == 1
+   beq    waitBCLO\@
+.else
+   bne    waitBCLO\@
+.endif
 .endm
 
 .macro WAIT_FOR_DATA_BIT
@@ -858,7 +888,7 @@ got_offset_under\@:
 not_dma_underrun\@:
    ld     r0, (r7)  #read MAI CTL
    btst   r0, HD_MAI_CTL_ERRORE
-   bne    repeat_empty\@
+   bne    repeat_empty_ERRORE\@
    btst   r0, HD_MAI_CTL_EMPTY
    beq    not_empty\@
 empty\@:
@@ -882,6 +912,11 @@ use_slow_pll_empty\@:
    st     r0, (r18)
    b      not_empty\@
 
+repeat_empty_ERRORE\@:
+   mov    r0, (1 << HD_MAI_CTL_RST_MAI) | (1 << HD_MAI_CTL_ERRORF) | (1 << HD_MAI_CTL_ERRORE) | (1 << HD_MAI_CTL_DLATE) | (1 << HD_MAI_CTL_FLUSH)
+   st     r0, (r7)    #clear ERRORE
+   mov    r0, (1 << HD_MAI_CTL_ENABLE) | (2 << HD_MAI_CTL_CHNUM) | (1 << HD_MAI_CTL_WHOLSMP) | (1 << HD_MAI_CTL_CHALIGN)
+   st     r0, (r7)
 repeat_empty\@:
    bset   r2, REPEAT_SAMPLE
    add    r23, 0x10000
@@ -920,7 +955,7 @@ got_offset_over\@:
 not_dma_overrun\@:
    ld     r0, (r7)  #read MAI CTL
    btst   r0, HD_MAI_CTL_ERRORF
-   bne    drop_full\@
+   bne    drop_full_ERRORF\@
    btst   r0, HD_MAI_CTL_FULL
    beq    not_full\@
 full\@:
@@ -943,7 +978,11 @@ use_slow_pll_full\@:
    or     r0, CM_PASSWORD
    st     r0, (r18)
    b      not_full\@
-
+drop_full_ERRORF\@:
+   mov    r0, (1 << HD_MAI_CTL_RST_MAI) | (1 << HD_MAI_CTL_ERRORF) | (1 << HD_MAI_CTL_ERRORE) | (1 << HD_MAI_CTL_DLATE) | (1 << HD_MAI_CTL_FLUSH)
+   st     r0, (r7)    #clear ERRORF
+   mov    r0, (1 << HD_MAI_CTL_ENABLE) | (2 << HD_MAI_CTL_CHNUM) | (1 << HD_MAI_CTL_WHOLSMP) | (1 << HD_MAI_CTL_CHALIGN)
+   st     r0, (r7)
 drop_full\@:
    bset   r2, DROP_SAMPLE
    add    r23, 1

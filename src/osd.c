@@ -500,7 +500,7 @@ static param_t features[] = {
    {                F_WAVS,     "Test WAV File",          "wav_file", 0,                 0, 1, 0 },
 
    {           F_AUDIO_CAP,     "Audio Capture",     "audio_capture", 0,                 1, 1, 1 },
-   {          F_AUDIO_MODE,        "Audio Type",        "audio_mode", 0,                 3, 1, 1 },
+   {          F_AUDIO_MODE,        "Audio Mode",        "audio_mode", 0,                 3, 1, 1 },
    {                 F_DMA,      "Capture Type",      "capture_type", 0,                 1, 1, 1 },
    {           F_DMA_DELAY,      "DMA Delay ms",         "dma_delay", 3,               500, 1, 1 },
    {          F_CLOCK_SYNC,        "Clock Sync",        "clock_sync", 0,                 3, 1, 1 },
@@ -1615,11 +1615,16 @@ void set_feature(int num, int value) {
       }
       set_parameter(num, value);
       int hardware = get_audio_hardware_type();
-      if (hardware != AUDIO_NO_HARDWARE && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE) && value > 0) {
-          if (hardware >= AUDIO_2GPIO) {
-             value += 40;
-          } else {
-             value += 30;
+      if (hardware != AUDIO_NO_HARDWARE && get_parameter(F_AUDIO_CAP) && get_parameter(F_OPTIMISE)) {
+          if (value > 0) {    //if already overclocking give a 30 Mhz boost because things will be marginal
+              value += 30;
+          }
+          if (hardware >= AUDIO_2GPIO && (hardware & AUDIO_48KHZ)) {
+             if (value < 50) {
+                value = 50;  //if 48Khz 2 GPIO mode give a 50Mhz boost even if not overclocking
+             } else {
+                value += 10; //if already greater than 50Mhz then give another 10Mhz boost
+             }
           }
       }
 #ifdef RPI4
