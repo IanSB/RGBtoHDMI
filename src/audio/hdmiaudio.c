@@ -157,7 +157,7 @@ uint32_t hdmi_audio_get_fifo_pointer() {
 
 void hdmi_audio_stop_packet(int isforce) {
     return;
-    log_info("hdmi_audio_stop_packet");
+    log_debug("hdmi_audio_stop_packet");
     *HDMI_RAM_PACKET_CONFIG &= ~(1 << 4);           //Checked (AudioPacketIdentifier bit)
     if(isforce)
         return;
@@ -168,7 +168,7 @@ void hdmi_audio_stop_packet(int isforce) {
 }
 
 void hdmi_audio_start_packet(int isforce) {
-    log_info("hdmi_audio_start_packet");
+    log_debug("hdmi_audio_start_packet");
     *HDMI_RAM_PACKET_CONFIG |= (1 << 4);             //Checked (AudioPacketIdentifier bit)
     if(isforce)
         return;
@@ -179,7 +179,7 @@ void hdmi_audio_start_packet(int isforce) {
 }
 
 void hdmi_audio_reset() {
-    log_info("hdmi_audio_reset");
+    log_debug("hdmi_audio_reset");
     uint32_t mai_ctl = 0;
     hdmi_audio_stop_packet(1);
     mai_ctl = (1 << 0);  //RST
@@ -189,7 +189,7 @@ void hdmi_audio_reset() {
 }
 
 void hdmi_audio_startup() {
-    log_info("hdmi_audio_startup");
+    log_debug("hdmi_audio_startup");
     uint32_t mai_ctl = 0;
     mai_ctl |= (1 << 0);  //RST
     mai_ctl |= (1 << 1);  //OF
@@ -311,7 +311,7 @@ double pllh_clock;
    int PLLH_ANA1_PREDIV = ((gpioreg[PLLH_ANA1] >> 11) & 1) ? 2 : 1; //prediv on bit 11 instead of bit 14 for pllh
    pllh_clock = (CRYSTAL * ((double)(gpioreg[PLLH_CTRL] & 0x3ff) + ((double)gpioreg[PLLH_FRAC]) / ((double)(1 << 20)))) * PLLH_ANA1_PREDIV;
 #endif
-   log_info("pllh Clock: %lf MHz", pllh_clock);
+   log_debug("pllh Clock: %lf MHz", pllh_clock);
    return pllh_clock;
 }
 
@@ -336,7 +336,7 @@ double get_pixel_clock_rate(void) {
    // Calculate the pixel clock
    double pixel_clock = pllh_clock / ((double) fixed_divider) / ((double) additional_divider);
 #endif
-   log_info("Pixel Clock: %lf Hz", pixel_clock);
+   log_debug("Pixel Clock: %lf Hz", pixel_clock);
    return pixel_clock;
 }
 
@@ -372,7 +372,7 @@ unsigned long GetHSMClockRate()
 }
 
 void hdmi_audio_prepare(unsigned long measured_sample_rate) {
-    log_info("hdmi_audio_prepare");
+    log_debug("hdmi_audio_prepare");
 
     unsigned long m_nSampleRate = 48000;
     unsigned long m_ulAudioClockRate = GetHSMClockRate();
@@ -382,11 +382,11 @@ void hdmi_audio_prepare(unsigned long measured_sample_rate) {
 				     0xFFFFFFU,
 				     0xFFU + 1,
 				     &ulNumerator, &ulDenominator);
-    log_info("HSM = %d, n=%d, d=%d", (uint32_t) m_ulAudioClockRate, (uint32_t) ulNumerator, (uint32_t) ulDenominator );
-    log_info("val = %lf",  ((double)m_ulAudioClockRate*ulDenominator/ulNumerator));
+    log_debug("HSM = %d, n=%d, d=%d", (uint32_t) m_ulAudioClockRate, (uint32_t) ulNumerator, (uint32_t) ulDenominator );
+    log_debug("val = %lf",  ((double)m_ulAudioClockRate*ulDenominator/ulNumerator));
     uint32_t mai_smp = (uint32_t) ulNumerator << 8
 				     | (uint32_t) (ulDenominator - 1);
-    log_info("calculated MAI_SMP = %08X", mai_smp);
+    log_debug("calculated MAI_SMP = %08X", mai_smp);
 
     *HDMI_MAI_SMP = mai_smp;
 
@@ -421,7 +421,7 @@ void hdmi_audio_prepare(unsigned long measured_sample_rate) {
     cfg |= (IEC958_B_FRAME_PREAMBLE << 10); //changed to support IEC958 frames as some TVs require the audio samples to be formatted this way
     cfg |= (1 << 1) | (1 << 0); //Left, Right
 
-    log_info("audio config=%08X", cfg);
+    log_debug("audio config=%08X", cfg);
 
     *HDMI_AUDIO_PACKET_CONFIG = cfg;  //checked against circle
 
@@ -430,9 +430,9 @@ void hdmi_audio_prepare(unsigned long measured_sample_rate) {
     *HDMI_CRP_CFG = cts_n | (1 << 24); //EXTERNAL CTS EN   //checked against circle
 
     unsigned long pixel_clock = get_pixel_clock_rate() * measured_sample_rate / (m_nSampleRate * 1000);
-    log_info("adjuted Pixel Clock: %d Hz", pixel_clock);
+    log_debug("Adjusted Pixel Clock: %d Hz", pixel_clock);
 	uint32_t nCTS = (uint32_t) (((uint64_t) pixel_clock * cts_n) / nSampleRateMul128);
-    log_info("nCTS = %08x",nCTS);
+    log_debug("nCTS = %08x",nCTS);
 
     *HDMI_CTS_0 = nCTS; //0x1220A;
     *HDMI_CTS_1 = nCTS; //0x1220A;

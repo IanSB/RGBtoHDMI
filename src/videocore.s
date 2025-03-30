@@ -76,8 +76,8 @@
 .equ HD_MAI_CTL_BUSY,    14
 .equ HD_MAI_CTL_DLATE,   15
 
-.equ PLL_OFFSET_SLOW, 0x04
-.equ PLL_OFFSET_FAST, 0x40
+.equ PLL_OFFSET_SLOW, 0x02
+.equ PLL_OFFSET_FAST, 0x20
 
 .equ MAX_DMA_DRIFT, 112
 .equ MAX_DMA_DRIFT_ERROR, 144
@@ -94,7 +94,7 @@
 .equ REPEAT_SAMPLE, 31
 
 .equ SYNC_CHECK_RATE, 192
-.equ BUFFER_CHECK_COUNT, SYNC_CHECK_RATE * 4
+.equ BUFFER_CHECK_COUNT, SYNC_CHECK_RATE * 2
 
 
 
@@ -647,6 +647,11 @@ high_latency_capture_loop:
 
 .endm
 
+.macro DELAY_NOP2
+   nop
+   nop
+
+.endm
 
 .macro WAIT_EDGE_FOR_DATA_BIT
 waitBCH\@:
@@ -676,14 +681,13 @@ waitBCH\@:
 .macro HI_BITCLK_FOR_DATA_BIT
 waitBCH\@:
    ld     r0, (r4)
-#   DELAY_NOP
+#   DELAY_NOP2
    btst   r0, CLOCK_BIT
 .if INVERTED_CLOCK == 1
    bne    waitBCH\@
 .else
    beq    waitBCH\@
 .endif
-#   DELAY_NOP
    ld     r0, (r4)
    btst   r0, r15 # DATABIT
    addne  r8, 1  #parity count
@@ -692,14 +696,13 @@ waitBCH\@:
 .macro LO_BITCLK_FOR_LR_BIT
 waitBCL\@:
    ld     r0, (r4)
-#   DELAY_NOP
+#   DELAY_NOP2
    btst   r0, CLOCK_BIT
 .if INVERTED_CLOCK == 1
    beq    waitBCL\@
 .else
    bne    waitBCL\@
 .endif
-#   DELAY_NOP
    ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
    btst   r0, r16 # LRBIT
 .endm
@@ -707,7 +710,7 @@ waitBCL\@:
 .macro HI_BITCLK
 waitBCHO\@:
    ld     r0, (r4)
-#   DELAY_NOP
+#   DELAY_NOP2
    btst   r0, CLOCK_BIT
 .if INVERTED_CLOCK == 1
    bne    waitBCHO\@
@@ -719,7 +722,7 @@ waitBCHO\@:
 .macro LO_BITCLK
 waitBCLO\@:
    ld     r0, (r4)
-#   DELAY_NOP
+#   DELAY_NOP2
    btst   r0, CLOCK_BIT
 .if INVERTED_CLOCK == 1
    beq    waitBCLO\@
@@ -917,6 +920,7 @@ repeat_empty_ERRORE\@:
    st     r0, (r7)    #clear ERRORE
    mov    r0, (1 << HD_MAI_CTL_ENABLE) | (2 << HD_MAI_CTL_CHNUM) | (1 << HD_MAI_CTL_WHOLSMP) | (1 << HD_MAI_CTL_CHALIGN)
    st     r0, (r7)
+   bl     SINGLE_WRITE_LEFT_RIGHT
 repeat_empty\@:
    bset   r2, REPEAT_SAMPLE
    add    r23, 0x10000
@@ -983,6 +987,7 @@ drop_full_ERRORF\@:
    st     r0, (r7)    #clear ERRORF
    mov    r0, (1 << HD_MAI_CTL_ENABLE) | (2 << HD_MAI_CTL_CHNUM) | (1 << HD_MAI_CTL_WHOLSMP) | (1 << HD_MAI_CTL_CHALIGN)
    st     r0, (r7)
+   bl     SINGLE_WRITE_LEFT_RIGHT
 drop_full\@:
    bset   r2, DROP_SAMPLE
    add    r23, 1

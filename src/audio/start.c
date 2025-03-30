@@ -161,7 +161,7 @@ void initialise_audio_capture_on_VC1() {
 
         new_PLL_fraction = gpioreg[PLLD_FRAC];
 
-        log_info("PLL %08X, %08X", old_PLL_fraction, new_PLL_fraction);
+        log_info("PLL: normal = 0x%08X, adjusted = 0x%08X", old_PLL_fraction, new_PLL_fraction);
 
         log_info("Starting VC1 core...");
         SMI_DSR0[0] = 0; //command register (standby)
@@ -215,11 +215,11 @@ void start_hdmi_sound(uint32_t *buffer, uint32_t size) {
 
 void stop_audio_capture() {
     if (audio_hardware_type != AUDIO_NO_HARDWARE) {
-        log_info("stopping audio capture");
+        log_info("Stopping audio capture...");
         SMI_DSR0[0] = 0; //command register (standby)
         do {
         } while ((SMI_DSR0[1] & 1) !=0);
-        log_info("audio capture stopped");
+        log_info("Audio capture stopped.");
     }
      RPI_SetGpioPinFunction(RPI_GPIO25, FS_OUTPUT); // mode 7 LED
 }
@@ -259,7 +259,7 @@ void start_audio_capture() {
             delay_in_arm_cycles_cpu_adjust(1000000);
             hdmi_audio_setup(audio_sample_rate_48000000);
         }
-        log_info("newPLL %08X", gpioreg[PLLD_FRAC]);
+        log_info("Audio new PLL = 0x%08X", gpioreg[PLLD_FRAC]);
 
         if (get_parameter(F_DMA)) {
             buffer_start = (uint32_t) sound_buffer | topbits;
@@ -274,7 +274,7 @@ void start_audio_capture() {
             SMI_DSR0[2] = gpioreg[PLLD_FRAC];
             SMI_DSR0[3] = buffer_start; //buffer start
             SMI_DSR0[4] = buffer_end; //buffer end
-            log_info("Starting audio using DMA capture %08X, %08X, %08X", buffer_pointer, buffer_start, buffer_end);
+            log_info("Starting audio using DMA capture: PTR=0x%08X, Start=0x%08X, End=0x%08X", buffer_pointer, buffer_start, buffer_end);
             start_hdmi_sound(sound_buffer, SMI_DSR0[4] - SMI_DSR0[3]);
             delay_in_arm_cycles_cpu_adjust(1000000); //wait a quarter of the buffer size to allow some preload by dma  get_parameter(F_DMA_DELAY) * 1000000 / 4
             dma_debug(0);
@@ -293,7 +293,7 @@ void start_audio_capture() {
 
         sound_running = 1;
 
-        log_info("Audio capture setup complete %08X %08X %08X",sound_buffer, (uint32_t) DMA_S_ADDR(0));
+        log_info("Audio capture setup complete");
  /*
         static volatile uint32_t *gpioreg;
         gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);

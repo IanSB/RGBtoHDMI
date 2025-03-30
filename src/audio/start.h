@@ -18,3 +18,4 @@ enum {
 };
 #define AUDIO_NO_HARDWARE 0xffffffff
 #define AUDIO_2GPIO AUDIO_2GPIO_24KHZ_N
+#define AUDIO_48KHZ 2
