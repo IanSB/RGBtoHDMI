@@ -1952,45 +1952,45 @@ char* get_audio_hardware_string() {
         int pins = 0;
         char swapped = '?';
         switch (hardware) {
-            case AUDIO_3GPIO_24KHZ_N:
+            case AUDIO_3GPIO_24KHZ_L:
                 clk = 24;
                 pins = 3;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_3GPIO_24KHZ_R:
+            case AUDIO_3GPIO_24KHZ_F:
                 clk = 24;
                 pins = 3;
-                swapped = 'R';
+                swapped = 'F';
                 break;
-            case AUDIO_3GPIO_48KHZ_N:
+            case AUDIO_3GPIO_48KHZ_L:
                 clk = 48;
                 pins = 3;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_3GPIO_48KHZ_R:
+            case AUDIO_3GPIO_48KHZ_F:
                 clk = 48;
                 pins = 3;
-                swapped = 'R';
+                swapped = 'F';
                 break;
-            case AUDIO_2GPIO_24KHZ_N:
+            case AUDIO_2GPIO_24KHZ_L:
                 clk = 24;
                 pins = 2;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_2GPIO_24KHZ_R:
+            case AUDIO_2GPIO_24KHZ_F:
                 clk = 24;
                 pins = 2;
-                swapped = 'R';
+                swapped = 'F';
                 break;
-            case AUDIO_2GPIO_48KHZ_N:
+            case AUDIO_2GPIO_48KHZ_L:
                 clk = 48;
                 pins = 2;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_2GPIO_48KHZ_R:
+            case AUDIO_2GPIO_48KHZ_F:
                 clk = 48;
                 pins = 2;
-                swapped = 'R';
+                swapped = 'F';
                 break;
         }
         sprintf(msg, "%dKhz Capture (%d GPIO-%c)", clk, pins, swapped);
@@ -8415,45 +8415,45 @@ void live_debug_info() {
         char swapped = '?';
 
         switch (hardware) {
-            case AUDIO_3GPIO_24KHZ_N:
+            case AUDIO_3GPIO_24KHZ_L:
                 clk = 24;
                 pins = 3;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_3GPIO_24KHZ_R:
+            case AUDIO_3GPIO_24KHZ_F:
                 clk = 24;
                 pins = 3;
-                swapped = 'R';
+                swapped = 'F';
                 break;
-            case AUDIO_3GPIO_48KHZ_N:
+            case AUDIO_3GPIO_48KHZ_L:
                 clk = 48;
                 pins = 3;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_3GPIO_48KHZ_R:
+            case AUDIO_3GPIO_48KHZ_F:
                 clk = 48;
                 pins = 3;
-                swapped = 'R';
+                swapped = 'F';
                 break;
-            case AUDIO_2GPIO_24KHZ_N:
+            case AUDIO_2GPIO_24KHZ_L:
                 clk = 24;
                 pins = 2;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_2GPIO_24KHZ_R:
+            case AUDIO_2GPIO_24KHZ_F:
                 clk = 24;
                 pins = 2;
-                swapped = 'R';
+                swapped = 'F';
                 break;
-            case AUDIO_2GPIO_48KHZ_N:
+            case AUDIO_2GPIO_48KHZ_L:
                 clk = 48;
                 pins = 2;
-                swapped = 'N';
+                swapped = 'L';
                 break;
-            case AUDIO_2GPIO_48KHZ_R:
+            case AUDIO_2GPIO_48KHZ_F:
                 clk = 48;
                 pins = 2;
-                swapped = 'R';
+                swapped = 'F';
                 break;
         }
 
