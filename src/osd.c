@@ -1619,11 +1619,11 @@ void set_feature(int num, int value) {
           if (value > 0) {    //if already overclocking give a 30 Mhz boost because things will be marginal
               value += 30;
           }
-          if (hardware >= AUDIO_2GPIO && (hardware & AUDIO_48KHZ)) {
+          if ((hardware & AUDIO_1GPIO) && (hardware & AUDIO_48KHZ)) {
              if (value < 50) {
-                value = 50;  //if 48Khz 2 GPIO mode give a 50Mhz boost even if not overclocking
+                value = 50;  //if 48Khz 1 GPIO mode give a 50Mhz boost even if not overclocking
              } else {
-                value += 10; //if already greater than 50Mhz then give another 10Mhz boost
+                value += 20; //if already greater than 50Mhz then give another 20Mhz boost
              }
           }
       }
@@ -1948,52 +1948,7 @@ char* get_audio_hardware_string() {
     if (hardware == AUDIO_NO_HARDWARE) {
         sprintf(msg, "No Capture Hardware");
     } else {
-        int clk = 0;
-        int pins = 0;
-        char swapped = '?';
-        switch (hardware) {
-            case AUDIO_3GPIO_24KHZ_L:
-                clk = 24;
-                pins = 3;
-                swapped = 'L';
-                break;
-            case AUDIO_3GPIO_24KHZ_F:
-                clk = 24;
-                pins = 3;
-                swapped = 'F';
-                break;
-            case AUDIO_3GPIO_48KHZ_L:
-                clk = 48;
-                pins = 3;
-                swapped = 'L';
-                break;
-            case AUDIO_3GPIO_48KHZ_F:
-                clk = 48;
-                pins = 3;
-                swapped = 'F';
-                break;
-            case AUDIO_2GPIO_24KHZ_L:
-                clk = 24;
-                pins = 2;
-                swapped = 'L';
-                break;
-            case AUDIO_2GPIO_24KHZ_F:
-                clk = 24;
-                pins = 2;
-                swapped = 'F';
-                break;
-            case AUDIO_2GPIO_48KHZ_L:
-                clk = 48;
-                pins = 2;
-                swapped = 'L';
-                break;
-            case AUDIO_2GPIO_48KHZ_F:
-                clk = 48;
-                pins = 2;
-                swapped = 'F';
-                break;
-        }
-        sprintf(msg, "%dKhz Capture (%d GPIO-%c)", clk, pins, swapped);
+        sprintf(msg, "%dKhz Capture (%d GPIO-%c%c%c", hardware & AUDIO_48KHZ ? 48:24, hardware & AUDIO_1GPIO ? 1:2, hardware & AUDIO_PINS ? 'F':'L', hardware & AUDIO_1GPIO ? ')': (hardware & AUDIO_PINS ? 'L':'F'), hardware & AUDIO_1GPIO ? ' ':')' );
     }
     return msg;
 }
@@ -8388,7 +8343,6 @@ void osd_init() {
    set_menu_table();
 }
 
-
 void live_debug_info() {
 //static int last_pll = -1;
 //static int count = 0;
@@ -8410,54 +8364,9 @@ void live_debug_info() {
             type = 'C';
         }
         int hardware = get_audio_hardware_type();
-        int clk = 0;
-        int pins = 0;
-        char swapped = '?';
+        sprintf(buffer + 1 * LINELEN, "%dK%d%c:F=%04d,D=%04d,R=%04d,P=%05X,%c=%04X",
+        hardware & AUDIO_48KHZ ? 48:24, hardware & AUDIO_1GPIO ? 1:2, hardware & AUDIO_PINS ? 'F':'L', error, drop, repeat, pll, type, membuf);
 
-        switch (hardware) {
-            case AUDIO_3GPIO_24KHZ_L:
-                clk = 24;
-                pins = 3;
-                swapped = 'L';
-                break;
-            case AUDIO_3GPIO_24KHZ_F:
-                clk = 24;
-                pins = 3;
-                swapped = 'F';
-                break;
-            case AUDIO_3GPIO_48KHZ_L:
-                clk = 48;
-                pins = 3;
-                swapped = 'L';
-                break;
-            case AUDIO_3GPIO_48KHZ_F:
-                clk = 48;
-                pins = 3;
-                swapped = 'F';
-                break;
-            case AUDIO_2GPIO_24KHZ_L:
-                clk = 24;
-                pins = 2;
-                swapped = 'L';
-                break;
-            case AUDIO_2GPIO_24KHZ_F:
-                clk = 24;
-                pins = 2;
-                swapped = 'F';
-                break;
-            case AUDIO_2GPIO_48KHZ_L:
-                clk = 48;
-                pins = 2;
-                swapped = 'L';
-                break;
-            case AUDIO_2GPIO_48KHZ_F:
-                clk = 48;
-                pins = 2;
-                swapped = 'F';
-                break;
-        }
-
-        sprintf(buffer + 1 * LINELEN, "%02dK%d%c:F=%04d,D=%04d,R=%04d,P=%05X,%c=%04X",clk,pins,swapped,error,drop,repeat,pll, type, membuf);
         /*
         if (pll != last_pll && count > 100) {
             log_info("%03X", pll & 0xFFF);
@@ -8469,7 +8378,6 @@ void live_debug_info() {
         */
     }
 }
-
 
 
 void osd_update(uint32_t *osd_base, int bytes_per_line, int relocate) {

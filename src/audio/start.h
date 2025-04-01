@@ -7,15 +7,16 @@ void start_all_audio(char wav_names[MAX_NAMES][MAX_NAMES_WIDTH], int count);
 void update_audio_ctrl();
 int get_audio_hardware_type();
 enum {
-    AUDIO_3GPIO_24KHZ_L,
-    AUDIO_3GPIO_24KHZ_F,
-    AUDIO_3GPIO_48KHZ_L,
-    AUDIO_3GPIO_48KHZ_F,
     AUDIO_2GPIO_24KHZ_L,
     AUDIO_2GPIO_24KHZ_F,
     AUDIO_2GPIO_48KHZ_L,
-    AUDIO_2GPIO_48KHZ_F
+    AUDIO_2GPIO_48KHZ_F,
+    AUDIO_1GPIO_24KHZ_L,
+    AUDIO_1GPIO_24KHZ_F,
+    AUDIO_1GPIO_48KHZ_L,
+    AUDIO_1GPIO_48KHZ_F
 };
 #define AUDIO_NO_HARDWARE 0xffffffff
-#define AUDIO_2GPIO AUDIO_2GPIO_24KHZ_L
+#define AUDIO_PINS 1
 #define AUDIO_48KHZ 2
+#define AUDIO_1GPIO 4

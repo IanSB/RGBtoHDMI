@@ -644,6 +644,8 @@ high_latency_capture_loop:
    nop
    nop
    nop
+   nop
+   nop
 
 .endm
 

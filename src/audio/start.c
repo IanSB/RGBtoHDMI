@@ -56,9 +56,9 @@ void initialise_audio_capture_on_VC1() {
     uint32_t audio_data1_rate = (double) audio_timing[1] * cpuspeed * 1000000 / AUDIO_TEST_DURATION;
     uint32_t audio_data2_rate = (double) audio_timing[2] * cpuspeed * 1000000 / AUDIO_TEST_DURATION;
 
-    log_info("Audio clock rate = %d Hz", audio_clock_rate);
-    log_info("Audio data1 rate = %d Hz", audio_data1_rate);
-    log_info("Audio data2 rate = %d Hz", audio_data2_rate);
+    log_debug("Audio clock rate = %d Hz", audio_clock_rate);
+    log_debug("Audio 2 rate = %d Hz", audio_data1_rate);
+    log_debug("Audio 3 rate = %d Hz", audio_data2_rate);
 
     uint32_t audio_data_pin = 0;
     uint32_t audio_LR_pin = 0;
@@ -70,53 +70,45 @@ void initialise_audio_capture_on_VC1() {
             audio_LR_pin = AUDIO_DATA1_PIN;
             sample_repeat = 1;
             audio_sample_rate_48000000 = 2 * (double) audio_clock_rate * 1000 / 64;
-            //log_info("24000Hz 3 GPIO detected: LR pin = %d, Data pin = %d", audio_LR_pin, audio_data_pin) ;
-            audio_hardware_type = AUDIO_3GPIO_24KHZ_L;
+            audio_hardware_type = AUDIO_2GPIO_24KHZ_L;
         } else if (audio_data2_rate > (23900 * 2) && audio_data2_rate < (24100 * 2)) {
             audio_data_pin = AUDIO_DATA1_PIN;
             audio_LR_pin = AUDIO_DATA2_PIN;
             sample_repeat = 1;
             audio_sample_rate_48000000 = 2 * (double) audio_clock_rate * 1000 / 64;
-            //log_info("24000Hz 3 GPIO detected: LR pin = %d, Data pin = %d", audio_LR_pin, audio_data_pin) ;
-            audio_hardware_type = AUDIO_3GPIO_24KHZ_F;
+            audio_hardware_type = AUDIO_2GPIO_24KHZ_F;
         } else {
-            //log_info("24000Hz clock detected but unsupported format");
             audio_data_pin = 0;
             audio_LR_pin = 0;
             sample_repeat = 0;
             audio_sample_rate_48000000 = 0;
         }
     } else if (audio_clock_rate > (47900 * 64) && audio_clock_rate < (48100 * 64)) {
-        //log_info("Either 48000Hz 3 GPIO or 24000Hz 2 GPIO detected");
         if (audio_data1_rate > (47900 * 2) && audio_data1_rate < (48100 * 2)) {
             audio_data_pin = AUDIO_DATA2_PIN;
             audio_LR_pin = AUDIO_DATA1_PIN;
             sample_repeat = 0;
             audio_sample_rate_48000000 = (double) audio_clock_rate * 1000 / 64;
-            //log_info("48000Hz 3 GPIO detected: LR pin = %d, Data pin = %d", audio_LR_pin, audio_data_pin) ;
-            audio_hardware_type = AUDIO_3GPIO_48KHZ_L;
+            audio_hardware_type = AUDIO_2GPIO_48KHZ_L;
         } else if (audio_data2_rate > (47900 * 2) && audio_data2_rate < (48100 * 2)) {
             audio_data_pin = AUDIO_DATA1_PIN;
             audio_LR_pin = AUDIO_DATA2_PIN;
             sample_repeat = 0;
             audio_sample_rate_48000000 = (double) audio_clock_rate * 1000 / 64;
-            //log_info("48000Hz 3 GPIO detected: LR pin = %d, Data pin = %d", audio_LR_pin, audio_data_pin) ;
-            audio_hardware_type = AUDIO_3GPIO_48KHZ_F;
+            audio_hardware_type = AUDIO_2GPIO_48KHZ_F;
         } else {
             if ((audio_data2_rate > 47900 && audio_data2_rate < (96100 * 64)) || audio_data1_rate < 23900 ) {
                 audio_data_pin = AUDIO_DATA2_PIN;
                 audio_LR_pin = AUDIO_DATA2_PIN;
                 sample_repeat = 1;
                 audio_sample_rate_48000000 = (double) audio_clock_rate * 1000 / 64;
-                //log_info("24000Hz 2 GPIO detected: No LR pin, Data pin = %d", audio_data_pin) ;
-                audio_hardware_type = AUDIO_2GPIO_24KHZ_L;
+                audio_hardware_type = AUDIO_1GPIO_24KHZ_L;
             } else {
                 audio_data_pin = AUDIO_DATA1_PIN;
                 audio_LR_pin = AUDIO_DATA1_PIN;
                 sample_repeat = 1;
                 audio_sample_rate_48000000 = (double) audio_clock_rate * 1000 / 64;
-                //log_info("24000Hz 2 GPIO detected: No LR pin, Data pin = %d", audio_data_pin) ;
-                audio_hardware_type = AUDIO_2GPIO_24KHZ_F;
+                audio_hardware_type = AUDIO_1GPIO_24KHZ_F;
             }
         }
     } else if (audio_clock_rate > (95900 * 64) && audio_clock_rate < (96100 * 64)) {
@@ -125,18 +117,15 @@ void initialise_audio_capture_on_VC1() {
                 audio_LR_pin = AUDIO_DATA2_PIN;
                 sample_repeat = 0;
                 audio_sample_rate_48000000 = (double) audio_clock_rate * 1000 / 64 / 2;
-                //log_info("48000Hz 2 GPIO detected: No LR pin, Data pin = %d", audio_data_pin) ;
-                audio_hardware_type = AUDIO_2GPIO_48KHZ_L;
+                audio_hardware_type = AUDIO_1GPIO_48KHZ_L;
             } else {
                 audio_data_pin = AUDIO_DATA1_PIN;
                 audio_LR_pin = AUDIO_DATA1_PIN;
                 sample_repeat = 0;
                 audio_sample_rate_48000000 = (double) audio_clock_rate * 1000 / 64 / 2;
-                //log_info("48000Hz 2 GPIO detected: No LR pin, Data pin = %d", audio_data_pin) ;
-                audio_hardware_type = AUDIO_2GPIO_48KHZ_F;
+                audio_hardware_type = AUDIO_1GPIO_48KHZ_F;
             }
     } else {
-        //log_info("Interface not fitted or unsupported");
         audio_data_pin = 0;
         audio_LR_pin = 0;
         sample_repeat = 0;
@@ -144,9 +133,9 @@ void initialise_audio_capture_on_VC1() {
     }
     if (audio_sample_rate_48000000 != 0) {
         if (audio_LR_pin == audio_data_pin) {
-            log_info("Capture sample rate of %dHz, 2 GPIO protocol detected: LR = %d, Data = %d", audio_sample_rate_48000000 / 1000 / (sample_repeat + 1), audio_LR_pin, audio_data_pin);
+            log_info("Capture sample rate of %dHz, 1 GPIO mode detected: Data1 = %d, Data2 = %d", audio_sample_rate_48000000 / 1000 / (sample_repeat + 1), audio_data_pin, audio_LR_pin );
         } else {
-            log_info("Capture sample rate of %dHz, 3 GPIO protocol detected: LR = %d, Data = %d", audio_sample_rate_48000000 / 1000 / (sample_repeat + 1), audio_LR_pin, audio_data_pin);
+            log_info("Capture sample rate of %dHz, 2 GPIO mode detected: Data1 = %d, Data2 = %d", audio_sample_rate_48000000 / 1000 / (sample_repeat + 1), audio_data_pin, audio_LR_pin );
         }
         static volatile uint32_t *gpioreg;
         gpioreg = (volatile uint32_t *)(_get_peripheral_base() + 0x101000UL);
