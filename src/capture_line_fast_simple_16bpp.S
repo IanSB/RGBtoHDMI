@@ -65,7 +65,8 @@
         // Pixel in GPIO 13.. 2 -> 15.. 0
         and    r9, r8, r14
         eor    r10, \reg, r9, lsr #(PIXEL_BASE)
-        tst    r8, #MUX_MASK
+        tst    r3, #BITDUP_ENABLE_FFOSD
+        tstne  r8, #MUX_MASK
         orrne  r3, #BITDUP_FFOSD_DETECTED
 .endm
 
@@ -81,7 +82,8 @@
         eor    r9, r9, #(GREY_PIXELS & 0x0ff) << PIXEL_BASE
         eors   r9, r9, #(GREY_PIXELS & 0xf00) << PIXEL_BASE
         bicne  r3, #BITDUP_LINE_CONDITION_DETECTED
-        tst    r8, #MUX_MASK
+        tst    r3, #BITDUP_ENABLE_FFOSD
+        tstne  r8, #MUX_MASK
         orrne  r3, #BITDUP_FFOSD_DETECTED
         orrne  r10, #0xff00
         orrne  r10, #0x00ff
@@ -94,7 +96,8 @@
         eor    r9, r9, #(GREY_PIXELS & 0x0ff) << PIXEL_BASE
         eors   r9, r9, #(GREY_PIXELS & 0xf00) << PIXEL_BASE
         bicne  r3, #BITDUP_LINE_CONDITION_DETECTED
-        tst    r8, #MUX_MASK
+        tst    r3, #BITDUP_ENABLE_FFOSD
+        tstne  r8, #MUX_MASK
         orrne  r3, #BITDUP_FFOSD_DETECTED
         orrne  \reg, \reg, #(0xff000000)
         orrne  \reg, \reg, #(0x00ff0000)
