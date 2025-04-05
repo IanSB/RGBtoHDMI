@@ -662,10 +662,9 @@ waitBCH\@:
    eor    r0, r2
    btst   r0, CLOCK_BIT
    beq    waitBCH\@
-   ld     r0, (r4)          #second read for reliability
-   bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+   ld     r0, (r4)     #second read for settle delay
+   bchg   r2, CLOCK_BIT
    btst   r0, r15 # DATABIT
-   addne  r8, 1  #parity count
 .endm
 
 .macro WAIT_EDGE_FOR_LR_BIT
@@ -675,8 +674,8 @@ waitBCH\@:
    eor    r0, r2
    btst   r0, CLOCK_BIT
    beq    waitBCH\@
-   ld     r0, (r4)          #second read for reliability
-   bchg   r2, CLOCK_BIT     #edge detect if using 3 gpios otherwise high detect
+   ld     r0, (r4)     #second read for settle delay
+   bchg   r2, CLOCK_BIT
    btst   r0, r16 # LRBIT
 .endm
 
@@ -685,14 +684,10 @@ waitBCH\@:
    ld     r0, (r4)
 #   DELAY_NOP2
    btst   r0, CLOCK_BIT
-.if INVERTED_CLOCK == 1
-   bne    waitBCH\@
-.else
    beq    waitBCH\@
-.endif
-   ld     r0, (r4)
+   ld     r0, (r4)     #second read for settle delay
    btst   r0, r15 # DATABIT
-   addne  r8, 1  #parity count
+
 .endm
 
 .macro LO_BITCLK_FOR_LR_BIT
@@ -700,12 +695,8 @@ waitBCL\@:
    ld     r0, (r4)
 #   DELAY_NOP2
    btst   r0, CLOCK_BIT
-.if INVERTED_CLOCK == 1
-   beq    waitBCL\@
-.else
    bne    waitBCL\@
-.endif
-   ld     r0, (r4)   #second read for delay to allow LR to stabilise in two gpio mode
+   ld     r0, (r4)     #second read for settle delay
    btst   r0, r16 # LRBIT
 .endm
 
@@ -714,11 +705,7 @@ waitBCHO\@:
    ld     r0, (r4)
 #   DELAY_NOP2
    btst   r0, CLOCK_BIT
-.if INVERTED_CLOCK == 1
-   bne    waitBCHO\@
-.else
    beq    waitBCHO\@
-.endif
 .endm
 
 .macro LO_BITCLK
@@ -726,15 +713,11 @@ waitBCLO\@:
    ld     r0, (r4)
 #   DELAY_NOP2
    btst   r0, CLOCK_BIT
-.if INVERTED_CLOCK == 1
-   beq    waitBCLO\@
-.else
    bne    waitBCLO\@
-.endif
 .endm
 
 .macro WAIT_FOR_DATA_BIT
-.if TWOGPIO == 1
+.if ONEGPIO == 1
    LO_BITCLK
    HI_BITCLK_FOR_DATA_BIT
 .else
@@ -743,21 +726,21 @@ waitBCLO\@:
 .endm
 
 .macro WAIT_FOR_LR_BIT
-.if TWOGPIO == 1
+.if ONEGPIO == 1
    LO_BITCLK_FOR_LR_BIT
 .else
    WAIT_EDGE_FOR_LR_BIT
 .endif
 .endm
 
-.macro WAIT_HI_TWOGPIO_ONLY
-.if TWOGPIO == 1
+.macro WAIT_HI_ONEGPIO_ONLY
+.if ONEGPIO == 1
    HI_BITCLK
 .endif
 .endm
 
 .macro LO_LRCLK
-.if TWOGPIO == 1
+.if ONEGPIO == 1
 waitLRCL2\@:
    HI_BITCLK
    LO_BITCLK_FOR_LR_BIT
@@ -766,13 +749,13 @@ waitLRCL2\@:
 .else
 waitLRCL\@:
    WAIT_EDGE_FOR_LR_BIT
-   bne    waitLRCL\@
+   beq    waitLRCL\@
 .endif
 .endm
 
 
 .macro HI_LRCLK
-.if TWOGPIO == 1
+.if ONEGPIO == 1
 waitLRCH2\@:
    HI_BITCLK
    LO_BITCLK_FOR_LR_BIT
@@ -781,7 +764,7 @@ waitLRCH2\@:
 .else
 waitLRCH\@:
    WAIT_EDGE_FOR_LR_BIT
-   beq    waitLRCH\@
+   bne    waitLRCH\@
 .endif
 .endm
 
@@ -834,7 +817,7 @@ no_status_bytes\@:
     addne  r8, 1
 
     btst   r8, 0
-    bsetne r1, 31   # set parity bit count is odd
+    bsetne r1, 31   # set parity bit as count is odd
 
 .endm
 
@@ -990,8 +973,11 @@ drop_full_ERRORF\@:
    mov    r0, (1 << HD_MAI_CTL_ENABLE) | (2 << HD_MAI_CTL_CHNUM) | (1 << HD_MAI_CTL_WHOLSMP) | (1 << HD_MAI_CTL_CHALIGN)
    st     r0, (r7)
    bl     SINGLE_WRITE_LEFT_RIGHT
+   bset   r2, REPEAT_SAMPLE #as buffer flushed
+   b      dont_drop\@
 drop_full\@:
    bset   r2, DROP_SAMPLE
+dont_drop\@:
    add    r23, 1
    bclr   r23, 15  #max 32767
    st     r23, SMI_DROP_REPEAT_COUNT(r20)
@@ -1054,7 +1040,13 @@ audio_main_loop\@:
 firstloop\@:
    lsl    r1, 1
    WAIT_FOR_DATA_BIT
+.if ONEGPIO == 1
+   addne  r8, 1  #parity count
    orne   r1, 1
+.else
+   addeq  r8, 1  #parity count
+   oreq   r1, 1
+.endif
    sub    r3, 1
    cmp    r3, 0
    bne    firstloop\@
@@ -1091,16 +1083,24 @@ firstremain\@:
 skip_log\@:
 
    WAIT_FOR_LR_BIT
+.if ONEGPIO == 1
    bne    bad_sync_LR_high1\@
-   WAIT_HI_TWOGPIO_ONLY
+.else
+   beq    bad_sync_LR_high1\@
+.endif
+   WAIT_HI_ONEGPIO_ONLY
 
    WAIT_FOR_LR_BIT
+.if ONEGPIO == 1
    beq    bad_sync_LR_low1\@
+.else
+   bne    bad_sync_LR_low1\@
+.endif
    mov    r1, r17
    mov    r11, r1   #save in case of repeat
    IEC958_STATUS
    mov    r17, r1
-   WAIT_HI_TWOGPIO_ONLY
+   WAIT_HI_ONEGPIO_ONLY
 
    #capture second sample
    #LR clock has just gone low
@@ -1110,7 +1110,13 @@ skip_log\@:
 secondloop\@:
    lsl    r1, 1
    WAIT_FOR_DATA_BIT
+.if ONEGPIO == 1
+   addne  r8, 1  #parity count
    orne   r1, 1
+.else
+   addeq  r8, 1  #parity count
+   oreq   r1, 1
+.endif
    sub    r3, 1
    cmp    r3, 0
    bne    secondloop\@
@@ -1145,13 +1151,22 @@ secondremain\@:
    mov    r1, r0
 
    WAIT_FOR_LR_BIT
+.if ONEGPIO == 1
    beq    bad_sync_LR_low2\@
-   WAIT_HI_TWOGPIO_ONLY
+.else
+   bne    bad_sync_LR_low2\@
+.endif
+
+   WAIT_HI_ONEGPIO_ONLY
 
    WAIT_FOR_LR_BIT
+.if ONEGPIO == 1
    bne    bad_sync_LR_high2\@
+.else
+   beq    bad_sync_LR_high2\@
+.endif
    mov    r12, r1   #save in case of repeat
-   WAIT_HI_TWOGPIO_ONLY
+   WAIT_HI_ONEGPIO_ONLY
 
    btst   r2, DROP_SAMPLE
    bclrne r2, DROP_SAMPLE
@@ -1323,13 +1338,13 @@ fill:
 
 use_dma:
    cmp    r15, r16             # if data pin and LR pin are the same then two GPIO capture
-   beq    two_gpio_capture
+   beq    one_gpio_capture
 
-.set TWOGPIO, 0
+.set ONEGPIO, 0
    CAPTURE_AUDIO
 
-two_gpio_capture:
-.set TWOGPIO, 1
+one_gpio_capture:
+.set ONEGPIO, 1
    CAPTURE_AUDIO
 
 
