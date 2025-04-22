@@ -107,6 +107,13 @@ void RPI_PropertyAddTag( rpi_mailbox_tag_t tag, ... )
             pt_index += 34;
             break;
 
+        case TAG_SET_VPU_IRQ_VECTORS:
+            pt[pt_index++] = 8;
+            pt[pt_index++] = 0; /* Request */
+            pt[pt_index++] = va_arg( vl, int ); /* vector number */
+            pt[pt_index++] = va_arg( vl, int ); /* vector address */
+            break;
+
         case TAG_SET_CLOCK_STATE:
             pt[pt_index++] = 8;
             pt[pt_index++] = 0; /* Request */

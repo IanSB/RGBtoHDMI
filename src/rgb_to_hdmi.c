@@ -266,17 +266,25 @@ static int parameters[MAX_PARAMETERS] = {0};
 
 
 void start_vc_1( uint32_t flags, uint32_t param1, uint32_t param2, uint32_t param3) {
-   int func;
-   func = (int) &___videocore_asm[0] + 4;
+   int code_start = (int) &___videocore_asm[0];
+   int func = code_start + VPU1_CODE_OFFSET;
    RPI_PropertyInit();
-   RPI_PropertyAddTag(TAG_LAUNCH_VPU1,func, 0, flags, param1, param2, param3, 0);
+   RPI_PropertyAddTag(TAG_LAUNCH_VPU1,func, code_start, flags, param1, param2, param3);
    RPI_PropertyProcessNoCheck();
 }
+
+void set_vc_irq_vectors() {
+   int irq_handler = (int) &___videocore_asm[0] + VPU_INTERRUPT_OFFSET;
+   RPI_PropertyInit();
+   RPI_PropertyAddTag(TAG_SET_VPU_IRQ_VECTORS, 113, irq_handler);
+   RPI_PropertyProcess();
+}
+
 
 void start_vc_0() {
 #ifndef USE_ARM_CAPTURE
    int func;
-   func = (int) &___videocore_asm[0];
+   func = (int) &___videocore_asm[0] + VPU0_CODE_OFFSET;
    RPI_PropertyInit();
    RPI_PropertyAddTag(TAG_EXECUTE_CODE,func,0,0,0,0,0,0);
    RPI_PropertyProcessNoCheck();
@@ -291,12 +299,11 @@ void terminate_vc_0() {
 
 void start_vc_bench(int type) {
    int func;
-   func = (int) &___videocore_asm[0];
+   func = (int) &___videocore_asm[0] + VPU0_CODE_OFFSET;
    RPI_PropertyInit();
    RPI_PropertyAddTag(TAG_EXECUTE_CODE,func,type,0,0,0,0,0);
    RPI_PropertyProcess();
 }
-
 
 static int current_genlock_mode = -1;
 static const char *sync_names[] = {

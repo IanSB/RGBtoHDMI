@@ -3,7 +3,17 @@
 # (c) IanB Nov 2021
 #-------------------------------------------------------------------------
 
-.equ INVERTED_CLOCK, 0
+#https://github.com/hermanhermitage/videocoreiv/wiki/VideoCore-IV-Programmers-Manual#interrupts
+#https://github.com/librerpi/rpi-open-firmware/blob/master/docs/interrupts.txt
+
+.equ INTERRUPTS, 0
+
+.equ IC0_BASE,  0x7e002000
+.equ IC1_BASE,  0x7e002800
+
+.equ IC_MASK_BASE, 0x10
+.equ IC_GPIO_INT0_MASK6, IC_MASK_BASE + (6 * 4)
+.equ IC_GPIO_INT0_MASK_BITS, 0x000000f0
 
 # GPIO registers
 
@@ -27,11 +37,8 @@
 
 .equ GPLEV0,            0x7e200034
 .equ GPEDS0,            0x7e200040
-.equ GPREN0,            0x7e20004c
-.equ GPFEN0,            0x7e200058
-
-.equ INTEN,             0x7e00B210       # Interrupt enable reg
-
+.equ GPREN0,            0x7e20004c #0x7e20007c #
+.equ GPFEN0,            0x7e200058 #0x7e200088 #
 
 .equ PLLD_FRAC,         0x7e102240
 .equ CM_PASSWORD,       0x5a000000
@@ -233,14 +240,32 @@ waitPSE\@:
    bchg   r2, PSYNC_BIT
 .endm
 
-
-# main code entry point
+code_start:
+# main code entry point starts at 0 offset
    di
    b vpu0
-   .align 2
+
+# vpu1 code entry point starts at 0x10 offset
+   .align 4
    di
    b vpu1
-   b vpu1_interrupt
+
+
+
+
+.if INTERRUPTS
+#interrupt starts at 0x20 offset
+   .align 4
+vpu1_interrupt:
+   # Acknowledge the interrupt
+   # ld     r27, (GPEDS0-GPLEV0)(r4)
+   mov    r27, (1 << CLOCK_BIT)
+   st     r27, (GPEDS0-GPLEV0)(r4)
+   ld     r27, (r4)
+   bset   r27, 31
+   rti
+.endif
+
 vpu0:
    cmp    r0, 1
    bne    not_gpio_read_benchmark
@@ -655,6 +680,28 @@ high_latency_capture_loop:
 
 .endm
 
+.if INTERRUPTS
+
+.macro WAIT_EDGE_FOR_DATA_BIT
+waitBCH\@:
+   btst   r27, 31
+   beq    waitBCH\@
+   bclr   r27, 31
+   mov    r0, r27
+   btst   r0, r15 # DATABIT
+.endm
+
+.macro WAIT_EDGE_FOR_LR_BIT
+waitBCH\@:
+   btst   r27, 31
+   beq    waitBCH\@
+   bclr   r27, 31
+   mov    r0, r27
+   btst   r0, r16 # LRBIT
+.endm
+
+.else
+
 .macro WAIT_EDGE_FOR_DATA_BIT
 waitBCH\@:
    ld     r0, (r4)
@@ -676,8 +723,11 @@ waitBCH\@:
    beq    waitBCH\@
    ld     r0, (r4)     #second read for settle delay
    bchg   r2, CLOCK_BIT
-   btst   r0, r16 # LRBIT
+   btst   r0, r16
 .endm
+
+.endif
+
 
 .macro HI_BITCLK_FOR_DATA_BIT
 waitBCH\@:
@@ -686,7 +736,7 @@ waitBCH\@:
    btst   r0, CLOCK_BIT
    beq    waitBCH\@
    ld     r0, (r4)     #second read for settle delay
-   btst   r0, r15 # DATABIT
+   btst   r0, r15
 
 .endm
 
@@ -697,7 +747,7 @@ waitBCL\@:
    btst   r0, CLOCK_BIT
    bne    waitBCL\@
    ld     r0, (r4)     #second read for settle delay
-   btst   r0, r16 # LRBIT
+   btst   r0, r16
 .endm
 
 .macro HI_BITCLK
@@ -717,7 +767,7 @@ waitBCLO\@:
 .endm
 
 .macro WAIT_FOR_DATA_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    LO_BITCLK
    HI_BITCLK_FOR_DATA_BIT
 .else
@@ -726,7 +776,7 @@ waitBCLO\@:
 .endm
 
 .macro WAIT_FOR_LR_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    LO_BITCLK_FOR_LR_BIT
 .else
    WAIT_EDGE_FOR_LR_BIT
@@ -734,13 +784,13 @@ waitBCLO\@:
 .endm
 
 .macro WAIT_HI_ONEGPIO_ONLY
-.if ONEGPIO == 1
+.if ONEGPIO
    HI_BITCLK
 .endif
 .endm
 
 .macro LO_LRCLK
-.if ONEGPIO == 1
+.if ONEGPIO
 waitLRCL2\@:
    HI_BITCLK
    LO_BITCLK_FOR_LR_BIT
@@ -755,7 +805,7 @@ waitLRCL\@:
 
 
 .macro HI_LRCLK
-.if ONEGPIO == 1
+.if ONEGPIO
 waitLRCH2\@:
    HI_BITCLK
    LO_BITCLK_FOR_LR_BIT
@@ -1040,7 +1090,7 @@ audio_main_loop\@:
 firstloop\@:
    lsl    r1, 1
    WAIT_FOR_DATA_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    addne  r8, 1  #parity count
    orne   r1, 1
 .else
@@ -1083,7 +1133,7 @@ firstremain\@:
 skip_log\@:
 
    WAIT_FOR_LR_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    bne    bad_sync_LR_high1\@
 .else
    beq    bad_sync_LR_high1\@
@@ -1091,7 +1141,7 @@ skip_log\@:
    WAIT_HI_ONEGPIO_ONLY
 
    WAIT_FOR_LR_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    beq    bad_sync_LR_low1\@
 .else
    bne    bad_sync_LR_low1\@
@@ -1110,7 +1160,7 @@ skip_log\@:
 secondloop\@:
    lsl    r1, 1
    WAIT_FOR_DATA_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    addne  r8, 1  #parity count
    orne   r1, 1
 .else
@@ -1151,7 +1201,7 @@ secondremain\@:
    mov    r1, r0
 
    WAIT_FOR_LR_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    beq    bad_sync_LR_low2\@
 .else
    bne    bad_sync_LR_low2\@
@@ -1160,7 +1210,7 @@ secondremain\@:
    WAIT_HI_ONEGPIO_ONLY
 
    WAIT_FOR_LR_BIT
-.if ONEGPIO == 1
+.if ONEGPIO
    bne    bad_sync_LR_high2\@
 .else
    beq    bad_sync_LR_high2\@
@@ -1198,8 +1248,7 @@ no_repeat_sample_main\@:
 
 .endm
 
-vpu1_interrupt:
-   rti
+
 
 #start of audio capture
 vpu1:
@@ -1221,8 +1270,8 @@ audio_capture:
    #r12 = copy of second sample
    #r13 = low end of dma buffer
    #r14 = high end of dma buffer
-   #r15 = audio data pin
-   #r16 = audio LR pin
+   #r15 = audio data1 pin
+   #r16 = audio data2 pin
    #r17 = temp save reg
    #r18 = pointer to PLLD FRAC register
    #r19 = original value of PLLD FRAC register
@@ -1232,43 +1281,66 @@ audio_capture:
    #r23 = drop and repeat counts (15 bits each)
    #r24 = temp save reg
 
-# on entry r1 = audio_data_pin, r2 = audio_LR_pin, r3 = sample_repeat)
+   #r25 = stack pointer
+   #r26 = link register
+   #r27 = ?
+   #r28 = stack pointer for exception handlers
+   #r29 = thread pointer
+   #r30 = status register
+   #r31 = program counter
+
+# on entry r0 = code start, r1 = audio_1_pin, r2 = audio_2_pin, r3 = sample_repeat)
    mov   r15, r1
    mov   r16, r2
    mov   r2, r3
 
+   mov   r4, IC1_BASE
+
+   mov   r0, 0              #disable all irqs
+   st    r0, IC_MASK_BASE(r4)
+   st    r0, IC_MASK_BASE + 4(r4)
+   st    r0, IC_MASK_BASE + 8(r4)
+   st    r0, IC_MASK_BASE + 12(r4)
+   st    r0, IC_MASK_BASE + 16(r4)
+   st    r0, IC_MASK_BASE + 20(r4)
+   st    r0, IC_MASK_BASE + 24(r4)
+   st    r0, IC_MASK_BASE + 28(r4)
+
+.if INTERRUPTS
+   mov   r0, IC_GPIO_INT0_MASK_BITS
+   st    r0, IC_GPIO_INT0_MASK6(r4) #enable GPIO block 0 interrupt
+
+   mov   r4, IC0_BASE
+   mov   r0, 0
+   st    r0, IC_GPIO_INT0_MASK6(r4)
+
+.endif
+
+   mov    r4, GPLEV0
+
+.if INTERRUPTS
+   mov    r0, (1 << CLOCK_BIT)
+   st     r0, (GPREN0-GPLEV0)(r4)
+   st     r0, (GPFEN0-GPLEV0)(r4)
+.endif
+
    mov    r20, SMI_BASE
    mov    r10, DMA0POINTER
 
-   mov    r4, GPLEV0
    mov    r7, HD_MAI_CTL
-
    mov    r18, PLLD_FRAC
-
-#   mov    r0, (1 << CLOCK_BIT)
-#   st     r0, (GPREN0-GPLEV0)(r4)   #enable rising edge detection
-#   st     r0, (GPFEN0-GPLEV0)(r4)   #enable falling edge detection
-
-#   mov r1, INTEN
-#   ld  r0, (r1)
-#   or  r0, (1 << 17)
-#   st  r0, (r1)
-
-  # Acknowledge the interrupt
-  #  ld     r0, (GPEDS0-GPLEV0)(r4)
-  #  st     r0, (GPEDS0-GPLEV0)(r4)
 
 abort_audio:
    mov    r0,0
    st     r0, SMI_CTRL(r20)
    st     r0, SMI_STATUS(r20)
-
    st     r0, SMI_ERROR_COUNT(r20)
    st     r0, SMI_DROP_REPEAT_COUNT(r20)
 
    ld     r0, SMI_DEFAULT_PLLDFRAC(r20)
    or     r0, CM_PASSWORD
    st     r0, (r18)
+
 command_loop:
    mov    r0,0
    st     r0, SMI_STATUS(r20)
@@ -1284,31 +1356,18 @@ sleep:
    btst   r21, SMI_CTRL_BIT_RUN
    beq    command_loop
 
-   ld     r19, (r18)
-
-   #set the pll
-#   mov    r0, r19
-#   btst   r21, SMI_CTRL_BIT_PLL
-#   beq    norunfast
-#   sub    r0, PLL_OFFSET_SLOW     # run pll fast so buffer fills up
-#norunfast:
-#   or     r0, CM_PASSWORD
-#   st     r0, (r18)
-
-
-   mov    r6,  0 #nFrame
-
-   mov    r9,  0 #overundercheck counter
-
-   mov    r11, 0 #copy of first sample
-   mov    r12, 0 #copy of second sample
+   ld     r19, (r18)    #get current PLLD FRAC register value
+   mov    r6,  0        #nFrame
+   mov    r9,  0        #overundercheck counter
+   mov    r11, 0        #copy of first sample
+   mov    r12, 0        #copy of second sample
    bclr   r2, CLOCK_BIT #flags
-   mov    r22, 0 #error count
-   mov    r23, 0 # drop/rep count
+   mov    r22, 0        #error count
+   mov    r23, 0        #drop/rep count
    mov    r24, 0
 
    mov    r0, 1
-   st     r0, SMI_STATUS(r20)
+   st     r0, SMI_STATUS(r20)   #set running bit
 
    # get buffer
    ld     r13, SMI_BUFFER_START(r20)
@@ -1337,7 +1396,14 @@ fill:
    bne    fill
 
 use_dma:
-   cmp    r15, r16             # if data pin and LR pin are the same then two GPIO capture
+
+.if INTERRUPTS
+   ld     r0, (GPEDS0-GPLEV0)(r4)
+   st     r0, (GPEDS0-GPLEV0)(r4)  #clear any existing irq state
+   ei     #enable interrupts
+.endif
+
+   cmp    r15, r16             # if data1 pin and data2 pin are the same then two GPIO capture
    beq    one_gpio_capture
 
 .set ONEGPIO, 0

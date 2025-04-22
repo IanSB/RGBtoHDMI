@@ -2475,9 +2475,8 @@ static int audio_msg1(int line){
    osd_set(line++, 0, "with your monitor.");
    line++;
    osd_set(line++, 0, "Audio capture requires an addon board.");
-   osd_set(line++, 0, "(Details TBA)");
-//   osd_set(line++, 0, "(Available from the official sellers");
-//   osd_set(line++, 0, "listed in the github wiki).");
+   osd_set(line++, 0, "See https://github.com/IanSB");
+   osd_set(line++, 0, "/RGBtoHDMI/wiki/audio");
 
    line++;
    return line;

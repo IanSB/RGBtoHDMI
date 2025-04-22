@@ -637,6 +637,10 @@ typedef struct {
 #define Bit8u uint8_t
 #define Bitu uint32_t
 
+#define VPU0_CODE_OFFSET 0x00
+#define VPU1_CODE_OFFSET 0x10
+#define VPU_INTERRUPT_OFFSET 0x20
+
 #define INT_BASE ((volatile uint32_t *)(_get_peripheral_base() + 0x00B000))
 
 //#define SMI_DSR0 ((volatile uint32_t *)0xc8800000)

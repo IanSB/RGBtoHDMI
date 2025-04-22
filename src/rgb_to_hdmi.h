@@ -61,6 +61,7 @@ void write_palette(uint32_t * current_palette);
 void terminate_vc_0();
 void start_vc_0();
 void start_vc_1( uint32_t flags, uint32_t param1, uint32_t param2, uint32_t param3);
+void set_vc_irq_vectors();
 void init_gpclk0(int source, int divisor);
 uint32_t get_GPU_top_bits();
 int get_cpuspeed();

@@ -28,6 +28,7 @@ typedef enum {
 
    /* Shared resource management */
    TAG_GET_DMA_CHANNELS = 0x60001,
+   TAG_SET_VPU_IRQ_VECTORS = 0x3805a,
 
    /* Power */
    TAG_GET_POWER_STATE = 0x20001,
