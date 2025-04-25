@@ -162,7 +162,7 @@ void initialise_audio_capture_on_VC1() {
         } while (SMI_DSR0[1] !=0);
         log_info("VC1 core running and ready for audio commands");
 
-        //set_vc_irq_vectors();
+        set_vc_irq_vectors();
 
     } else {
         log_info("No valid audio interface detected");

@@ -6,7 +6,7 @@
 #include "../rpi-gpio.h"
 #include "../rgb_to_fb.h"
 #include "../rgb_to_hdmi.h"
-
+#include "../audio/start.h"
 #include "ports.h"
 #include "micro.h"
 #include "update_cpld.h"
@@ -55,6 +55,9 @@ int update_cpld(char *path, int show_message) {
    }
 
    close_filesystem();
+
+   stop_all_audio();
+
    RPI_SetGpioPinFunction(MUX_PIN,      FS_OUTPUT);
 
    log_info("Read xsvf file %s (length = %d)", path, xsvf_info.fsize);
