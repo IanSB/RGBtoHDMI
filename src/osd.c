@@ -129,6 +129,9 @@ static char *default_palette_names[] = {
    "Commodore_64_Rev1",
    "VIC_20",
    "NES",
+   "RGB6(Lumacode)",
+   "Intellivision_(Lumacode)",
+   "G7000",
    "Atari_800_PAL",
    "Atari_800_NTSC",
    "Atari_2600_PAL",
@@ -2476,7 +2479,7 @@ static int audio_msg1(int line){
    line++;
    osd_set(line++, 0, "Audio capture requires an addon board.");
    osd_set(line++, 0, "See https://github.com/IanSB");
-   osd_set(line++, 0, "/RGBtoHDMI/wiki/audio");
+   osd_set(line++, 0, "/RGBtoHDMI/wiki/Audio");
 
    line++;
    return line;
@@ -4952,7 +4955,135 @@ int max_palette_count;
                  }
                  break;
 
+                case PALETTE_MASTER_SYSTEM: {
+                    static int palette[] = {
+                            0x00000000,
+                            0x09550000,
+                            0x13AA0000,
+                            0x1DFF0000,
+                            0x31005500,
+                            0x3B555500,
+                            0x45AA5500,
+                            0x4EFF5500,
+                            0x6300AA00,
+                            0x6D55AA00,
+                            0x77AAAA00,
+                            0x80FFAA00,
+                            0x9500FF00,
+                            0x9F55FF00,
+                            0xA9AAFF00,
+                            0xB2FFFF00,
+                            0x19000055,
+                            0x23550055,
+                            0x2CAA0055,
+                            0x36FF0055,
+                            0x4B005555,
+                            0x55555555,
+                            0x5EAA5555,
+                            0x68FF5555,
+                            0x7D00AA55,
+                            0x8655AA55,
+                            0x90AAAA55,
+                            0x9AFFAA55,
+                            0xAF00FF55,
+                            0xB855FF55,
+                            0xC2AAFF55,
+                            0xCCFFFF55,
+                            0x320000AA,
+                            0x3C5500AA,
+                            0x46AA00AA,
+                            0x4FFF00AA,
+                            0x640055AA,
+                            0x6E5555AA,
+                            0x78AA55AA,
+                            0x81FF55AA,
+                            0x9600AAAA,
+                            0xA055AAAA,
+                            0xAAAAAAAA,
+                            0xB3FFAAAA,
+                            0xC800FFAA,
+                            0xD255FFAA,
+                            0xDBAAFFAA,
+                            0xE5FFFFAA,
+                            0x4C0000FF,
+                            0x555500FF,
+                            0x5FAA00FF,
+                            0x69FF00FF,
+                            0x7E0055FF,
+                            0x875555FF,
+                            0x91AA55FF,
+                            0x9BFF55FF,
+                            0xB000AAFF,
+                            0xB955AAFF,
+                            0xC3AAAAFF,
+                            0xCDFFAAFF,
+                            0xE100FFFF,
+                            0xEB55FFFF,
+                            0xF5AAFFFF,
+                            0xFFFFFFFF
+                        };
+                        r = palette[i & 0x3f] & 0xff;
+                        g = (palette[i & 0x3f] >> 8) & 0xff;
+                        b = (palette[i & 0x3f] >> 16) & 0xff;
+                        m = (palette[i & 0x3f] >> 24) & 0xff;
+                        max_palette_count = 64;
+                 }
+                 break;
 
+
+                case PALETTE_INTELLIVISION_LUMACODE: {
+                    static int palette[] = {
+                            0x0405000C,
+                            0x37FF2D00,
+                            0x70003EFF,
+                            0xC364D4C9,
+                            0x480F7800,
+                            0x6520A700,
+                            0xD827EAFA,
+                            0xFDFFFCFF,
+                            0xA7A8A8A7,
+                            0xAFFFCB5A,
+                            0xAD00A6FF,
+                            0x4500583C,
+                            0x777632FF,
+                            0xADFF95BD,
+                            0x9E30CD6C,
+                            0x597D1AC8
+                        };
+                        r = palette[i & 0x0f] & 0xff;
+                        g = (palette[i & 0x0f] >> 8) & 0xff;
+                        b = (palette[i & 0x0f] >> 16) & 0xff;
+                        m = (palette[i & 0x0f] >> 24) & 0xff;
+                        max_palette_count = 16;
+                 }
+                 break;
+
+                case PALETTE_G7000: {
+                    static int palette[] = {
+                            0x00000000,
+                            0x14B60000,
+                            0x6A00B600,
+                            0x7FB6B600,
+                            0x360000B6,
+                            0x4BB600B6,
+                            0xA100B6B6,
+                            0xB5B6B6B6,
+                            0x49494949,
+                            0x5DFF4949,
+                            0xB349FF49,
+                            0xC8FFFF49,
+                            0x7F4949FF,
+                            0x94FF49FF,
+                            0xEA49FFFF,
+                            0xFFFFFFFF
+                        };
+                        r = palette[i & 0x0f] & 0xff;
+                        g = (palette[i & 0x0f] >> 8) & 0xff;
+                        b = (palette[i & 0x0f] >> 16) & 0xff;
+                        m = (palette[i & 0x0f] >> 24) & 0xff;
+                        max_palette_count = 16;
+                 }
+                 break;
 
                 case PALETTE_ATARI2600_PAL: {
                        static int palette[] = {
