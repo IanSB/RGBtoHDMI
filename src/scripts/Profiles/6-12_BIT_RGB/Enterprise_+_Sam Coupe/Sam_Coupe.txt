@@ -3,3 +3,4 @@ geometry=120,58,512,204,608,276,3,4,1,1,12000000,768,5000,312,4,0,0
 palette=RrGgBbI_(SAM)
 audio_capture=1
 integer_scaling=2
+overclock_core=20
