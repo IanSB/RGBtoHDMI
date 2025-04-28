@@ -2507,7 +2507,7 @@ static void audio_tone(int line) {
    set_parameter(F_AUDIO_CAP, 0);
    start_tone();
    line = audio_msg1(line);
-   osd_set(line++, 0, "Playing test cap...");
+   osd_set(line++, 0, "Playing test tone...");
    line = audio_msg2(line);
 }
 
@@ -5026,7 +5026,7 @@ int max_palette_count;
                         g = (palette[i & 0x3f] >> 8) & 0xff;
                         b = (palette[i & 0x3f] >> 16) & 0xff;
                         m = (palette[i & 0x3f] >> 24) & 0xff;
-                        max_palette_count = 64;
+                        max_palette_count = 256;
                  }
                  break;
 
