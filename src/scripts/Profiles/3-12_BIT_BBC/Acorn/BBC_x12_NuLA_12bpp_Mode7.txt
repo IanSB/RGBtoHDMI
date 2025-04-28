@@ -5,4 +5,4 @@ geometry=180,29,640,256,720,270,1,2,1,2,16000000,1024,5000,312,4,0,0
 auto_switch=2
 teletext_deinterlace=0
 overclock_core=50
-audio_capture=1
+audio_mode=1

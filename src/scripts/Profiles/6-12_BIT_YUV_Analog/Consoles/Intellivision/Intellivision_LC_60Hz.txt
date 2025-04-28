@@ -2,3 +2,4 @@ sampling=4,4,4,4,4,4,4,0,1,0,3,0,0,0,0,2,0,2,1,0,62,43,256,256,10,27,256,256
 geometry=28,35,160,200,176,220,2,1,3,1,7159088,456,5000,262,4,0,0
 palette=Intellivision_(Lumacode)
 palette_control=7
+audio_mode=1

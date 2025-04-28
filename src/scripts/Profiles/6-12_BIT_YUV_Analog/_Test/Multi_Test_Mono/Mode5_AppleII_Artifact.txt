@@ -5,5 +5,3 @@ palette_control=3
 ntsc_colour=1
 ntsc_type=2
 powerup_message=0
-audio_capture=1
-audio_mode=0

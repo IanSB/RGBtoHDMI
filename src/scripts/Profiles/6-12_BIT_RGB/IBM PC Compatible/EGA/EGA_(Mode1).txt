@@ -3,4 +3,3 @@ geometry=112,30,640,204,736,234,2,5,1,2,14318181,912,4500,262,3,0,0
 palette=RGBI_(CGA)
 palette_control=2
 
-

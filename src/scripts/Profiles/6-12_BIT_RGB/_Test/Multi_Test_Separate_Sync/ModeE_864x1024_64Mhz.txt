@@ -4,5 +4,3 @@ scanline_level=0
 overclock_cpu=50
 overclock_core=50
 powerup_message=0
-audio_capture=1
-audio_mode=0

@@ -4,4 +4,4 @@ palette=Dragon-CoCo_Full
 palette_control=4
 output_invert=2
 border_colour=1
-audio_capture=1
+audio_mode=1

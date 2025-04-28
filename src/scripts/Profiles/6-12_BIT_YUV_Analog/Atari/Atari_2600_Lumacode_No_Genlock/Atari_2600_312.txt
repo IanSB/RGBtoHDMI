@@ -3,4 +3,5 @@ geometry=24,35,168,256,184,280,8,4,3,1,14250880,912,81000,312,4,0,0
 palette=Atari_2600_PAL
 palette_control=9
 genlock_mode=1
-audio_capture=1
+audio_mode=1
+optimise=0

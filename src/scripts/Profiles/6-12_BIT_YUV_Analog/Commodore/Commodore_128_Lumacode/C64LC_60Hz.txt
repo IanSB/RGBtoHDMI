@@ -3,4 +3,4 @@ geometry=76,33,336,208,400,240,4,5,3,1,16363636,1040,5000,262,4,0,0
 palette=Commodore_64
 palette_control=7
 pal_oddlevel=33
-audio_capture=1
+audio_mode=1

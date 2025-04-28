@@ -1,6 +1,6 @@
 sampling=0,0,0,0,0,0,0,0,1,0,6,0,0,0,0,0,0,2,0,0,100,256,100,256,100,256,256,256
 geometry=120,58,512,204,608,276,3,4,1,1,12000000,768,5000,312,4,0,0
 palette=RrGgBbI_(SAM)
-audio_capture=1
+audio_mode=1
 integer_scaling=2
 overclock_core=20
